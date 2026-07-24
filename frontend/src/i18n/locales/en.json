@@ -10,7 +10,8 @@
     "login": "Sign in",
     "register": "Register",
     "account": "Account",
-    "home": "Home"
+    "home": "Home",
+    "toggleDarkMode": "Toggle dark mode"
   },
   "home": {
     "title": "Project template",

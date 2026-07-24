@@ -10,7 +10,8 @@
     "login": "Přihlásit se",
     "register": "Registrace",
     "account": "Účet",
-    "home": "Domů"
+    "home": "Domů",
+    "toggleDarkMode": "Přepnout tmavý režim"
   },
   "home": {
     "title": "Šablona projektu",
