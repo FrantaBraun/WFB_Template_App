@@ -69,6 +69,14 @@
       "companyName": "Název společnosti",
       "internalRiskScore": "Interní rizikové skóre"
     },
+    "themeCard": {
+      "title": "Vzhled",
+      "storedLabel": "Uloženo v profilu",
+      "dark": "Tmavý",
+      "light": "Světlý",
+      "diverges": "Aktuálně zobrazený vzhled se liší od toho, co je uloženo v profilu.",
+      "toggleLabel": "Tmavý režim"
+    },
     "saveSuccess": "Uloženo.",
     "saveError": "Uložení se nezdařilo.",
     "redirecting": "Přesměrování na přihlášení…"

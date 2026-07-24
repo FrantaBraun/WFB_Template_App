@@ -7,9 +7,8 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useTheme } from '../context/ThemeContext'
 import { SUPPORTED_LANGUAGES } from '../i18n'
-import { persistDarkModePreference } from '../theme'
+import ThemeToggle from './ThemeToggle'
 
 /** Small control to switch the active i18next language between the supported locales. */
 function LanguageSwitcher() {
@@ -31,44 +30,6 @@ function LanguageSwitcher() {
         </button>
       ))}
     </div>
-  )
-}
-
-/**
- * Light/dark toggle switch. Applies the theme instantly (via ThemeContext)
- * and, when signed in, immediately persists it to the profile too - there's
- * no separate "save" step for this control, unlike the rest of the Profile
- * form on the Account page.
- */
-function ThemeToggle() {
-  const { t } = useTranslation()
-  const { darkMode, setDarkMode } = useTheme()
-  const { user } = useAuth()
-
-  function handleToggle() {
-    const next = !darkMode
-    setDarkMode(next)
-    if (user?.application_group_id) {
-      persistDarkModePreference(user.application_group_id, next)
-    }
-  }
-
-  return (
-    <button
-      onClick={handleToggle}
-      role="switch"
-      aria-checked={darkMode}
-      aria-label={t('common.toggleDarkMode')}
-      className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-        darkMode ? 'bg-sky-600' : 'bg-slate-300 dark:bg-slate-700'
-      }`}
-    >
-      <span
-        className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-          darkMode ? 'translate-x-4' : 'translate-x-0.5'
-        }`}
-      />
-    </button>
   )
 }
 

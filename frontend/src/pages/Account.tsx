@@ -9,9 +9,11 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import usePageMeta from '../hooks/usePageMeta'
 import { loadUserAttributes, type UserAttribute } from '../config/userAttributes'
 import DynamicAttributeField from '../components/DynamicAttributeField'
+import ThemeToggle from '../components/ThemeToggle'
 import { applyUserLanguage } from '../i18n'
 
 interface AccountData {
@@ -59,6 +61,7 @@ export default function Account() {
   const { t } = useTranslation()
   usePageMeta({ title: t('account.pageTitle'), description: t('account.pageDescription') })
   const { user, loading: authLoading } = useAuth()
+  const { darkMode } = useTheme()
   const navigate = useNavigate()
 
   const [account, setAccount] = useState<AccountData | null>(null)
@@ -122,6 +125,13 @@ export default function Account() {
       </div>
     )
   }
+
+  // What's actually persisted on the profile, per the last group-attributes
+  // fetch/toggle - independent of the currently active theme (`darkMode`
+  // from useTheme()), which may reflect a locally-cached value that hasn't
+  // been reconciled with the server yet. Defaults to false (light), matching
+  // the auth service's own stored default for a user who never set this.
+  const storedDarkMode = typeof attributeValues.darkMode === 'boolean' ? attributeValues.darkMode : false
 
   async function handleAccountSubmit(e: FormEvent) {
     e.preventDefault()
@@ -280,6 +290,31 @@ export default function Account() {
           {profileSaving ? t('common.saving') : t('common.save')}
         </button>
       </form>
+
+      {/* Deliberately not inside the Profile <form> above: this toggle saves
+          instantly (see ThemeToggle), unlike the rest of the profile fields
+          which wait for the Save button. */}
+      <div className="space-y-3 rounded-2xl border border-sky-700/40 bg-sky-50 p-6 dark:border-sky-800/40 dark:bg-sky-950/20">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+          {t('account.themeCard.title')}
+        </h2>
+
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          {t('account.themeCard.storedLabel')}:{' '}
+          <span className="font-medium text-slate-900 dark:text-slate-100">
+            {storedDarkMode ? t('account.themeCard.dark') : t('account.themeCard.light')}
+          </span>
+        </p>
+
+        {storedDarkMode !== darkMode && (
+          <p className="text-sm text-amber-600 dark:text-amber-400">{t('account.themeCard.diverges')}</p>
+        )}
+
+        <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+          <ThemeToggle onToggle={(next) => setAttributeValues((prev) => ({ ...prev, darkMode: next }))} />
+          {t('account.themeCard.toggleLabel')}
+        </label>
+      </div>
     </div>
   )
 }

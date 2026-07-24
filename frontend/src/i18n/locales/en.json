@@ -69,6 +69,14 @@
       "companyName": "Company name",
       "internalRiskScore": "Internal risk score"
     },
+    "themeCard": {
+      "title": "Appearance",
+      "storedLabel": "Stored in profile",
+      "dark": "Dark",
+      "light": "Light",
+      "diverges": "The currently displayed theme differs from what's stored in your profile.",
+      "toggleLabel": "Dark mode"
+    },
     "saveSuccess": "Saved.",
     "saveError": "Save failed.",
     "redirecting": "Redirecting to sign in…"
