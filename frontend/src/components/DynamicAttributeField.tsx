@@ -24,15 +24,15 @@ export default function DynamicAttributeField({ attribute, value, onChange }: Pr
 
   if (attribute.type === 'boolean') {
     return (
-      <label className="flex items-center gap-2 text-sm text-slate-300">
+      <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
         <input
           type="checkbox"
           checked={Boolean(value)}
           onChange={(e) => onChange(attribute.key, e.target.checked)}
-          className="rounded border-slate-700 bg-slate-900"
+          className="rounded border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900"
         />
         {label}
-        {attribute.required && <span className="text-red-400">*</span>}
+        {attribute.required && <span className="text-red-600 dark:text-red-400">*</span>}
       </label>
     )
   }
@@ -41,9 +41,9 @@ export default function DynamicAttributeField({ attribute, value, onChange }: Pr
 
   return (
     <div>
-      <label htmlFor={`attr-${attribute.key}`} className="mb-1 block text-sm text-slate-400">
+      <label htmlFor={`attr-${attribute.key}`} className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
         {label}
-        {attribute.required && <span className="text-red-400"> *</span>}
+        {attribute.required && <span className="text-red-600 dark:text-red-400"> *</span>}
       </label>
       <input
         id={`attr-${attribute.key}`}
@@ -57,7 +57,7 @@ export default function DynamicAttributeField({ attribute, value, onChange }: Pr
             onChange(attribute.key, e.target.value)
           }
         }}
-        className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-slate-100"
+        className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
       />
     </div>
   )
