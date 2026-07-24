@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { clearTokens, getRefreshToken, setTokens } from '../api/client'
 import { apiFetch } from '../api/client'
 import { applyUserLanguage } from '../i18n'
+import { useTheme } from './ThemeContext'
 
 interface AuthContextType {
   user: any | null
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser]       = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const { setDarkMode } = useTheme()
 
   const redirectToConsent = useCallback(
     (groupId: string) => {
@@ -74,6 +76,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // supported-language/EN/leave-as-is fallback) rather than whatever
       // the browser or a pre-login manual choice left active.
       applyUserLanguage(userData.language_code)
+      // Best-effort sync of the stored dark-mode preference (lives in
+      // group-attributes' user_data, not on UserOut itself, so it needs its
+      // own request). Only overrides the local theme if the profile has an
+      // explicit value - a user who never set one keeps whatever was active
+      // (localStorage/toggle) rather than being forced to light.
+      if (userData.application_group_id) {
+        apiFetch(`/api/auth/me/group-attributes/${userData.application_group_id}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            if (typeof data?.user_data?.darkMode === 'boolean') {
+              setDarkMode(data.user_data.darkMode)
+            }
+          })
+          .catch(() => {})
+      }
       return true
     }
     if (resp?.status === 403) {
@@ -88,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearTokens()
     setUser(null)
     return false
-  }, [redirectToConsent])
+  }, [redirectToConsent, setDarkMode])
 
   useEffect(() => {
     if (localStorage.getItem('access_token')) {

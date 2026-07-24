@@ -6,7 +6,16 @@
 
 @import "tailwindcss";
 
+/* Tailwind v4 is CSS-first with no tailwind.config.js - this line switches
+   dark: utilities from the OS-level prefers-color-scheme default to a
+   .dark class on <html>, toggled by ThemeContext (see src/context/ThemeContext.tsx). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
+  color-scheme: light;
+}
+
+:root.dark {
   color-scheme: dark;
 }
 
@@ -25,6 +34,10 @@ body {
     'Segoe UI',
     Roboto,
     sans-serif;
+  background: radial-gradient(circle at top, #f8fafc, #e2e8f0 60%);
+}
+
+.dark body {
   background: radial-gradient(circle at top, #1e293b, #020617 60%);
 }
 
