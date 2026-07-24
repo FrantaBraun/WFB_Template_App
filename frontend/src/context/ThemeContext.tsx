@@ -9,11 +9,20 @@ import { createContext, useContext, useEffect, useState } from 'react'
 interface ThemeContextType {
   darkMode: boolean
   setDarkMode: (value: boolean) => void
+  /** Last known value of the signed-in user's profile-stored preference
+   * (user_data.darkMode) - null until it's been fetched or set at least
+   * once. Lives here, not in a page-local state, so every consumer (the
+   * header toggle, the Account page's stored-value display and save
+   * payload) stays in sync no matter which ThemeToggle instance changed it. */
+  profileDarkMode: boolean | null
+  setProfileDarkMode: (value: boolean | null) => void
 }
 
 const ThemeContext = createContext<ThemeContextType>({
   darkMode: false,
   setDarkMode: () => {},
+  profileDarkMode: null,
+  setProfileDarkMode: () => {},
 })
 
 const STORAGE_KEY = 'dark_mode'
@@ -28,13 +37,18 @@ const STORAGE_KEY = 'dark_mode'
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [darkMode, setDarkMode] = useState<boolean>(() => localStorage.getItem(STORAGE_KEY) === 'true')
+  const [profileDarkMode, setProfileDarkMode] = useState<boolean | null>(null)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode)
     localStorage.setItem(STORAGE_KEY, String(darkMode))
   }, [darkMode])
 
-  return <ThemeContext.Provider value={{ darkMode, setDarkMode }}>{children}</ThemeContext.Provider>
+  return (
+    <ThemeContext.Provider value={{ darkMode, setDarkMode, profileDarkMode, setProfileDarkMode }}>
+      {children}
+    </ThemeContext.Provider>
+  )
 }
 
 /** Reads the current ThemeContextType (darkMode, setDarkMode) from the nearest ThemeProvider. */

@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser]       = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
-  const { setDarkMode } = useTheme()
+  const { setDarkMode, setProfileDarkMode } = useTheme()
 
   const redirectToConsent = useCallback(
     (groupId: string) => {
@@ -85,6 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         apiFetch(`/api/auth/me/group-attributes/${userData.application_group_id}`)
           .then((r) => (r.ok ? r.json() : null))
           .then((data) => {
+            const stored = typeof data?.user_data?.darkMode === 'boolean' ? data.user_data.darkMode : false
+            setProfileDarkMode(stored)
             if (typeof data?.user_data?.darkMode === 'boolean') {
               setDarkMode(data.user_data.darkMode)
             }
@@ -105,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearTokens()
     setUser(null)
     return false
-  }, [redirectToConsent, setDarkMode])
+  }, [redirectToConsent, setDarkMode, setProfileDarkMode])
 
   useEffect(() => {
     if (localStorage.getItem('access_token')) {

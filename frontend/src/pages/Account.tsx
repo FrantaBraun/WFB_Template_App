@@ -61,7 +61,7 @@ export default function Account() {
   const { t } = useTranslation()
   usePageMeta({ title: t('account.pageTitle'), description: t('account.pageDescription') })
   const { user, loading: authLoading } = useAuth()
-  const { darkMode } = useTheme()
+  const { darkMode, profileDarkMode, setProfileDarkMode } = useTheme()
   const navigate = useNavigate()
 
   const [account, setAccount] = useState<AccountData | null>(null)
@@ -114,9 +114,20 @@ export default function Account() {
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: { user_data: Record<string, unknown> | null }) => {
         setAttributeValues(data.user_data ?? {})
+        setProfileDarkMode(typeof data.user_data?.darkMode === 'boolean' ? (data.user_data.darkMode as boolean) : false)
       })
       .catch(() => {})
-  }, [groupId])
+  }, [groupId, setProfileDarkMode])
+
+  // Keeps the Profile form's own copy of darkMode (used only as part of the
+  // full user_data payload on Save) aligned with the shared ThemeContext
+  // value - which any ThemeToggle instance (including the header's) may have
+  // just updated - so a plain Save click never PATCHes back a stale value.
+  useEffect(() => {
+    if (profileDarkMode !== null) {
+      setAttributeValues((prev) => ({ ...prev, darkMode: profileDarkMode }))
+    }
+  }, [profileDarkMode])
 
   if (authLoading || !user) {
     return (
@@ -126,12 +137,12 @@ export default function Account() {
     )
   }
 
-  // What's actually persisted on the profile, per the last group-attributes
-  // fetch/toggle - independent of the currently active theme (`darkMode`
-  // from useTheme()), which may reflect a locally-cached value that hasn't
-  // been reconciled with the server yet. Defaults to false (light), matching
-  // the auth service's own stored default for a user who never set this.
-  const storedDarkMode = typeof attributeValues.darkMode === 'boolean' ? attributeValues.darkMode : false
+  // What's actually persisted on the profile - read from ThemeContext's
+  // shared profileDarkMode (not a page-local copy), so it reflects a toggle
+  // fired from *any* ThemeToggle instance, including the header's. Defaults
+  // to false (light) before it's been fetched, matching the auth service's
+  // own stored default for a user who never set this.
+  const storedDarkMode = profileDarkMode ?? false
 
   async function handleAccountSubmit(e: FormEvent) {
     e.preventDefault()
@@ -325,7 +336,7 @@ export default function Account() {
         )}
 
         <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
-          <ThemeToggle onToggle={(next) => setAttributeValues((prev) => ({ ...prev, darkMode: next }))} />
+          <ThemeToggle />
           {t('account.themeCard.toggleLabel')}
         </label>
       </div>

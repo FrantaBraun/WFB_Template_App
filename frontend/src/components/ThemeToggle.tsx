@@ -9,23 +9,18 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { persistDarkModePreference } from '../theme'
 
-interface Props {
-  /** Fires right after a toggle, with the new value - lets callers (e.g.
-   * Account.tsx's own theme section) optimistically update their own copy
-   * of the stored value without waiting for a re-fetch. */
-  onToggle?: (darkMode: boolean) => void
-}
-
 /**
  * Light/dark toggle switch, shared by the header nav and Account.tsx's
  * dedicated theme section so both controls behave identically. Applies the
  * theme instantly (via ThemeContext) and, when signed in, immediately
  * persists it to the profile too - there's no separate "save" step for this
- * control, unlike the rest of the Profile form.
+ * control, unlike the rest of the Profile form. Also updates the shared
+ * `profileDarkMode` in ThemeContext optimistically, so every consumer (not
+ * just this specific toggle instance) sees the new stored value right away.
  */
-export default function ThemeToggle({ onToggle }: Props) {
+export default function ThemeToggle() {
   const { t } = useTranslation()
-  const { darkMode, setDarkMode } = useTheme()
+  const { darkMode, setDarkMode, setProfileDarkMode } = useTheme()
   const { user } = useAuth()
 
   function handleToggle() {
@@ -33,8 +28,8 @@ export default function ThemeToggle({ onToggle }: Props) {
     setDarkMode(next)
     if (user?.application_group_id) {
       persistDarkModePreference(user.application_group_id, next)
+      setProfileDarkMode(next)
     }
-    onToggle?.(next)
   }
 
   return (
