@@ -14,13 +14,13 @@ export default function ConsentRejected() {
   usePageMeta({ title: t('consentRejected.pageTitle') })
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center text-slate-100">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center text-slate-900 dark:text-slate-100">
       <h1 className="text-2xl font-semibold tracking-tight">{t('consentRejected.title')}</h1>
-      <p className="max-w-md text-sm text-slate-400">
+      <p className="max-w-md text-sm text-slate-600 dark:text-slate-400">
         {/* Trans (not t()) because the translated string embeds a <link> tag around part of the text. */}
         <Trans
           i18nKey="consentRejected.message"
-          components={{ link: <Link to="/login" className="text-slate-100 underline" /> }}
+          components={{ link: <Link to="/login" className="text-slate-900 underline dark:text-slate-100" /> }}
         />
       </p>
     </div>

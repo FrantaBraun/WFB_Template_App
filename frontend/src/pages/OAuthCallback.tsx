@@ -51,11 +51,11 @@ export default function OAuthCallback() {
   }, [navigate, loadUser, t])
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center text-slate-100">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center text-slate-900 dark:text-slate-100">
       {error ? (
-        <p className="text-sm text-red-400">{error}</p>
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
       ) : (
-        <p className="text-sm text-slate-400">{t('oauthCallback.signingIn')}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400">{t('oauthCallback.signingIn')}</p>
       )}
     </div>
   )

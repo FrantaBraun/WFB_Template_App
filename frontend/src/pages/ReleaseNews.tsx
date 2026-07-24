@@ -79,7 +79,7 @@ function sortGenerationKeys(keys: string[]): string[] {
 
 function ChangeList({ changes }: { changes: string[] }) {
   return (
-    <ul className="space-y-1 text-sm text-slate-400">
+    <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
       {changes.map((change, i) => (
         <li key={i}>• {change}</li>
       ))}
@@ -108,11 +108,11 @@ function ReleaseColumn({ title, releases }: { title: string; releases: ReleaseEn
     <div>
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h3>
       {releases.length === 0 ? (
-        <p className="text-sm text-slate-600">{t('releaseNews.noCompatibleRelease')}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-600">{t('releaseNews.noCompatibleRelease')}</p>
       ) : (
         releases.map((release) => (
           <div key={release.version} className="mb-4 last:mb-0">
-            <p className="mb-1 text-sm font-medium text-slate-200">
+            <p className="mb-1 text-sm font-medium text-slate-800 dark:text-slate-200">
               v{release.version} <span className="text-slate-500">— {release.release_date}</span>
             </p>
             <ChangeList changes={release.changes} />
@@ -146,12 +146,12 @@ export default function ReleaseNews() {
   ])
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-16 text-slate-100">
+    <div className="mx-auto max-w-3xl px-6 py-16 text-slate-900 dark:text-slate-100">
       <h1 className="mb-1 text-2xl font-semibold tracking-tight">{t('releaseNews.title')}</h1>
       <p className="mb-8 text-sm text-slate-500">{t('releaseNews.subtitle')}</p>
 
       {loading && <p className="text-sm text-slate-500">{t('common.loading')}</p>}
-      {hasError && <p className="mb-6 text-sm text-red-400">{t('releaseNews.loadError')}</p>}
+      {hasError && <p className="mb-6 text-sm text-red-600 dark:text-red-400">{t('releaseNews.loadError')}</p>}
 
       {!loading && (
         <div className="space-y-6">
@@ -169,10 +169,12 @@ export default function ReleaseNews() {
               <div
                 key={key}
                 className={`rounded-2xl border p-6 ${
-                  compatible ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-800 bg-slate-900'
+                  compatible
+                    ? 'border-emerald-500/30 bg-emerald-500/5'
+                    : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
                 }`}
               >
-                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-400">
+                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                   v{key} {compatible && `— ${t('releaseNews.compatible')}`}
                 </h2>
                 <div className="grid grid-cols-2 gap-6">

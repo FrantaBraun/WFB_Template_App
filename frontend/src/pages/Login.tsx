@@ -50,12 +50,12 @@ export default function Login() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 text-slate-100">
+    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 text-slate-900 dark:text-slate-100">
       <h1 className="mb-6 text-2xl font-semibold tracking-tight">{t('login.title')}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="identifier" className="mb-1 block text-sm text-slate-400">
+          <label htmlFor="identifier" className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
             {t('login.identifierLabel')}
           </label>
           <input
@@ -64,12 +64,12 @@ export default function Login() {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             required
-            className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-slate-100"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm text-slate-400">
+          <label htmlFor="password" className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
             {t('login.passwordLabel')}
           </label>
           <input
@@ -78,37 +78,37 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-slate-100"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           />
         </div>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-slate-100 px-4 py-2 font-medium text-slate-900 disabled:opacity-50"
+          className="w-full rounded-lg bg-slate-900 px-4 py-2 font-medium text-slate-100 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
         >
           {loading ? t('login.submitting') : t('login.submit')}
         </button>
       </form>
 
       <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-slate-500">
-        <div className="h-px flex-1 bg-slate-800" />
+        <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
         {t('login.or')}
-        <div className="h-px flex-1 bg-slate-800" />
+        <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
       </div>
 
       <a
         href={buildGoogleLoginUrl()}
-        className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-center font-medium text-slate-100"
+        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-center font-medium text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
       >
         {t('login.google')}
       </a>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
         {t('login.noAccount')}{' '}
-        <Link to="/register" className="text-slate-100 underline">
+        <Link to="/register" className="text-slate-900 underline dark:text-slate-100">
           {t('login.registerLink')}
         </Link>
       </p>

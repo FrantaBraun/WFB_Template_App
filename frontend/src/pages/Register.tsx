@@ -57,12 +57,12 @@ export default function Register() {
 
   if (success) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 text-center text-slate-100">
+      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 text-center text-slate-900 dark:text-slate-100">
         <h1 className="mb-2 text-2xl font-semibold tracking-tight">{t('register.successTitle')}</h1>
-        <p className="mb-6 text-sm text-slate-400">{t('register.successMessage')}</p>
+        <p className="mb-6 text-sm text-slate-600 dark:text-slate-400">{t('register.successMessage')}</p>
         <Link
           to="/login"
-          className="w-full rounded-lg bg-slate-100 px-4 py-2 font-medium text-slate-900"
+          className="w-full rounded-lg bg-slate-900 px-4 py-2 font-medium text-slate-100 dark:bg-slate-100 dark:text-slate-900"
         >
           {t('register.loginLink')}
         </Link>
@@ -71,12 +71,12 @@ export default function Register() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 text-slate-100">
+    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 text-slate-900 dark:text-slate-100">
       <h1 className="mb-6 text-2xl font-semibold tracking-tight">{t('register.title')}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm text-slate-400">
+          <label htmlFor="email" className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
             {t('register.emailLabel')}
           </label>
           <input
@@ -85,12 +85,12 @@ export default function Register() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-slate-100"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           />
         </div>
 
         <div>
-          <label htmlFor="login" className="mb-1 block text-sm text-slate-400">
+          <label htmlFor="login" className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
             {t('register.loginLabel')}
           </label>
           <input
@@ -99,12 +99,12 @@ export default function Register() {
             value={login}
             onChange={(e) => setLogin(e.target.value)}
             required
-            className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-slate-100"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm text-slate-400">
+          <label htmlFor="password" className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
             {t('register.passwordLabel')}
           </label>
           <input
@@ -113,13 +113,13 @@ export default function Register() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-slate-100"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           />
         </div>
 
         <div className="flex gap-3">
           <div className="flex-1">
-            <label htmlFor="firstName" className="mb-1 block text-sm text-slate-400">
+            <label htmlFor="firstName" className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
               {t('register.firstNameLabel')}
             </label>
             <input
@@ -128,11 +128,11 @@ export default function Register() {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               required
-              className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-slate-100"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
             />
           </div>
           <div className="flex-1">
-            <label htmlFor="lastName" className="mb-1 block text-sm text-slate-400">
+            <label htmlFor="lastName" className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
               {t('register.lastNameLabel')}
             </label>
             <input
@@ -141,25 +141,25 @@ export default function Register() {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
-              className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-slate-100"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
             />
           </div>
         </div>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-slate-100 px-4 py-2 font-medium text-slate-900 disabled:opacity-50"
+          className="w-full rounded-lg bg-slate-900 px-4 py-2 font-medium text-slate-100 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
         >
           {loading ? t('register.submitting') : t('register.submit')}
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
         {t('register.haveAccount')}{' '}
-        <Link to="/login" className="text-slate-100 underline">
+        <Link to="/login" className="text-slate-900 underline dark:text-slate-100">
           {t('common.login')}
         </Link>
       </p>

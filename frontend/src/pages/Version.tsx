@@ -52,12 +52,12 @@ function VersionCard({ title, state }: { title: string; state: FetchState }) {
     : []
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-400">{title}</h2>
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{title}</h2>
 
       {loading && <p className="text-sm text-slate-500">{t('version.loading')}</p>}
       {error && (
-        <p className="text-sm text-red-400">
+        <p className="text-sm text-red-600 dark:text-red-400">
           {t('version.loadFailed')}: {error}
         </p>
       )}
@@ -67,10 +67,10 @@ function VersionCard({ title, state }: { title: string; state: FetchState }) {
           {fields.map(([key, value]) => (
             <div
               key={key}
-              className="flex items-baseline justify-between gap-4 border-b border-slate-800/60 pb-2 last:border-0 last:pb-0"
+              className="flex items-baseline justify-between gap-4 border-b border-slate-200/60 pb-2 last:border-0 last:pb-0 dark:border-slate-800/60"
             >
               <dt className="text-xs uppercase tracking-wide text-slate-500">{key.replace(/_/g, ' ')}</dt>
-              <dd className="truncate text-right font-mono text-sm text-slate-100">{String(value)}</dd>
+              <dd className="truncate text-right font-mono text-sm text-slate-900 dark:text-slate-100">{String(value)}</dd>
             </div>
           ))}
         </dl>
@@ -105,7 +105,7 @@ export default function Version() {
     })()
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-16 text-slate-100">
+    <div className="mx-auto max-w-2xl px-6 py-16 text-slate-900 dark:text-slate-100">
       <h1 className="mb-1 text-2xl font-semibold tracking-tight">{t('version.title')}</h1>
       <p className="mb-8 text-sm text-slate-500">{t('version.subtitle')}</p>
 
