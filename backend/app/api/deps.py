@@ -4,7 +4,7 @@
 
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,3 +37,11 @@ async def get_current_user(
 
     result = await db.execute(select(User).where(User.auth_sub == auth_sub))
     return result.scalar_one()
+
+
+async def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """Gate for admin-only routes - builds on get_current_user so it drops in
+    anywhere that dependency is used, just with an extra is_admin check."""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
