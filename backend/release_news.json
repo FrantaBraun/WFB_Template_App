@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add a pluggable feature-module system: self-contained modules under app/modules/ are auto-discovered and toggled on/off per application via ENABLED_MODULES, with no code changes to shared routing or migrations",
         "Add GET /api/public/release-news endpoint, exposing release_news.json for the frontend's release news page"
     ],
     "releases": [

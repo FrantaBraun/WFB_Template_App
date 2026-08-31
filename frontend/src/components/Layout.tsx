@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { SUPPORTED_LANGUAGES } from '../i18n'
+import type { ModuleDefinition } from '../modules/types'
 import ThemeToggle from './ThemeToggle'
 
 /** Small control to switch the active i18next language between the supported locales. */
@@ -33,8 +34,8 @@ function LanguageSwitcher() {
   )
 }
 
-/** Top navigation bar: brand link plus auth-aware links (account/logout when signed in, login/register otherwise). */
-function Nav() {
+/** Top navigation bar: brand link, any enabled module's own nav links, plus auth-aware links (account/logout when signed in, login/register otherwise). */
+function Nav({ modules }: { modules: ModuleDefinition[] }) {
   const { t } = useTranslation()
   const { user, logout } = useAuth()
 
@@ -48,6 +49,11 @@ function Nav() {
         </Link>
 
         <nav className="flex items-center gap-4">
+          {modules.flatMap((module) => module.nav ?? []).map((item) => (
+            <Link key={item.to} to={item.to} className="hover:text-slate-900 dark:hover:text-slate-100">
+              {t(item.labelKey)}
+            </Link>
+          ))}
           {user ? (
             <>
               <Link to="/account" className="hover:text-slate-900 dark:hover:text-slate-100">
@@ -76,10 +82,10 @@ function Nav() {
 }
 
 /** Page chrome shared by every route: renders Nav above the routed page content. */
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function Layout({ children, modules = [] }: { children: React.ReactNode; modules?: ModuleDefinition[] }) {
   return (
     <>
-      <Nav />
+      <Nav modules={modules} />
       <main className="page">{children}</main>
     </>
   )

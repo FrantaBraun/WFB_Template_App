@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add a pluggable feature-module system: self-contained modules under src/modules/ are auto-discovered and toggled on/off per application via public/modules.json, contributing their own routes, nav links, and translations",
         "Add light/dark theme toggle in the header, with the preference synced to the signed-in user's profile (user_data.darkMode) and a dedicated Appearance section on the Account page",
         "Add /release-news page showing backend and frontend release history side by side, grouped by compatible major.minor version"
     ],
