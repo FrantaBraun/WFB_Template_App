@@ -2,14 +2,13 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
-import re
 import uuid
 from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-_SLUG_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+from app.api.validators import validate_slug
 
 
 class PageOut(BaseModel):
@@ -35,12 +34,7 @@ class PageCreate(BaseModel):
     status: Literal["draft", "published"] = "draft"
     show_in_nav: bool = False
 
-    @field_validator("slug")
-    @classmethod
-    def _check_slug(cls, value: str) -> str:
-        if not _SLUG_PATTERN.match(value):
-            raise ValueError("slug must be lowercase letters, digits and single hyphens only")
-        return value
+    _check_slug = field_validator("slug")(validate_slug)
 
 
 class PageUpdate(BaseModel):
@@ -56,6 +50,4 @@ class PageUpdate(BaseModel):
     @field_validator("slug")
     @classmethod
     def _check_slug(cls, value: str | None) -> str | None:
-        if value is not None and not _SLUG_PATTERN.match(value):
-            raise ValueError("slug must be lowercase letters, digits and single hyphens only")
-        return value
+        return validate_slug(value) if value is not None else value
