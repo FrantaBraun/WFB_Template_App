@@ -118,6 +118,9 @@ ftp_download "${FTP_BACKEND_PATH}/${BACKEND_FILE}"  "${TMP_DIR}/backend.zip"
 ftp_download "${FTP_FRONTEND_PATH}/${FRONTEND_FILE}" "${TMP_DIR}/frontend.zip"
 
 step "3/10  Extract archives"
+# No uploads dir to preserve on a first install (nothing has been uploaded
+# yet); an app that defines UPLOADS_DIR creates it itself on first boot.
+# upgrade.sh is what carries an existing uploads dir across later deploys.
 rm -rf "${INSTALL_DIR}/backend" "${INSTALL_DIR}/frontend"
 mkdir -p "${INSTALL_DIR}/backend" "${INSTALL_DIR}/frontend"
 unzip -q "${TMP_DIR}/backend.zip"  -d "${INSTALL_DIR}/backend"

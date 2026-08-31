@@ -10,6 +10,10 @@ FTP_BACKEND_PATH="/releases/backend"
 FTP_FRONTEND_PATH="/releases/frontend"
 
 # ── Application ───────────────────────────────────────────────────────────────
+# If this app's backend/.env defines UPLOADS_DIR, upgrade.sh reads it from
+# there automatically and preserves that directory across the backend/ wipe
+# on every deploy, the same way it already preserves .env. No separate
+# config is needed here for that.
 INSTALL_DIR="/srv/apps/auth"        # absolute path; scripts run from here
 DOMAIN="auth.withfbraun.com"
 BACKEND_PORT=8002
