@@ -7,7 +7,8 @@ dist-ssr/
 .venv/
 __pycache__/
 backend/logs/
-.claude/
+.claude/*
+!.claude/skills/
 .vscode/
 scripts/build.config.toml
 scripts/deploy.config.sh

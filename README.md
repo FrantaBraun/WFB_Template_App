@@ -15,10 +15,10 @@ Aplikace bude obsahovat administraci – uživatel s rolí Administrator pro tut
 ## Branches
 
 - **`core`** — the shared foundation (the code described in this README). Cross-cutting changes land here first.
-- **`template_app`** — branched from `core` and kept in sync with it; the branch to fork whenever you start a new application.
-- **Application branches** — one per real app, branched from `template_app`, diverging with app-specific code while periodically pulling in updates from `core`.
+- **Application branches** — one per real app, branched **directly from `core`**, diverging with app-specific code while periodically pulling in updates from `core`.
+- **`template_app`** — also branched from `core` and kept in sync with it, but not the fork point for the applications above.
 
-Just want a one-off template to clone and rename for a single app? Start from `template_app`.
+Starting a new app in this family? Branch it from `core` — the `/new-app` skill (see `.claude/skills/new-app/`) automates the fork, branding, and initial docs. Just want a one-off template to clone and rename for a single unrelated app? Start from `template_app` instead.
 
 ## What's included
 
@@ -104,6 +104,7 @@ Every backend route talks to a mocked version of the auth service in tests (via 
 - Extend `backend/app/api/account/` for anything that's purely local to your app; keep it separate from the auth-service-proxying endpoints in `backend/app/api/auth/`.
 - Add extra profile fields the shared identity service should store per-application via `frontend/public/config.json` — no backend changes required.
 - Swap the branding, favicon, and translations under `frontend/src/i18n/locales/`.
+- Build a pre-packaged, toggleable feature (administration, reservations, orders, ...) as a module under `backend/app/modules/<key>/` + `frontend/src/modules/<key>/` — both sides auto-discover modules, so turning one on/off is a config change (`ENABLED_MODULES` / `public/modules.json`), not a code change. See "Feature modules" in `CLAUDE.md`.
 
 Changes that should benefit every application (auth flow, theming, i18n, deployment tooling, etc.) belong on the `core` branch — merge them out into `template_app` and each application branch rather than duplicating them there.
 
