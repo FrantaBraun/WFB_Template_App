@@ -14,11 +14,12 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 import app.security.jwt as jwt_module
 from app.config import Settings
-from app.database import engine
+from app.database import engine, get_db
 from app.main import app
 
 
@@ -102,6 +103,23 @@ async def db_session() -> AsyncSession:
         async with session_factory() as session:
             yield session
         await connection.rollback()
+
+
+@pytest.fixture()
+async def api_client(db_session):
+    """An httpx.AsyncClient wired to the real app via ASGITransport, with
+    get_db overridden to this test's own rolled-back db_session. Same
+    rationale as test_account_router.py's original _account_request helper:
+    TestClient runs the app in a separate thread with its own event loop,
+    which conflicts with db_session's connection - ASGITransport keeps
+    everything on one loop. Shared here since every DB-touching router test
+    (pages, articles, admin/*) needs this exact wiring."""
+    app.dependency_overrides[get_db] = lambda: db_session
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            yield ac
+    finally:
+        app.dependency_overrides.pop(get_db, None)
 
 
 @pytest.fixture()

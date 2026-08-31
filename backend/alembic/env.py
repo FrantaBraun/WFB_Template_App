@@ -13,6 +13,7 @@ from alembic import context
 
 from app.config import get_settings
 from app.models.base import Base
+from app.models.page import Page  # noqa: F401  (registers the table on Base.metadata)
 from app.models.user import User  # noqa: F401  (registers the table on Base.metadata)
 from app.modules.registry import import_all_module_models
 

@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add Page model with a public GET /api/pages/{slug} route and admin-only CRUD under /api/admin/pages, with server-side HTML sanitization on write",
         "Add is_admin flag to the local user account, with a require_admin dependency for gating admin-only routes"
     ],
     "releases": []
