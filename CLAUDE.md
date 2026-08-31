@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Application: Slavíčkovy knihohrátky
+
+**Purpose:** Aplikace typu blog s kalendářem akcí a typy příspěvků – nadcházející termín (představení akce nadcházejícího termínu), proběhlá akce (popis uplynulé akce).
+
+Aplikace bude mít hlavní stránku, kde se zobrazí nejbližší článek pro nadcházející termín, dále ukotvené články seřazené dle termínu od nejnovějšího s platností od-do a nakonec posledních 5 článků uplynulých akcí, které nejsou ukotvené a splňují podmínku zobrazení od-do. Dále stránka pro představení projektu, stránka s archivem všech článků s filtrováním data a platností od-do – stránkované. Zobrazení kalendáře s vyznačenými termíny akce a prokliky na články odpovídajícího data.
+
+Článek má název, krátký popis (zobrazený na dashboard a v prohlížení archivu), plný text, termín, termín zobrazení od a do. Stav – draft, published, deleted.
+
+Aplikace bude obsahovat administraci – uživatel s rolí Administrator pro tuto aplikaci v system datech. Administrace bude umožňovat přidat/editovat stránku (nadpis, slug, obsah, stav draft/published, zobrazovat v navigaci ano/ne) a přidat/editovat akci/článek. Editor obsahu stránky a článku je WYSIWYG včetně obrázků a odkazů – odkaz na jinou stránku/článek lze vyvolat znakem @, kdy se zobrazí nabídka dle zadávání textu.
+
+Forked from `core` by the `new-app` skill on 2026-08-31.
+
 ## Repository purpose
 
 This repository hosts a **family of applications built on one shared core**, rather than a single deployable app. The reusable foundation — `backend/` (FastAPI), `frontend/` (Vite/React), and `scripts/` (build + deployment tooling), wired to a separate, shared authorization service at `auth.withfbraun.com` (see "Authorization" below, which is the largest and most actively-evolving part of it) — is developed on the `core` branch. Each application lives in its own branch and pulls in `core`'s changes, so a fix or feature that belongs to every app is made once, on `core`, instead of being duplicated per application. Components remain independently versioned and deployed within any given branch — see "Independent versioning" below.

@@ -1,8 +1,16 @@
-# With FBraun — App Family Template
+# Slavíčkovy knihohrátky
 
-A shared foundation for a family of full-stack applications: a **FastAPI** backend, a **Vite + React + TypeScript** frontend, and deployment tooling — pre-wired to a shared, external authorization service so you don't have to build login, registration, or session handling from scratch.
+Aplikace typu blog s kalendářem akcí a typy příspěvků – nadcházející termín (představení akce nadcházejícího termínu), proběhlá akce (popis uplynulé akce).
 
 This repository doesn't ship a single app — it hosts a shared core plus one branch per application, so improvements to the shared foundation are made once and carried into every app instead of being duplicated per app.
+
+## About this application
+
+Aplikace bude mít hlavní stránku, kde se zobrazí nejbližší článek pro nadcházející termín, dále ukotvené články seřazené dle termínu od nejnovějšího s platností od-do a nakonec posledních 5 článků uplynulých akcí, které nejsou ukotvené a splňují podmínku zobrazení od-do. Dále stránka pro představení projektu, stránka s archivem všech článků s filtrováním data a platností od-do – stránkované. Zobrazení kalendáře s vyznačenými termíny akce a prokliky na články odpovídajícího data.
+
+Článek má název, krátký popis (zobrazený na dashboard a v prohlížení archivu), plný text, termín, termín zobrazení od a do. Stav – draft, published, deleted.
+
+Aplikace bude obsahovat administraci – uživatel s rolí Administrator pro tuto aplikaci v system datech. Administrace bude umožňovat přidat/editovat stránku (nadpis, slug, obsah, stav draft/published, zobrazovat v navigaci ano/ne) a přidat/editovat akci/článek. Editor obsahu stránky a článku je WYSIWYG včetně obrázků a odkazů – odkaz na jinou stránku/článek lze vyvolat znakem @, kdy se zobrazí nabídka dle zadávání textu.
 
 ## Branches
 

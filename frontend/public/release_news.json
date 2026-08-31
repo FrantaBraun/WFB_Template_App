@@ -1,20 +1,4 @@
 {
-    "unreleased": [
-        "Add light/dark theme toggle in the header, with the preference synced to the signed-in user's profile (user_data.darkMode) and a dedicated Appearance section on the Account page",
-        "Add /release-news page showing backend and frontend release history side by side, grouped by compatible major.minor version"
-    ],
-    "releases": [
-        {
-            "version": "1.0.0",
-            "release_date": "2026-07-14",
-            "changes": [
-                "Vite + React + TypeScript + Tailwind v4 app",
-                "Login, registration, and Google OAuth sign-in",
-                "Account page with separate local-data and shared-profile cards, including config.json-driven custom attributes",
-                "Custom consent screen and rejection page",
-                "Multi-language UI (Czech/English) with automatic switching to the signed-in user's own language preference",
-                "/version diagnostic page comparing backend/frontend compatibility"
-            ]
-        }
-    ]
+    "unreleased": [],
+    "releases": []
 }

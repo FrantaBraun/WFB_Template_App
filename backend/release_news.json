@@ -1,19 +1,4 @@
 {
-    "unreleased": [
-        "Add GET /api/public/release-news endpoint, exposing release_news.json for the frontend's release news page"
-    ],
-    "releases": [
-        {
-            "version": "1.0.0",
-            "release_date": "2026-07-14",
-            "changes": [
-                "FastAPI backend with an async Postgres stack (SQLAlchemy + asyncpg), Alembic migrations, time-rotating logging, and a parametrizable email service",
-                "Backend-for-frontend proxy to the shared auth.withfbraun.com identity service: register, login, refresh, logout, local RS256 JWT verification, Google OAuth support",
-                "Custom in-app consent flow (group-info, grant/reject) instead of the auth service's hosted consent page",
-                "Local account resource (GET/PATCH /api/account/me) kept strictly separate from the auth-service-proxied profile endpoints",
-                "Profile updates and configurable per-application user attributes via the group-attributes endpoints",
-                "Public /api/public/version endpoint for build and deployment health checks"
-            ]
-        }
-    ]
+    "unreleased": [],
+    "releases": []
 }
