@@ -7,10 +7,10 @@ This repository doesn't ship a single app — it hosts a shared core plus one br
 ## Branches
 
 - **`core`** — the shared foundation (the code described in this README). Cross-cutting changes land here first.
-- **`template_app`** — branched from `core` and kept in sync with it; the branch to fork whenever you start a new application.
-- **Application branches** — one per real app, branched from `template_app`, diverging with app-specific code while periodically pulling in updates from `core`.
+- **Application branches** — one per real app, branched **directly from `core`** (the `new-app` skill automates this). They diverge with app-specific code while periodically pulling in updates from `core`.
+- **`template_app`** — also branched from `core` and kept in sync with it, but *not* the fork point for the applications above. It's a separate, standalone one-off template for cloning and renaming into a single app outside this family.
 
-Just want a one-off template to clone and rename for a single app? Start from `template_app`.
+Want a one-off template to clone and rename for a single, standalone app rather than joining this family? Start from `template_app` instead.
 
 ## What's included
 
