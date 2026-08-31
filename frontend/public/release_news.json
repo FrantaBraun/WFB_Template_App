@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Fix 4 high-severity dependency vulnerabilities (react-router-dom CSRF bypass, postcss/nanoid via vite) via npm audit fix — patch-level updates only, no API changes",
         "Add a sitewide footer (linking to withfbraun.com before the copyright line) pinned to the bottom of the viewport even on short pages",
         "Add a pluggable feature-module system: self-contained modules under src/modules/ are auto-discovered and toggled on/off per application via public/modules.json, contributing their own routes, nav links, and translations",
         "Add light/dark theme toggle in the header, with the preference synced to the signed-in user's profile (user_data.darkMode) and a dedicated Appearance section on the Account page",
