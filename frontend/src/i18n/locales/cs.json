@@ -139,5 +139,9 @@
   },
   "nav": {
     "brand": "Šablona"
+  },
+  "footer": {
+    "ecosystem": "WithFBraun",
+    "copyright": "© {{year}} František Braun"
   }
 }

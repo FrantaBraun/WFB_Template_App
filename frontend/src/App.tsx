@@ -17,10 +17,13 @@ import Register from "./pages/Register"
 import OAuthCallback from "./pages/OAuthCallback"
 import Version from "./pages/Version"
 import ReleaseNews from "./pages/ReleaseNews"
+import { useEnabledModules } from "./modules/registry"
 
 
 function App() {
-  return (<Layout>
+  const modules = useEnabledModules()
+
+  return (<Layout modules={modules}>
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<Login />} />
@@ -32,6 +35,12 @@ function App() {
       {/* Publicly accessible, hidden from regular nav */}
       <Route path="/version" element={<Version />} />
       <Route path="/release-news" element={<ReleaseNews />} />
+      {/* Enabled feature modules (see src/modules/) contribute their own routes here */}
+      {modules.flatMap((module) =>
+        module.routes.map((route) => (
+          <Route key={`${module.key}:${route.path}`} path={route.path} element={route.element} />
+        )),
+      )}
     </Routes>
 
   </Layout>
