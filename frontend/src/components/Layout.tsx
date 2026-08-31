@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { SUPPORTED_LANGUAGES } from '../i18n'
 import type { ModuleDefinition } from '../modules/types'
+import Footer from './Footer'
 import ThemeToggle from './ThemeToggle'
 
 /** Small control to switch the active i18next language between the supported locales. */
@@ -81,12 +82,19 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
   )
 }
 
-/** Page chrome shared by every route: renders Nav above the routed page content. */
+/**
+ * Page chrome shared by every route: Nav above the routed page content, Footer
+ * below it. The flex column + min-h-screen wrapper with flex-1 on <main> is
+ * what pins the footer to the bottom of the viewport even when a page's own
+ * content is shorter than the screen, while still flowing normally (footer
+ * right after the content, page scrolls) once content grows past that.
+ */
 export default function Layout({ children, modules = [] }: { children: React.ReactNode; modules?: ModuleDefinition[] }) {
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       <Nav modules={modules} />
-      <main className="page">{children}</main>
-    </>
+      <main className="page flex-1">{children}</main>
+      <Footer />
+    </div>
   )
 }

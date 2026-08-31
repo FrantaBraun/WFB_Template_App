@@ -139,5 +139,9 @@
   },
   "nav": {
     "brand": "Template"
+  },
+  "footer": {
+    "ecosystem": "WithFBraun",
+    "copyright": "© {{year}} František Braun"
   }
 }
