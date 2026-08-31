@@ -1,4 +1,6 @@
 {
-    "unreleased": [],
+    "unreleased": [
+        "Add is_admin flag to the local user account, with a require_admin dependency for gating admin-only routes"
+    ],
     "releases": []
 }
