@@ -4,7 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository purpose
 
-This is a template repository for bootstrapping new full-stack applications. It has three independently versioned and deployed components: `backend/` (FastAPI), `frontend/` (Vite/React), and `scripts/` (build + deployment tooling). They don't share a release cadence — see "Independent versioning" below. Its backend is wired to a separate, shared authorization service at `auth.withfbraun.com` — see "Authorization" below, which is the largest and most actively-evolving part of this template.
+This repository hosts a **family of applications built on one shared core**, rather than a single deployable app. The reusable foundation — `backend/` (FastAPI), `frontend/` (Vite/React), and `scripts/` (build + deployment tooling), wired to a separate, shared authorization service at `auth.withfbraun.com` (see "Authorization" below, which is the largest and most actively-evolving part of it) — is developed on the `core` branch. Each application lives in its own branch and pulls in `core`'s changes, so a fix or feature that belongs to every app is made once, on `core`, instead of being duplicated per application. Components remain independently versioned and deployed within any given branch — see "Independent versioning" below.
+
+### Branch structure
+
+- **`core`** — the shared foundation described by the rest of this file (backend, frontend, scripts, auth integration). Cross-cutting work happens here first.
+- **`template_app`** — branched from `core`, kept in sync with it, and never itself diverges into app-specific code. This carries forward the repository's original template role: fork `template_app` whenever a new application is started.
+- **Application branches** — one per real app, branched from `template_app`. They diverge with app-specific code (models, pages, config) while periodically merging in updates from `core` (directly, or via `template_app` once it has merged them).
+
+When working on a branch other than `core`, treat app-specific code you find as intentional local divergence — don't "fix" it back to match `core` unless that's the actual task.
 
 ## Workflow requirements
 

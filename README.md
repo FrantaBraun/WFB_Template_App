@@ -1,8 +1,16 @@
-# With FBraun — Full-Stack App Template
+# With FBraun — App Family Template
 
-A ready-to-use starting point for building new web applications: a **FastAPI** backend, a **Vite + React + TypeScript** frontend, and deployment tooling — pre-wired to a shared, external authorization service so you don't have to build login, registration, or session handling from scratch.
+A shared foundation for a family of full-stack applications: a **FastAPI** backend, a **Vite + React + TypeScript** frontend, and deployment tooling — pre-wired to a shared, external authorization service so you don't have to build login, registration, or session handling from scratch.
 
-Clone it, rename it, and start building your actual app.
+This repository doesn't ship a single app — it hosts a shared core plus one branch per application, so improvements to the shared foundation are made once and carried into every app instead of being duplicated per app.
+
+## Branches
+
+- **`core`** — the shared foundation (the code described in this README). Cross-cutting changes land here first.
+- **`template_app`** — branched from `core` and kept in sync with it; the branch to fork whenever you start a new application.
+- **Application branches** — one per real app, branched from `template_app`, diverging with app-specific code while periodically pulling in updates from `core`.
+
+Just want a one-off template to clone and rename for a single app? Start from `template_app`.
 
 ## What's included
 
@@ -88,6 +96,8 @@ Every backend route talks to a mocked version of the auth service in tests (via 
 - Extend `backend/app/api/account/` for anything that's purely local to your app; keep it separate from the auth-service-proxying endpoints in `backend/app/api/auth/`.
 - Add extra profile fields the shared identity service should store per-application via `frontend/public/config.json` — no backend changes required.
 - Swap the branding, favicon, and translations under `frontend/src/i18n/locales/`.
+
+Changes that should benefit every application (auth flow, theming, i18n, deployment tooling, etc.) belong on the `core` branch — merge them out into `template_app` and each application branch rather than duplicating them there.
 
 ## Deployment
 
