@@ -66,6 +66,39 @@ PYEOF
 )"
 }
 
+# Resolve UPLOADS_DIR out of a preserved .env into an absolute path, the same
+# way the running app resolves a relative value: against backend/, which is
+# its systemd WorkingDirectory. Fails (prints nothing) if the setting isn't
+# present in that .env at all — apps that don't define it are a no-op.
+resolve_uploads_dir() {
+    local env_file="$1"
+    local raw
+    raw=$(grep "^UPLOADS_DIR=" "$env_file" | tail -1 | cut -d= -f2-) || true
+    [[ -n "$raw" ]] || return 1
+    if [[ "$raw" = /* ]]; then
+        printf '%s\n' "$raw"
+    else
+        printf '%s\n' "${INSTALL_DIR}/backend/${raw#./}"
+    fi
+}
+
+# Copy the resolved uploads dir (if it currently exists) to $1, so it
+# survives the backend/ wipe-and-recreate the same way .env does. A no-op
+# when UPLOADS_DIR isn't configured or the directory doesn't exist yet.
+backup_uploads_dir() {
+    [[ -n "${UPLOADS_DIR_RESOLVED:-}" && -d "$UPLOADS_DIR_RESOLVED" ]] || return 0
+    cp -a "$UPLOADS_DIR_RESOLVED" "$1"
+}
+
+# Restore a directory previously saved by backup_uploads_dir back to its
+# resolved location. A no-op when there was nothing to restore.
+restore_uploads_dir() {
+    [[ -n "${UPLOADS_DIR_RESOLVED:-}" && -d "$1" ]] || return 0
+    mkdir -p "$(dirname "$UPLOADS_DIR_RESOLVED")"
+    rm -rf "$UPLOADS_DIR_RESOLVED"
+    cp -a "$1" "$UPLOADS_DIR_RESOLVED"
+}
+
 install_python_deps() {
     local venv="${INSTALL_DIR}/backend/.venv"
     if command -v uv &>/dev/null; then
@@ -116,6 +149,7 @@ rollback() {
 
     chown -R "${APP_USER}:${APP_GROUP}" "${INSTALL_DIR}/backend" "${INSTALL_DIR}/frontend"
     cp "${TMP_DIR}/.env.bak" "${INSTALL_DIR}/backend/.env"
+    restore_uploads_dir "${TMP_DIR}/uploads.bak"
 
     systemctl start ${APP_SERVICE_NAME}
     echo -e "${RED}${BOLD}Rollback complete. Service restarted from backup.${NC}"
@@ -156,8 +190,11 @@ ftp_download "${FTP_BACKEND_PATH}/${BACKEND_FILE}"   "${TMP_DIR}/backend.zip"
 ftp_download "${FTP_FRONTEND_PATH}/${FRONTEND_FILE}" "${TMP_DIR}/frontend.zip"
 
 step "5/8  Extract archives"
-# Preserve .env – it is not shipped in the archive
+# Preserve .env and the uploads dir it points at – neither is shipped in the
+# archive, so without this both would be silently wiped on every deploy.
 cp "${INSTALL_DIR}/backend/.env" "${TMP_DIR}/.env.bak"
+UPLOADS_DIR_RESOLVED="$(resolve_uploads_dir "${INSTALL_DIR}/backend/.env")" || UPLOADS_DIR_RESOLVED=""
+backup_uploads_dir "${TMP_DIR}/uploads.bak"
 
 rm -rf "${INSTALL_DIR}/backend" "${INSTALL_DIR}/frontend"
 mkdir -p "${INSTALL_DIR}/backend" "${INSTALL_DIR}/frontend"
@@ -165,6 +202,10 @@ unzip -q "${TMP_DIR}/backend.zip"  -d "${INSTALL_DIR}/backend"
 unzip -q "${TMP_DIR}/frontend.zip" -d "${INSTALL_DIR}/frontend"
 
 cp "${TMP_DIR}/.env.bak" "${INSTALL_DIR}/backend/.env"
+restore_uploads_dir "${TMP_DIR}/uploads.bak"
+if [[ -n "$UPLOADS_DIR_RESOLVED" ]]; then
+    info "  Uploads dir preserved: ${UPLOADS_DIR_RESOLVED}"
+fi
 
 info "Backend:  ${BACKEND_FILE}"
 info "Frontend: ${FRONTEND_FILE}"

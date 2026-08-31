@@ -1,8 +1,13 @@
 {
     "unreleased": [
+        "Fix 4 high-severity dependency vulnerabilities (react-router-dom CSRF bypass, postcss/nanoid via vite) via npm audit fix — patch-level updates only, no API changes",
         "Rebuild the home page as a dashboard: nearest upcoming article, pinned articles, and the last 5 non-pinned past articles, each linking to its own /clanek/:slug page",
         "Add public /stranka/:slug and /clanek/:slug routes for admin-authored Pages and Articles",
-        "Add an admin-only area (gated on the account's is_admin flag) for creating and editing Pages and Articles, with a WYSIWYG editor supporting image upload and @-mention links between content"
+        "Add an admin-only area (gated on the account's is_admin flag) for creating and editing Pages and Articles, with a WYSIWYG editor supporting image upload and @-mention links between content",
+        "Add a sitewide footer (linking to withfbraun.com before the copyright line) pinned to the bottom of the viewport even on short pages",
+        "Add a pluggable feature-module system: self-contained modules under src/modules/ are auto-discovered and toggled on/off per application via public/modules.json, contributing their own routes, nav links, and translations",
+        "Add light/dark theme toggle in the header, with the preference synced to the signed-in user's profile (user_data.darkMode) and a dedicated Appearance section on the Account page",
+        "Add /release-news page showing backend and frontend release history side by side, grouped by compatible major.minor version"
     ],
     "releases": []
 }
