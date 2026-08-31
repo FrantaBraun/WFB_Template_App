@@ -9,8 +9,8 @@ This repository hosts a **family of applications built on one shared core**, rat
 ### Branch structure
 
 - **`core`** — the shared foundation described by the rest of this file (backend, frontend, scripts, auth integration). Cross-cutting work happens here first.
-- **`template_app`** — branched from `core`, kept in sync with it, and never itself diverges into app-specific code. This carries forward the repository's original template role: fork `template_app` whenever a new application is started.
-- **Application branches** — one per real app, branched from `template_app`. They diverge with app-specific code (models, pages, config) while periodically merging in updates from `core` (directly, or via `template_app` once it has merged them).
+- **Application branches** — one per real app, branched **directly from `core`** (the `new-app` skill automates this). They diverge with app-specific code (models, pages, config) while periodically merging in updates from `core`.
+- **`template_app`** — also branched from `core` and kept in sync with it, but *not* the fork point for the applications above. It carries forward the repository's original, standalone template role: a generically-branded starting point for cloning and renaming into a one-off app outside this family. Don't confuse the two workflows.
 
 When working on a branch other than `core`, treat app-specific code you find as intentional local divergence — don't "fix" it back to match `core` unless that's the actual task.
 
