@@ -14,8 +14,11 @@
     "toggleDarkMode": "Přepnout tmavý režim"
   },
   "home": {
-    "title": "Šablona projektu",
-    "description": "Toto je výchozí šablona pro tvorbu dalších aplikací. Neobsahuje žádnou funkční logiku — jen předpřipravené prostředí, na kterém lze začít stavět."
+    "title": "Slavíčkovy knihohrátky",
+    "upcoming": "Nejbližší akce",
+    "pinned": "Důležité články",
+    "recentPast": "Nedávné akce",
+    "empty": "Zatím zde nejsou žádné články."
   },
   "login": {
     "pageTitle": "Přihlášení",
@@ -136,6 +139,12 @@
     "compatible": "kompatibilní",
     "noCompatibleRelease": "Pro tuto verzi není k dispozici žádné vydání",
     "loadError": "Načtení novinek se nezdařilo."
+  },
+  "pageDetail": {
+    "notFound": "Stránka nebyla nalezena."
+  },
+  "articleDetail": {
+    "notFound": "Článek nebyl nalezen."
   },
   "nav": {
     "brand": "Slavíčkovy knihohrátky",

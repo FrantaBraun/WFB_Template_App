@@ -22,6 +22,8 @@ import AdminPagesList from "./pages/admin/AdminPagesList"
 import AdminPageForm from "./pages/admin/AdminPageForm"
 import AdminArticlesList from "./pages/admin/AdminArticlesList"
 import AdminArticleForm from "./pages/admin/AdminArticleForm"
+import PageDetail from "./pages/PageDetail"
+import ArticleDetail from "./pages/ArticleDetail"
 import { useEnabledModules } from "./modules/registry"
 
 
@@ -48,6 +50,9 @@ function App() {
       <Route path="/admin/articles" element={<AdminArticlesList />} />
       <Route path="/admin/articles/new" element={<AdminArticleForm />} />
       <Route path="/admin/articles/:id/edit" element={<AdminArticleForm />} />
+      {/* Public content - admin-authored, sanitized on write */}
+      <Route path="/stranka/:slug" element={<PageDetail />} />
+      <Route path="/clanek/:slug" element={<ArticleDetail />} />
       {/* Enabled feature modules (see src/modules/) contribute their own routes here */}
       {modules.flatMap((module) =>
         module.routes.map((route) => (

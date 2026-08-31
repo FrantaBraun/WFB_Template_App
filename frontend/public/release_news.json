@@ -1,5 +1,7 @@
 {
     "unreleased": [
+        "Rebuild the home page as a dashboard: nearest upcoming article, pinned articles, and the last 5 non-pinned past articles, each linking to its own /clanek/:slug page",
+        "Add public /stranka/:slug and /clanek/:slug routes for admin-authored Pages and Articles",
         "Add an admin-only area (gated on the account's is_admin flag) for creating and editing Pages and Articles, with a WYSIWYG editor supporting image upload and @-mention links between content"
     ],
     "releases": []

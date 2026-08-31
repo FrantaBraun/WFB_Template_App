@@ -14,8 +14,11 @@
     "toggleDarkMode": "Toggle dark mode"
   },
   "home": {
-    "title": "Project template",
-    "description": "This is a default template for building further applications. It contains no functional logic — just a ready-made environment to start building on."
+    "title": "Slavíčkovy knihohrátky",
+    "upcoming": "Upcoming event",
+    "pinned": "Featured articles",
+    "recentPast": "Recent events",
+    "empty": "There are no articles here yet."
   },
   "login": {
     "pageTitle": "Sign in",
@@ -136,6 +139,12 @@
     "compatible": "compatible",
     "noCompatibleRelease": "No release available for this version",
     "loadError": "Failed to load release news."
+  },
+  "pageDetail": {
+    "notFound": "Page not found."
+  },
+  "articleDetail": {
+    "notFound": "Article not found."
   },
   "nav": {
     "brand": "Slavíčkovy knihohrátky",
