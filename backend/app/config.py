@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     mail_ssl_tls: bool = False
     mail_suppress_send: bool = False
 
+    # Uploads (admin-authored images for Page/Article content). Local dev
+    # default is fine as-is; a production .env must point somewhere that
+    # survives a deploy - see scripts/upgrade.sh's backend/ wipe-and-recreate.
+    uploads_dir: str = "./uploads"
+
     # Logging
     logging_level: str = "INFO"
     logging_dir: str = "logs"

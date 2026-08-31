@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add POST /api/admin/uploads/image for WYSIWYG editor images, serving uploaded files back under /uploads (configurable via UPLOADS_DIR)",
         "Add GET /api/admin/mentionable, a combined Page+Article list (all statuses) backing the WYSIWYG editor's @-mention suggestions",
         "Add Article model with a public GET /api/articles/dashboard (upcoming/pinned/recent-past) and GET /api/articles/{slug}, plus admin-only CRUD under /api/admin/articles",
         "Add Page model with a public GET /api/pages/{slug} route and admin-only CRUD under /api/admin/pages, with server-side HTML sanitization on write",
