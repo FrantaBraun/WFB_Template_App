@@ -17,6 +17,11 @@ import Register from "./pages/Register"
 import OAuthCallback from "./pages/OAuthCallback"
 import Version from "./pages/Version"
 import ReleaseNews from "./pages/ReleaseNews"
+import AdminHome from "./pages/admin/AdminHome"
+import AdminPagesList from "./pages/admin/AdminPagesList"
+import AdminPageForm from "./pages/admin/AdminPageForm"
+import AdminArticlesList from "./pages/admin/AdminArticlesList"
+import AdminArticleForm from "./pages/admin/AdminArticleForm"
 import { useEnabledModules } from "./modules/registry"
 
 
@@ -35,6 +40,14 @@ function App() {
       {/* Publicly accessible, hidden from regular nav */}
       <Route path="/version" element={<Version />} />
       <Route path="/release-news" element={<ReleaseNews />} />
+      {/* Admin-only - each page gates itself via useRequireAdmin */}
+      <Route path="/admin" element={<AdminHome />} />
+      <Route path="/admin/pages" element={<AdminPagesList />} />
+      <Route path="/admin/pages/new" element={<AdminPageForm />} />
+      <Route path="/admin/pages/:id/edit" element={<AdminPageForm />} />
+      <Route path="/admin/articles" element={<AdminArticlesList />} />
+      <Route path="/admin/articles/new" element={<AdminArticleForm />} />
+      <Route path="/admin/articles/:id/edit" element={<AdminArticleForm />} />
       {/* Enabled feature modules (see src/modules/) contribute their own routes here */}
       {modules.flatMap((module) =>
         module.routes.map((route) => (

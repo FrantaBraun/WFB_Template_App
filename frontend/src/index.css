@@ -45,3 +45,43 @@ body {
   background-color: #38bdf8;
   color: #020617;
 }
+
+/* RichTextEditor's Tiptap content area - no typography plugin installed, so
+   list/heading/image spacing needs basic rules here rather than defaulting
+   to the browser's bare (mostly fine, but list markers render flush-left
+   with no indent) styles. */
+.rich-text-content .ProseMirror {
+  min-height: 12rem;
+  outline: none;
+}
+
+.rich-text-content .ProseMirror ul,
+.rich-text-content .ProseMirror ol {
+  padding-left: 1.5rem;
+}
+
+.rich-text-content .ProseMirror ul {
+  list-style: disc;
+}
+
+.rich-text-content .ProseMirror ol {
+  list-style: decimal;
+}
+
+.rich-text-content .ProseMirror h2,
+.rich-text-content .ProseMirror h3 {
+  font-weight: 600;
+  margin-top: 0.75em;
+  margin-bottom: 0.25em;
+}
+
+.rich-text-content .ProseMirror blockquote {
+  border-left: 3px solid currentColor;
+  opacity: 0.8;
+  padding-left: 1rem;
+}
+
+.rich-text-content .ProseMirror img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+}

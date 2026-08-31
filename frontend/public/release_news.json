@@ -1,4 +1,6 @@
 {
-    "unreleased": [],
+    "unreleased": [
+        "Add an admin-only area (gated on the account's is_admin flag) for creating and editing Pages and Articles, with a WYSIWYG editor supporting image upload and @-mention links between content"
+    ],
     "releases": []
 }

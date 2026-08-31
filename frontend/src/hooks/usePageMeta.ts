@@ -6,7 +6,7 @@
 
 import { useEffect } from 'react'
 
-const SITE = 'Authenticate WFB'
+const SITE = 'Slavíčkovy knihohrátky'
 
 /**
  * Sets the document title (suffixed with the site name), the

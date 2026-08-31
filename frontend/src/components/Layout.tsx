@@ -57,6 +57,11 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
           ))}
           {user ? (
             <>
+              {user.is_admin && (
+                <Link to="/admin" className="hover:text-slate-900 dark:hover:text-slate-100">
+                  {t('nav.admin')}
+                </Link>
+              )}
               <Link to="/account" className="hover:text-slate-900 dark:hover:text-slate-100">
                 {t('common.account')}
               </Link>

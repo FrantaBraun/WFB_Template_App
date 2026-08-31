@@ -138,7 +138,62 @@
     "loadError": "Načtení novinek se nezdařilo."
   },
   "nav": {
-    "brand": "Slavíčkovy knihohrátky"
+    "brand": "Slavíčkovy knihohrátky",
+    "admin": "Administrace"
+  },
+  "admin": {
+    "pageTitle": "Administrace",
+    "pageDescription": "Správa stránek a článků.",
+    "dashboardTitle": "Administrace",
+    "pagesLink": "Stránky",
+    "articlesLink": "Články",
+    "backToList": "Zpět na seznam",
+    "backToDashboard": "Zpět do administrace",
+    "status": {
+      "draft": "Koncept",
+      "published": "Publikováno",
+      "deleted": "Smazáno"
+    },
+    "pages": {
+      "title": "Stránky",
+      "new": "Nová stránka",
+      "headingColumn": "Nadpis",
+      "statusColumn": "Stav",
+      "updatedColumn": "Upraveno",
+      "editLink": "Upravit",
+      "empty": "Zatím žádné stránky.",
+      "headingLabel": "Nadpis",
+      "slugLabel": "Slug",
+      "slugHint": "Malá písmena, číslice a pomlčky (např. o-projektu).",
+      "contentLabel": "Obsah",
+      "statusLabel": "Stav",
+      "showInNavLabel": "Zobrazovat v navigaci",
+      "saveSuccess": "Uloženo.",
+      "saveError": "Uložení se nezdařilo.",
+      "loadError": "Načtení se nezdařilo."
+    },
+    "articles": {
+      "title": "Články",
+      "new": "Nový článek",
+      "titleColumn": "Název",
+      "statusColumn": "Stav",
+      "updatedColumn": "Upraveno",
+      "editLink": "Upravit",
+      "empty": "Zatím žádné články.",
+      "titleLabel": "Název",
+      "slugLabel": "Slug",
+      "slugHint": "Malá písmena, číslice a pomlčky (např. podzimni-cteni).",
+      "shortDescriptionLabel": "Krátký popis",
+      "fullTextLabel": "Plný text",
+      "eventDateLabel": "Termín akce",
+      "displayFromLabel": "Zobrazovat od",
+      "displayToLabel": "Zobrazovat do",
+      "pinnedLabel": "Ukotvit",
+      "statusLabel": "Stav",
+      "saveSuccess": "Uloženo.",
+      "saveError": "Uložení se nezdařilo.",
+      "loadError": "Načtení se nezdařilo."
+    }
   },
   "footer": {
     "ecosystem": "WithFBraun",

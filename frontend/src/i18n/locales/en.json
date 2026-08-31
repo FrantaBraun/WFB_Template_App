@@ -138,7 +138,62 @@
     "loadError": "Failed to load release news."
   },
   "nav": {
-    "brand": "Slavíčkovy knihohrátky"
+    "brand": "Slavíčkovy knihohrátky",
+    "admin": "Administration"
+  },
+  "admin": {
+    "pageTitle": "Administration",
+    "pageDescription": "Manage pages and articles.",
+    "dashboardTitle": "Administration",
+    "pagesLink": "Pages",
+    "articlesLink": "Articles",
+    "backToList": "Back to list",
+    "backToDashboard": "Back to administration",
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "deleted": "Deleted"
+    },
+    "pages": {
+      "title": "Pages",
+      "new": "New page",
+      "headingColumn": "Heading",
+      "statusColumn": "Status",
+      "updatedColumn": "Updated",
+      "editLink": "Edit",
+      "empty": "No pages yet.",
+      "headingLabel": "Heading",
+      "slugLabel": "Slug",
+      "slugHint": "Lowercase letters, digits and hyphens (e.g. about-us).",
+      "contentLabel": "Content",
+      "statusLabel": "Status",
+      "showInNavLabel": "Show in navigation",
+      "saveSuccess": "Saved.",
+      "saveError": "Save failed.",
+      "loadError": "Failed to load."
+    },
+    "articles": {
+      "title": "Articles",
+      "new": "New article",
+      "titleColumn": "Title",
+      "statusColumn": "Status",
+      "updatedColumn": "Updated",
+      "editLink": "Edit",
+      "empty": "No articles yet.",
+      "titleLabel": "Title",
+      "slugLabel": "Slug",
+      "slugHint": "Lowercase letters, digits and hyphens (e.g. autumn-reading).",
+      "shortDescriptionLabel": "Short description",
+      "fullTextLabel": "Full text",
+      "eventDateLabel": "Event date",
+      "displayFromLabel": "Show from",
+      "displayToLabel": "Show until",
+      "pinnedLabel": "Pinned",
+      "statusLabel": "Status",
+      "saveSuccess": "Saved.",
+      "saveError": "Save failed.",
+      "loadError": "Failed to load."
+    }
   },
   "footer": {
     "ecosystem": "WithFBraun",
