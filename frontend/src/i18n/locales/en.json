@@ -140,6 +140,12 @@
     "noCompatibleRelease": "No release available for this version",
     "loadError": "Failed to load release news."
   },
+  "calendar": {
+    "title": "Event calendar",
+    "showButton": "Show calendar",
+    "close": "Close",
+    "noEvents": "No events this month."
+  },
   "pageDetail": {
     "notFound": "Page not found."
   },

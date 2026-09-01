@@ -140,6 +140,12 @@
     "noCompatibleRelease": "Pro tuto verzi není k dispozici žádné vydání",
     "loadError": "Načtení novinek se nezdařilo."
   },
+  "calendar": {
+    "title": "Kalendář akcí",
+    "showButton": "Zobrazit kalendář",
+    "close": "Zavřít",
+    "noEvents": "V tomto měsíci nejsou žádné akce."
+  },
   "pageDetail": {
     "notFound": "Stránka nebyla nalezena."
   },

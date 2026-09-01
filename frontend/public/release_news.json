@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add a browsable event calendar to the home page (desktop: right sidebar; mobile: expand-to-full-screen button), marking days with published, in-window articles and linking to them on hover/click",
         "Move page URLs to root level (/o-projektu instead of /stranka/o-projektu), reject page slugs colliding with an existing route, and render published show_in_nav pages in the site nav",
         "Fix 4 high-severity dependency vulnerabilities (react-router-dom CSRF bypass, postcss/nanoid via vite) via npm audit fix — patch-level updates only, no API changes",
         "Rebuild the home page as a dashboard: nearest upcoming article, pinned articles, and the last 5 non-pinned past articles, each linking to its own /clanek/:slug page",
