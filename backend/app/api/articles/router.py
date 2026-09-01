@@ -2,10 +2,11 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
+import calendar as calendar_module
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import and_, or_, select
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.articles.schemas import ArticleOut, ArticleTeaser, DashboardOut
@@ -78,6 +79,63 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)) -> DashboardOut:
         pinned=[ArticleTeaser.model_validate(a) for a in pinned],
         recent_past=[ArticleTeaser.model_validate(a) for a in recent_past],
     )
+
+
+@router.get("/calendar", response_model=list[ArticleTeaser])
+async def get_calendar(year: int, month: int, db: AsyncSession = Depends(get_db)) -> list[Article]:
+    """Declared above /{slug}, same reasoning as /dashboard. Flat list for
+    the given month - the frontend groups by day itself. The display window
+    is checked against today, not the browsed month - consistent with the
+    dashboard, an article isn't shown just because its event date falls in
+    the browsed month if its own embargo/expiry doesn't currently allow it
+    (browsing a future month doesn't bypass a display_from that hasn't
+    arrived yet)."""
+    if not 1 <= month <= 12:
+        raise HTTPException(status_code=422, detail="month must be between 1 and 12")
+    today = date.today()
+    first_day = date(year, month, 1)
+    last_day = date(year, month, calendar_module.monthrange(year, month)[1])
+
+    result = await db.execute(
+        select(Article)
+        .where(
+            Article.status == "published",
+            Article.event_date >= first_day,
+            Article.event_date <= last_day,
+            _within_display_window(today),
+        )
+        .order_by(Article.event_date.asc())
+    )
+    return list(result.scalars().all())
+
+
+@router.get("/search", response_model=list[ArticleTeaser])
+async def search_articles(q: str = Query(min_length=1), db: AsyncSession = Depends(get_db)) -> list[Article]:
+    """Declared above /{slug}. Published only - matches the detail route's
+    own reasoning that once an article is findable, the display window
+    shouldn't hide it from an explicit search. Matches title/
+    short_description case-insensitively, plus event_date rendered as both
+    DD.MM.YYYY and YYYY-MM-DD so a typed date (e.g. "5.9" or "2026-09")
+    finds the right articles too."""
+    pattern = f"%{q}%"
+    date_cz = func.to_char(Article.event_date, "DD.MM.YYYY")
+    date_iso = func.to_char(Article.event_date, "YYYY-MM-DD")
+
+    result = await db.execute(
+        select(Article)
+        .where(
+            Article.status == "published",
+            or_(
+                Article.title.ilike(pattern),
+                Article.short_description.ilike(pattern),
+                date_cz.ilike(pattern),
+                date_iso.ilike(pattern),
+            ),
+        )
+        .order_by(Article.event_date.desc())
+        .limit(20)
+    )
+    return list(result.scalars().all())
 
 
 @router.get("/{slug}", response_model=ArticleOut)

@@ -133,6 +133,78 @@ async def test_get_article_by_slug_draft_returns_404(db_session, api_client):
     assert resp.status_code == 404
 
 
+async def test_calendar_filters_month_status_and_window(db_session, api_client):
+    # A far-future month, and presence/absence of this test's own slugs
+    # rather than exact-set equality - robust against whatever else may
+    # already be in the shared dev database (see test_pages_router.py's
+    # nav-list test for the same rationale).
+    year, month = 2031, 6
+    in_month = _article(event_date=date(year, month, 15))
+    other_month = _article(event_date=date(year, month, 1) - timedelta(days=1))
+    draft_in_month = _article(event_date=date(year, month, 10), status="draft")
+    out_of_window = _article(event_date=date(year, month, 20), display_to=TODAY - timedelta(days=1))
+    db_session.add_all([in_month, other_month, draft_in_month, out_of_window])
+    await db_session.flush()
+
+    resp = await api_client.get("/api/articles/calendar", params={"year": year, "month": month})
+
+    assert resp.status_code == 200
+    slugs = {a["slug"] for a in resp.json()}
+    assert in_month.slug in slugs
+    assert other_month.slug not in slugs
+    assert draft_in_month.slug not in slugs
+    assert out_of_window.slug not in slugs
+
+
+async def test_calendar_invalid_month_rejected(api_client):
+    resp = await api_client.get("/api/articles/calendar", params={"year": 2031, "month": 13})
+    assert resp.status_code == 422
+
+
+async def test_search_matches_title(db_session, api_client):
+    unique = _slug()
+    article = _article(title=f"Unikátní {unique}", event_date=date(2031, 6, 15))
+    draft = _article(title=f"Unikátní draft {unique}", status="draft")
+    db_session.add_all([article, draft])
+    await db_session.flush()
+
+    resp = await api_client.get("/api/articles/search", params={"q": unique})
+
+    assert resp.status_code == 200
+    slugs = {a["slug"] for a in resp.json()}
+    assert article.slug in slugs
+    assert draft.slug not in slugs
+
+
+async def test_search_matches_short_description(db_session, api_client):
+    unique = _slug()
+    article = _article(short_description=f"Popis {unique}", event_date=date(2031, 6, 16))
+    db_session.add(article)
+    await db_session.flush()
+
+    resp = await api_client.get("/api/articles/search", params={"q": unique})
+
+    assert resp.status_code == 200
+    assert article.slug in {a["slug"] for a in resp.json()}
+
+
+async def test_search_matches_date_in_either_format(db_session, api_client):
+    article = _article(event_date=date(2031, 6, 17))
+    db_session.add(article)
+    await db_session.flush()
+
+    cz_resp = await api_client.get("/api/articles/search", params={"q": "17.06.2031"})
+    iso_resp = await api_client.get("/api/articles/search", params={"q": "2031-06-17"})
+
+    assert article.slug in {a["slug"] for a in cz_resp.json()}
+    assert article.slug in {a["slug"] for a in iso_resp.json()}
+
+
+async def test_search_requires_non_empty_query(api_client):
+    resp = await api_client.get("/api/articles/search", params={"q": ""})
+    assert resp.status_code == 422
+
+
 async def test_get_article_by_slug_ignores_display_window(db_session, api_client):
     """Direct-link access doesn't re-check display_from/display_to - that
     governs listing visibility, not whether a known link still works."""
