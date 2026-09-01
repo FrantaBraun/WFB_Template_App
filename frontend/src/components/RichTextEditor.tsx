@@ -23,7 +23,7 @@ export interface MentionableItem {
 }
 
 function mentionUrl(item: MentionableItem): string {
-  return item.type === 'page' ? `/stranka/${item.slug}` : `/clanek/${item.slug}`
+  return item.type === 'page' ? `/${item.slug}` : `/clanek/${item.slug}`
 }
 
 /**

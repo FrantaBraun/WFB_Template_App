@@ -4,13 +4,20 @@
  * Freely available as a template for building custom applications.
  */
 
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { apiFetch } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { SUPPORTED_LANGUAGES } from '../i18n'
 import type { ModuleDefinition } from '../modules/types'
 import Footer from './Footer'
 import ThemeToggle from './ThemeToggle'
+
+interface NavPage {
+  heading: string
+  slug: string
+}
 
 /** Small control to switch the active i18next language between the supported locales. */
 function LanguageSwitcher() {
@@ -39,6 +46,14 @@ function LanguageSwitcher() {
 function Nav({ modules }: { modules: ModuleDefinition[] }) {
   const { t } = useTranslation()
   const { user, logout } = useAuth()
+  const [navPages, setNavPages] = useState<NavPage[]>([])
+
+  useEffect(() => {
+    apiFetch('/api/pages/')
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setNavPages)
+      .catch(() => {})
+  }, [])
 
   return (
     <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
@@ -50,6 +65,11 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
         </Link>
 
         <nav className="flex items-center gap-4">
+          {navPages.map((page) => (
+            <Link key={page.slug} to={`/${page.slug}`} className="hover:text-slate-900 dark:hover:text-slate-100">
+              {page.heading}
+            </Link>
+          ))}
           {modules.flatMap((module) => module.nav ?? []).map((item) => (
             <Link key={item.to} to={item.to} className="hover:text-slate-900 dark:hover:text-slate-100">
               {t(item.labelKey)}

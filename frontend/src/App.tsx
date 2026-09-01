@@ -51,7 +51,6 @@ function App() {
       <Route path="/admin/articles/new" element={<AdminArticleForm />} />
       <Route path="/admin/articles/:id/edit" element={<AdminArticleForm />} />
       {/* Public content - admin-authored, sanitized on write */}
-      <Route path="/stranka/:slug" element={<PageDetail />} />
       <Route path="/clanek/:slug" element={<ArticleDetail />} />
       {/* Enabled feature modules (see src/modules/) contribute their own routes here */}
       {modules.flatMap((module) =>
@@ -59,6 +58,12 @@ function App() {
           <Route key={`${module.key}:${route.path}`} path={route.path} element={route.element} />
         )),
       )}
+      {/* Root-level page slugs (e.g. /o-projektu) - declared last, though React
+          Router ranks static routes above this dynamic one regardless of
+          order. Reserved words are rejected server-side at save time (see
+          app/api/validators.py's PAGE_RESERVED_SLUGS) so a page can never be
+          saved under a slug one of the routes above would otherwise shadow. */}
+      <Route path="/:slug" element={<PageDetail />} />
     </Routes>
 
   </Layout>
