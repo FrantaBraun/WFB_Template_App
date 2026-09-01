@@ -83,6 +83,7 @@ export default function EventCalendar() {
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <h2 className="mb-3 text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100 hidden md:block">{t('calendar.title')}</h2>
       <div className="mb-3 flex items-center justify-between">
         <button type="button" onClick={goToPreviousMonth} className="rounded px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
           ‹
@@ -123,11 +124,13 @@ export default function EventCalendar() {
                     : 'text-slate-700 dark:text-slate-300'
                 }`}
               >
-                {day}
+                <span className={year === today.getFullYear() && month === today.getMonth() + 1 && day === today.getDate() ? 'underline font-bold' : ''}>
+                  {day}
+                </span>
               </button>
 
               {isOpen && hasArticles && (
-                <div className="absolute left-1/2 top-full z-10 mt-1 w-48 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-1 text-left shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                <div className="absolute left-1/2 top-full z-10 p-1 w-48 -translate-x-1/2 rounded-lg border border-slate-200 bg-white text-left shadow-lg dark:border-slate-700 dark:bg-slate-800">
                   {dayArticles.map((article) => (
                     <Link
                       key={article.id}
@@ -147,6 +150,15 @@ export default function EventCalendar() {
       {articlesByDay.size === 0 && (
         <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">{t('calendar.noEvents')}</p>
       )}
+      <div className='flex justify-center'>
+        <button className="mt-3 rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600" onClick={() => {
+          const today = new Date()
+          setYear(today.getFullYear())
+          setMonth(today.getMonth() + 1)
+        }}>
+          {t('calendar.today')}
+        </button>
+      </div>
     </div>
   )
 }

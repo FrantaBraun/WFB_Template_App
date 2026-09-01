@@ -169,7 +169,8 @@
     "title": "Event calendar",
     "showButton": "Show calendar",
     "close": "Close",
-    "noEvents": "No events this month."
+    "noEvents": "No events this month.",
+    "today": "Today"
   },
   "pageDetail": {
     "notFound": "Page not found."
