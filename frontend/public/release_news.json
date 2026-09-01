@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add sun/moon icons to the light/dark toggle switch's thumb, matching whichever mode is active",
         "Upgrade the WYSIWYG editor: headings 1-5, font size/family/color, underline/strikethrough, and a link dialog (editable text + URL) for both inserting and editing links, including ones created via @-mention - links now render underlined by default",
         "Add filter and sortable columns (title/heading, status, event date) to the admin Pages and Articles lists",
         "Add full-text search to the home page (title/short_description/event_date), replacing the dashboard view with results while a query is active",
