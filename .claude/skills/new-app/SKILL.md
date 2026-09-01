@@ -99,9 +99,27 @@ One commit for everything in step 5:
 Initialize <Name> from core
 ```
 
-## 7. Report and suggest next steps
+## 7. Register the branch on `main`
 
-Tell the user which branch was created and what got customized. Then, reading back over the detailed description they gave you, suggest a short, concrete list of what they'd likely want to build first - as recommendations in chat, not code you've already written. Ground these in what already exists to extend, so the suggestions are actionable rather than generic:
+Other tooling (the `new-module` skill) rolls new modules out to every branch downstream of `core` by reading a list in `main`'s own `CLAUDE.md`, not by guessing from `git branch -a` - so a freshly forked application needs to be added to it there, not just exist as a branch:
+
+```bash
+git checkout main
+```
+
+In `CLAUDE.md`, find the `**Branches synced from \`core\`:**` line (just below `### Branch structure`) and append `<slug>` to that list.
+
+```bash
+git add CLAUDE.md
+git commit -m "Register <slug> as a branch synced from core"
+git checkout <slug>
+```
+
+That last checkout returns you to the new application branch - the rest of this session's work (and the report below) continues there, not on `main`.
+
+## 8. Report and suggest next steps
+
+Tell the user which branch was created, that it's now registered in `main`'s `CLAUDE.md` as a branch synced from `core`, and what got customized. Then, reading back over the detailed description they gave you, suggest a short, concrete list of what they'd likely want to build first - as recommendations in chat, not code you've already written. Ground these in what already exists to extend, so the suggestions are actionable rather than generic:
 
 - Candidate fields for the local `User` model (`backend/app/models/user.py`) if the description implies account data beyond what the auth service's own profile already covers.
 - Candidate `frontend/public/config.json` attributes for anything per-user that belongs on the auth service instead.

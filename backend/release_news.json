@@ -1,5 +1,8 @@
 {
     "unreleased": [
+        "Add a contact-form module (app/modules/kontaktni_formular): sends the message to CONTACT_MAIL plus a confirmation copy to the sender, signed with the sender's real name when they're signed in",
+        "Add a pluggable feature-module system: self-contained modules under app/modules/ are auto-discovered and toggled on/off per application via ENABLED_MODULES, with no code changes to shared routing or migrations",
+        "Add GET /api/public/release-news endpoint, exposing release_news.json for the frontend's release news page",
         "Add GET /api/articles/calendar (per-month, published+in-window) and GET /api/articles/search (title/short_description/event_date, published only)",
         "Add GET /api/pages, a public nav-eligible page list, and reject page slugs that collide with an existing app route (e.g. \"login\", \"admin\")",
         "Add POST /api/admin/uploads/image for WYSIWYG editor images, serving uploaded files back under /uploads (configurable via UPLOADS_DIR)",

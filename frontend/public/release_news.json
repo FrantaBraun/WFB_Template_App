@@ -1,7 +1,8 @@
 {
     "unreleased": [
-        "Give the site its own playful \"geometric confetti\" visual identity: a warm paper background with scattered accent shapes, hard-outlined cards, Poppins headings, and a teal/mustard/coral palette across the nav, footer, home page, and article/page views",
+        "Add a contact-form module (src/modules/kontaktni_formular) with a /kontakt page and nav link: subject + message, plus a required reply-to email when signed out",
         "Add sun/moon icons to the light/dark toggle switch's thumb, matching whichever mode is active",
+        "Give the site its own playful \"geometric confetti\" visual identity: a warm paper background with scattered accent shapes, hard-outlined cards, Poppins headings, and a teal/mustard/coral palette across the nav, footer, home page, and article/page views",
         "Upgrade the WYSIWYG editor: headings 1-5, font size/family/color, underline/strikethrough, and a link dialog (editable text + URL) for both inserting and editing links, including ones created via @-mention - links now render underlined by default",
         "Add filter and sortable columns (title/heading, status, event date) to the admin Pages and Articles lists",
         "Add full-text search to the home page (title/short_description/event_date), replacing the dashboard view with results while a query is active",

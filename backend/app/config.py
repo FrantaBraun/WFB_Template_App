@@ -32,6 +32,12 @@ class Settings(BaseSettings):
     auth_url: str = "https://auth.withfbraun.com"
     auth_api_key: str = ""
 
+    # Contact form module (app/modules/kontaktni_formular) - recipient for
+    # every submission; empty by default so a deployment that enables the
+    # module without setting this fails loudly (see the module's router)
+    # rather than silently mailing nobody.
+    contact_mail: str = ""
+
     # Email (SMTP)
     mail_username: str = ""
     mail_password: str = ""
