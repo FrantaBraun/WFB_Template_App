@@ -143,6 +143,28 @@
     "noCompatibleRelease": "No release available for this version",
     "loadError": "Failed to load release news."
   },
+  "editor": {
+    "paragraph": "Paragraph",
+    "heading": "Heading {{level}}",
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "strike": "Strikethrough",
+    "list": "List",
+    "quote": "Quote",
+    "link": "Link",
+    "image": "Image",
+    "fontFamilyDefault": "Default font",
+    "fontSizeDefault": "Default size",
+    "textColor": "Text color",
+    "linkDialogTitle": "Link",
+    "linkTextLabel": "Displayed text",
+    "linkUrlLabel": "URL",
+    "linkRemove": "Remove link",
+    "mentionNoResults": "No results",
+    "mentionPageType": "Pg",
+    "mentionArticleType": "Ar"
+  },
   "calendar": {
     "title": "Event calendar",
     "showButton": "Show calendar",

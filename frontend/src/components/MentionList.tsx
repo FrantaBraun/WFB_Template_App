@@ -5,6 +5,7 @@
  */
 
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { MentionableItem } from './RichTextEditor'
 
 interface MentionListProps {
@@ -21,6 +22,7 @@ export interface MentionListHandle {
  * render() can forward arrow/enter/escape key handling into this list -
  * Tiptap's own suggestion popups all follow this imperative-handle shape. */
 const MentionList = forwardRef<MentionListHandle, MentionListProps>(({ items, command }, ref) => {
+  const { t } = useTranslation()
   const [selectedIndex, setSelectedIndex] = useState(0)
 
   useEffect(() => setSelectedIndex(0), [items])
@@ -51,7 +53,7 @@ const MentionList = forwardRef<MentionListHandle, MentionListProps>(({ items, co
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500 shadow-lg dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-        Žádné výsledky
+        {t('editor.mentionNoResults')}
       </div>
     )
   }
@@ -68,7 +70,7 @@ const MentionList = forwardRef<MentionListHandle, MentionListProps>(({ items, co
           }`}
         >
           <span className="w-6 shrink-0 text-xs uppercase text-slate-400">
-            {item.type === 'page' ? 'Str' : 'Čl'}
+            {item.type === 'page' ? t('editor.mentionPageType') : t('editor.mentionArticleType')}
           </span>
           <span className="truncate text-slate-900 dark:text-slate-100">{item.label}</span>
         </button>

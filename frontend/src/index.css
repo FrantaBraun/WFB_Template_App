@@ -46,42 +46,57 @@ body {
   color: #020617;
 }
 
-/* RichTextEditor's Tiptap content area - no typography plugin installed, so
-   list/heading/image spacing needs basic rules here rather than defaulting
-   to the browser's bare (mostly fine, but list markers render flush-left
-   with no indent) styles. */
-.rich-text-content .ProseMirror {
-  min-height: 12rem;
-  outline: none;
-}
-
-.rich-text-content .ProseMirror ul,
-.rich-text-content .ProseMirror ol {
+/* Shared by RichTextEditor's live view (nested one level deeper under
+   .ProseMirror) AND the publicly-rendered content on PageDetail/
+   ArticleDetail (dangerouslySetInnerHTML straight into .rich-text-content,
+   no .ProseMirror wrapper there) - rules target .rich-text-content itself,
+   not .ProseMirror specifically, precisely so both cases pick them up via
+   normal CSS descendant matching. No typography plugin is installed, so
+   list/heading/image/link styling needs these explicit rules rather than
+   relying on Tailwind's preflight-reset browser defaults. */
+.rich-text-content ul,
+.rich-text-content ol {
   padding-left: 1.5rem;
 }
 
-.rich-text-content .ProseMirror ul {
+.rich-text-content ul {
   list-style: disc;
 }
 
-.rich-text-content .ProseMirror ol {
+.rich-text-content ol {
   list-style: decimal;
 }
 
-.rich-text-content .ProseMirror h2,
-.rich-text-content .ProseMirror h3 {
+.rich-text-content h1,
+.rich-text-content h2,
+.rich-text-content h3,
+.rich-text-content h4,
+.rich-text-content h5 {
   font-weight: 600;
   margin-top: 0.75em;
   margin-bottom: 0.25em;
 }
 
-.rich-text-content .ProseMirror blockquote {
+.rich-text-content blockquote {
   border-left: 3px solid currentColor;
   opacity: 0.8;
   padding-left: 1rem;
 }
 
-.rich-text-content .ProseMirror img {
+.rich-text-content img {
   max-width: 100%;
   border-radius: 0.5rem;
+}
+
+/* Tailwind's preflight strips the browser's default link underline, so
+   it's restored explicitly here to match the spec's "links render
+   underlined by default". */
+.rich-text-content a {
+  text-decoration: underline;
+}
+
+/* Only meaningful for the editable view itself, not static public content. */
+.rich-text-content .ProseMirror {
+  min-height: 12rem;
+  outline: none;
 }
