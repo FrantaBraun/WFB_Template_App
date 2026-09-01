@@ -12,3 +12,4 @@ backend/logs/
 .vscode/
 scripts/build.config.toml
 scripts/deploy.config.sh
+uploads/
