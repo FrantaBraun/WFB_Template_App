@@ -18,7 +18,10 @@
     "upcoming": "Upcoming event",
     "pinned": "Featured articles",
     "recentPast": "Recent events",
-    "empty": "There are no articles here yet."
+    "empty": "There are no articles here yet.",
+    "searchPlaceholder": "Search articles…",
+    "searchResults": "Search results",
+    "searchNoResults": "Nothing found."
   },
   "login": {
     "pageTitle": "Sign in",

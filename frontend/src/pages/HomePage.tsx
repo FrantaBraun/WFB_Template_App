@@ -4,7 +4,7 @@
  * Freely available as a template for building custom applications.
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
@@ -46,6 +46,9 @@ export default function HomePage() {
   const { t } = useTranslation()
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)
   const [showMobileCalendar, setShowMobileCalendar] = useState(false)
+  const [query, setQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<ArticleTeaser[] | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     apiFetch('/api/articles/dashboard')
@@ -53,6 +56,26 @@ export default function HomePage() {
       .then(setDashboard)
       .catch(() => setDashboard({ upcoming: null, pinned: [], recent_past: [] }))
   }, [])
+
+  // Debounced search - clearing the query restores the normal dashboard
+  // view (searchResults null) rather than showing an empty results list.
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const trimmed = query.trim()
+    if (!trimmed) {
+      setSearchResults(null)
+      return
+    }
+    debounceRef.current = setTimeout(() => {
+      apiFetch(`/api/articles/search?q=${encodeURIComponent(trimmed)}`)
+        .then((r) => (r.ok ? r.json() : []))
+        .then(setSearchResults)
+        .catch(() => setSearchResults([]))
+    }, 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [query])
 
   const isEmpty = dashboard && !dashboard.upcoming && dashboard.pinned.length === 0 && dashboard.recent_past.length === 0
 
@@ -65,48 +88,77 @@ export default function HomePage() {
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t('home.title')}</h1>
       </div>
 
+      <div className="mx-auto mt-8 max-w-md">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t('home.searchPlaceholder')}
+          className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+        />
+      </div>
+
       {/* Calendar sidebar lives on the home page only - a right-hand column
           at md: and up; below that it's hidden behind an expand button that
           opens the same EventCalendar full-screen instead of cramming it
           into a narrow single-column layout. */}
       <div className="mt-10 flex flex-col gap-10 md:flex-row md:items-start">
         <div className="flex flex-1 flex-col gap-10">
-          {dashboard?.upcoming && (
+          {searchResults !== null ? (
             <section>
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('home.upcoming')}
+                {t('home.searchResults')}
               </h2>
-              <TeaserCard article={dashboard.upcoming} />
+              {searchResults.length === 0 ? (
+                <p className="text-slate-600 dark:text-slate-400">{t('home.searchNoResults')}</p>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {searchResults.map((article) => (
+                    <TeaserCard key={article.id} article={article} />
+                  ))}
+                </div>
+              )}
             </section>
-          )}
+          ) : (
+            <>
+              {dashboard?.upcoming && (
+                <section>
+                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {t('home.upcoming')}
+                  </h2>
+                  <TeaserCard article={dashboard.upcoming} />
+                </section>
+              )}
 
-          {dashboard && dashboard.pinned.length > 0 && (
-            <section>
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('home.pinned')}
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {dashboard.pinned.map((article) => (
-                  <TeaserCard key={article.id} article={article} />
-                ))}
-              </div>
-            </section>
-          )}
+              {dashboard && dashboard.pinned.length > 0 && (
+                <section>
+                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {t('home.pinned')}
+                  </h2>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {dashboard.pinned.map((article) => (
+                      <TeaserCard key={article.id} article={article} />
+                    ))}
+                  </div>
+                </section>
+              )}
 
-          {dashboard && dashboard.recent_past.length > 0 && (
-            <section>
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('home.recentPast')}
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {dashboard.recent_past.map((article) => (
-                  <TeaserCard key={article.id} article={article} />
-                ))}
-              </div>
-            </section>
-          )}
+              {dashboard && dashboard.recent_past.length > 0 && (
+                <section>
+                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {t('home.recentPast')}
+                  </h2>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {dashboard.recent_past.map((article) => (
+                      <TeaserCard key={article.id} article={article} />
+                    ))}
+                  </div>
+                </section>
+              )}
 
-          {isEmpty && <p className="text-slate-600 dark:text-slate-400">{t('home.empty')}</p>}
+              {isEmpty && <p className="text-slate-600 dark:text-slate-400">{t('home.empty')}</p>}
+            </>
+          )}
         </div>
 
         <div className="hidden md:block md:w-72 md:shrink-0">

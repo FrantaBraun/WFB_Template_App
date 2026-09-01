@@ -18,7 +18,10 @@
     "upcoming": "Nejbližší akce",
     "pinned": "Důležité články",
     "recentPast": "Nedávné akce",
-    "empty": "Zatím zde nejsou žádné články."
+    "empty": "Zatím zde nejsou žádné články.",
+    "searchPlaceholder": "Hledat články…",
+    "searchResults": "Výsledky hledání",
+    "searchNoResults": "Nic nenalezeno."
   },
   "login": {
     "pageTitle": "Přihlášení",
