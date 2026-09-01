@@ -167,6 +167,8 @@
     "articlesLink": "Articles",
     "backToList": "Back to list",
     "backToDashboard": "Back to administration",
+    "filterPlaceholder": "Filter…",
+    "statusFilterAll": "All statuses",
     "status": {
       "draft": "Draft",
       "published": "Published",

@@ -167,6 +167,8 @@
     "articlesLink": "Články",
     "backToList": "Zpět na seznam",
     "backToDashboard": "Zpět do administrace",
+    "filterPlaceholder": "Filtrovat…",
+    "statusFilterAll": "Všechny stavy",
     "status": {
       "draft": "Koncept",
       "published": "Publikováno",
