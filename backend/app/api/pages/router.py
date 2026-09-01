@@ -6,11 +6,21 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.pages.schemas import PageOut
+from app.api.pages.schemas import PageNavItem, PageOut
 from app.database import get_db
 from app.models.page import Page
 
 router = APIRouter()
+
+
+@router.get("/", response_model=list[PageNavItem])
+async def list_nav_pages(db: AsyncSession = Depends(get_db)) -> list[Page]:
+    """Public - backs the site nav. Only published pages explicitly marked
+    to show there; nothing else about a Page is exposed by this route."""
+    result = await db.execute(
+        select(Page).where(Page.status == "published", Page.show_in_nav.is_(True))
+    )
+    return list(result.scalars().all())
 
 
 @router.get("/{slug}", response_model=PageOut)

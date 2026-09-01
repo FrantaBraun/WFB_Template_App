@@ -81,6 +81,19 @@ async def test_invalid_slug_rejected(db_session, api_client, make_access_token, 
     assert resp.status_code == 422
 
 
+async def test_reserved_slug_rejected(db_session, api_client, make_access_token, rsa_keypair, monkeypatch):
+    """A page slug matching a real app route (e.g. "login") would render at
+    root level and silently lose to React Router's static route - reject it
+    at save time instead of letting an admin create an unreachable page."""
+    headers = await _admin_headers(db_session, make_access_token, rsa_keypair, monkeypatch, is_admin=True)
+
+    resp = await api_client.post(
+        "/api/admin/pages/", headers=headers, json={"heading": "X", "slug": "login", "content": ""}
+    )
+
+    assert resp.status_code == 422
+
+
 async def test_non_admin_forbidden(db_session, api_client, make_access_token, rsa_keypair, monkeypatch):
     headers = await _admin_headers(db_session, make_access_token, rsa_keypair, monkeypatch, is_admin=False)
 

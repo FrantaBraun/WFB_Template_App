@@ -8,7 +8,17 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from app.api.validators import validate_slug
+from app.api.validators import validate_page_slug
+
+
+class PageNavItem(BaseModel):
+    """Minimal shape for the public nav-list endpoint - only what the site
+    nav needs to render a link, nothing else."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    heading: str
+    slug: str
 
 
 class PageOut(BaseModel):
@@ -34,7 +44,7 @@ class PageCreate(BaseModel):
     status: Literal["draft", "published"] = "draft"
     show_in_nav: bool = False
 
-    _check_slug = field_validator("slug")(validate_slug)
+    _check_slug = field_validator("slug")(validate_page_slug)
 
 
 class PageUpdate(BaseModel):
@@ -50,4 +60,4 @@ class PageUpdate(BaseModel):
     @field_validator("slug")
     @classmethod
     def _check_slug(cls, value: str | None) -> str | None:
-        return validate_slug(value) if value is not None else value
+        return validate_page_slug(value) if value is not None else value
