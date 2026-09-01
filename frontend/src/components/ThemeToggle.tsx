@@ -58,7 +58,7 @@ export default function ThemeToggle() {
       aria-checked={darkMode}
       aria-label={t('common.toggleDarkMode')}
       className={`inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-        darkMode ? 'bg-sky-600' : 'bg-slate-300 dark:bg-slate-700'
+        darkMode ? 'bg-teal' : 'bg-ink/20 dark:bg-ink-dark/25'
       }`}
     >
       <span
@@ -66,7 +66,7 @@ export default function ThemeToggle() {
           darkMode ? 'translate-x-4' : 'translate-x-0.5'
         }`}
       >
-        {darkMode ? <MoonIcon className="h-2.5 w-2.5 text-slate-700" /> : <SunIcon className="h-2.5 w-2.5 text-amber-500" />}
+        {darkMode ? <MoonIcon className="h-2.5 w-2.5 text-teal" /> : <SunIcon className="h-2.5 w-2.5 text-mustard" />}
       </span>
     </button>
   )

@@ -14,13 +14,13 @@ export default function Footer() {
   const { t } = useTranslation()
 
   return (
-    <footer className="border-t border-slate-200 px-6 py-8 text-center text-sm text-slate-400 dark:border-slate-800 dark:text-slate-500">
+    <footer className="border-t border-ink/10 px-6 py-8 text-center text-sm text-ink-muted dark:border-ink-dark/10 dark:text-ink-muted-dark">
       <p>
         <a
           href="https://withfbraun.com"
           target="_blank"
           rel="noreferrer"
-          className="font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+          className="font-medium text-teal hover:text-teal-dark dark:text-teal-dark dark:hover:text-teal"
         >
           {t('footer.ecosystem')}
         </a>

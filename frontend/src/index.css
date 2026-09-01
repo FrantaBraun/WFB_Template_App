@@ -4,12 +4,39 @@
  * Freely available as a template for building custom applications.
  */
 
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
 /* Tailwind v4 is CSS-first with no tailwind.config.js - this line switches
    dark: utilities from the OS-level prefers-color-scheme default to a
    .dark class on <html>, toggled by ThemeContext (see src/context/ThemeContext.tsx). */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* "Geometric confetti" visual identity: a warm paper background, a dark
+   "ink" tone standing in for the old slate palette on cards/borders/text,
+   and a small accent trio (teal/mustard/coral) used across the app - see
+   Layout.tsx's ConfettiBackground for the scattered-shapes decoration
+   these accents also appear in. Each token has a -dark counterpart rather
+   than relying on Tailwind's opacity math to invert it, since a few
+   (paper/card) flip lightness entirely rather than just dimming. */
+@theme {
+  --color-paper: #faf6ec;
+  --color-paper-dark: #211d17;
+  --color-card-dark: #2c2620;
+  --color-ink: #292520;
+  --color-ink-dark: #f2ead9;
+  --color-ink-soft: #5a5347;
+  --color-ink-soft-dark: #cabfa9;
+  --color-ink-muted: #6e6858;
+  --color-ink-muted-dark: #a89d87;
+  --color-teal: #2f7d78;
+  --color-teal-dark: #5cb0aa;
+  --color-mustard: #e8b54a;
+  --color-mustard-dark: #f0c46c;
+  --color-coral: #e86a5c;
+  --color-coral-dark: #f28a7d;
+  --color-violet: #9b7ebd;
+}
 
 :root {
   color-scheme: light;
@@ -34,16 +61,28 @@ body {
     'Segoe UI',
     Roboto,
     sans-serif;
-  background: radial-gradient(circle at top, #f8fafc, #e2e8f0 60%);
+  background: var(--color-paper);
 }
 
 .dark body {
-  background: radial-gradient(circle at top, #1e293b, #020617 60%);
+  background: var(--color-paper-dark);
+}
+
+/* Headings get the display face everywhere (including rich-text content
+   below) without touching every component's className. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+}
+
+/* For display-weight text that isn't a semantic heading (the nav brand,
+   button labels) - same face as h1-h6 above without changing the tag. */
+.font-display {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
 }
 
 ::selection {
-  background-color: #38bdf8;
-  color: #020617;
+  background-color: var(--color-mustard);
+  color: var(--color-ink);
 }
 
 /* Shared by RichTextEditor's live view (nested one level deeper under

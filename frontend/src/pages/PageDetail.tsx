@@ -39,22 +39,22 @@ export default function PageDetail() {
 
   if (notFound) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-slate-900 dark:text-slate-100">
-        <p className="text-sm text-slate-600 dark:text-slate-400">{t('pageDetail.notFound')}</p>
+      <div className="flex min-h-screen items-center justify-center text-ink dark:text-ink-dark">
+        <p className="text-sm text-ink-soft dark:text-ink-soft-dark">{t('pageDetail.notFound')}</p>
       </div>
     )
   }
 
   if (!page) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-slate-900 dark:text-slate-100">
-        <p className="text-sm text-slate-600 dark:text-slate-400">{t('common.loading')}</p>
+      <div className="flex min-h-screen items-center justify-center text-ink dark:text-ink-dark">
+        <p className="text-sm text-ink-soft dark:text-ink-soft-dark">{t('common.loading')}</p>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-16 text-slate-900 dark:text-slate-100">
+    <div className="mx-auto max-w-2xl px-6 py-16 text-ink dark:text-ink-dark">
       <h1 className="mb-6 text-3xl font-semibold tracking-tight">{page.heading}</h1>
       {/* eslint-disable-next-line react/no-danger */}
       <div className="rich-text-content" dangerouslySetInnerHTML={{ __html: page.content }} />

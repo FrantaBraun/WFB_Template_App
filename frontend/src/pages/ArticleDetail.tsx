@@ -43,23 +43,23 @@ export default function ArticleDetail() {
 
   if (notFound) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-slate-900 dark:text-slate-100">
-        <p className="text-sm text-slate-600 dark:text-slate-400">{t('articleDetail.notFound')}</p>
+      <div className="flex min-h-screen items-center justify-center text-ink dark:text-ink-dark">
+        <p className="text-sm text-ink-soft dark:text-ink-soft-dark">{t('articleDetail.notFound')}</p>
       </div>
     )
   }
 
   if (!article) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-slate-900 dark:text-slate-100">
-        <p className="text-sm text-slate-600 dark:text-slate-400">{t('common.loading')}</p>
+      <div className="flex min-h-screen items-center justify-center text-ink dark:text-ink-dark">
+        <p className="text-sm text-ink-soft dark:text-ink-soft-dark">{t('common.loading')}</p>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-16 text-slate-900 dark:text-slate-100">
-      <p className="mb-2 text-sm text-slate-500 dark:text-slate-400">
+    <div className="mx-auto max-w-2xl px-6 py-16 text-ink dark:text-ink-dark">
+      <p className="mb-2 text-sm text-ink-muted dark:text-ink-muted-dark">
         {new Date(article.event_date).toLocaleDateString()}
       </p>
       <h1 className="mb-6 text-3xl font-semibold tracking-tight">{article.title}</h1>

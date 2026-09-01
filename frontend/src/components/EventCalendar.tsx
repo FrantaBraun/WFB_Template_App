@@ -82,19 +82,19 @@ export default function EventCalendar() {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-      <h2 className="mb-3 text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100 hidden md:block">{t('calendar.title')}</h2>
+    <div className="rounded-2xl border-2 border-ink bg-white p-4 dark:border-ink-dark/30 dark:bg-card-dark">
+      <h2 className="mb-3 hidden font-display text-lg font-semibold tracking-tight text-ink dark:text-ink-dark md:block">{t('calendar.title')}</h2>
       <div className="mb-3 flex items-center justify-between">
-        <button type="button" onClick={goToPreviousMonth} className="rounded px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+        <button type="button" onClick={goToPreviousMonth} className="rounded px-2 py-1 text-sm text-ink-muted hover:bg-ink/10 dark:text-ink-muted-dark dark:hover:bg-ink-dark/10">
           ‹
         </button>
-        <span className="text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">{monthLabel}</span>
-        <button type="button" onClick={goToNextMonth} className="rounded px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+        <span className="text-sm font-semibold capitalize text-ink dark:text-ink-dark">{monthLabel}</span>
+        <button type="button" onClick={goToNextMonth} className="rounded px-2 py-1 text-sm text-ink-muted hover:bg-ink/10 dark:text-ink-muted-dark dark:hover:bg-ink-dark/10">
           ›
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-xs text-slate-500 dark:text-slate-400">
+      <div className="grid grid-cols-7 gap-1 text-center text-xs text-ink-muted dark:text-ink-muted-dark">
         {labels.map((label) => (
           <div key={label} className="py-1 capitalize">{label}</div>
         ))}
@@ -120,8 +120,8 @@ export default function EventCalendar() {
                 onClick={hasArticles ? () => setOpenDay(isOpen ? null : day) : undefined}
                 className={`aspect-square w-full rounded-lg text-sm ${
                   hasArticles
-                    ? 'cursor-pointer bg-sky-100 font-semibold text-sky-900 hover:bg-sky-200 dark:bg-sky-900/40 dark:text-sky-100 dark:hover:bg-sky-900/60'
-                    : 'text-slate-700 dark:text-slate-300'
+                    ? 'cursor-pointer bg-mustard/30 font-semibold text-ink hover:bg-mustard/45 dark:bg-mustard-dark/20 dark:text-ink-dark dark:hover:bg-mustard-dark/30'
+                    : 'text-ink-soft dark:text-ink-soft-dark'
                 }`}
               >
                 <span className={year === today.getFullYear() && month === today.getMonth() + 1 && day === today.getDate() ? 'underline font-bold' : ''}>
@@ -130,12 +130,12 @@ export default function EventCalendar() {
               </button>
 
               {isOpen && hasArticles && (
-                <div className="absolute left-1/2 top-full z-10 p-1 w-48 -translate-x-1/2 rounded-lg border border-slate-200 bg-white text-left shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                <div className="absolute left-1/2 top-full z-10 w-48 -translate-x-1/2 rounded-lg border-2 border-ink bg-white p-1 text-left shadow-lg dark:border-ink-dark/30 dark:bg-card-dark">
                   {dayArticles.map((article) => (
                     <Link
                       key={article.id}
                       to={`/clanek/${article.slug}`}
-                      className="block truncate rounded px-2 py-1.5 text-xs text-slate-900 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700"
+                      className="block truncate rounded px-2 py-1.5 text-xs text-ink hover:bg-ink/10 dark:text-ink-dark dark:hover:bg-ink-dark/10"
                     >
                       {article.title}
                     </Link>
@@ -148,10 +148,10 @@ export default function EventCalendar() {
       </div>
 
       {articlesByDay.size === 0 && (
-        <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">{t('calendar.noEvents')}</p>
+        <p className="mt-3 text-center text-xs text-ink-muted dark:text-ink-muted-dark">{t('calendar.noEvents')}</p>
       )}
       <div className='flex justify-center'>
-        <button className="mt-3 rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600" onClick={() => {
+        <button className="mt-3 rounded-lg bg-teal px-4 py-2 text-sm font-semibold text-white hover:bg-teal-dark dark:hover:bg-teal/80" onClick={() => {
           const today = new Date()
           setYear(today.getFullYear())
           setMonth(today.getMonth() + 1)
