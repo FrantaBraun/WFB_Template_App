@@ -2,6 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Application: API Hub
+
+**Purpose:** Aplikace pro evidenci API dokumentací s historickými verzemi a odkazy na dokumentace třetích stran. Import OpenAPI/Swagger dokumentace ze souboru nebo z odkazu.
+
+Přihlášený uživatel si registruje dokumentace aplikací třetích stran – OpenAPI, Swagger nebo jiné odkazy. Dokumentaci lze založit odkazem (URL na OpenAPI/Swagger specifikaci) nebo nahráním lokálního souboru (JSON/YAML); pokud aplikace zatím nemá veřejně dostupnou dokumentaci, lze k ní odkaz doplnit později a zapojit ji tak do automatické kontroly. Každá nová verze aplikace podle dokumentace se archivuje, aby bylo možné nahlédnout i zpětně, i když už oficiálně dostupná nebude. K dokumentaci aplikace lze přidávat vlastní poznámky.
+
+Dokumentace aplikací lze sdružovat do kolekcí. Samostatné aplikace i celé kolekce lze kombinovat do integrace – např. integrace využívá jednu kolekci dokumentací a k tomu jednu samostatnou aplikaci navíc. Ke kolekci lze vytvořit knowledge base s vlastními poznámkami, postupy a návody; integrace má obdobně vlastní KB, které obsahuje KB všech svých kolekcí plus vlastní stránky navíc. Editace KB integrace upravuje jen její vlastní část a neupravuje KB kolekce; editace KB kolekce se naopak promítne do vnořené části KB každé integrace, která danou kolekci obsahuje. Stránky KB smí editovat jen člen vlastnícího týmu, a to i u veřejné dokumentace nebo kolekce.
+
+U dokumentace načtené z odkazu lze nastavit periodu automatické kontroly (denně/týdně/měsíčně) nebo ji kdykoliv vyvolat ručně z administrace dokumentace; ruční nahrání nové verze souboru se chová stejně jako automatická kontrola. Kontrola zatím porovnává jen verzi ze specifikace (pole `info.version`) – obsahové porovnání s využitím AI modelu je plánované budoucí rozšíření, prozatím se neimplementuje. Pokud se verze změnila, založí se nová verze a stará se archivuje.
+
+Dokumentace, kolekce i integrace mají od začátku vlastnící tým – sdílení v rámci týmu je součástí návrhu, nejen budoucí rozšíření. Autor může dokumentaci nebo kolekci označit jako veřejnou, kdy ji může prohlížet (ne editovat) kdokoliv v aplikaci; přihlášený uživatel se navíc může k dokumentaci nebo kolekci přihlásit k odběru, i když není členem vlastnícího týmu. O nové verzi se posílá e-mail všem se sdíleným přístupem a odběratelům, spolu s in-app notifikací (seznam pod ikonou zvonečku v hlavičce) a bannerem přímo na stránce dané dokumentace.
+
+Forked from `core` by the `new-app` skill on 2026-09-10.
+
 ## Repository purpose
 
 This repository hosts a **family of applications built on one shared core**, rather than a single deployable app. The reusable foundation — `backend/` (FastAPI), `frontend/` (Vite/React), and `scripts/` (build + deployment tooling), wired to a separate, shared authorization service at `auth.withfbraun.com` (see "Authorization" below, which is the largest and most actively-evolving part of it) — is developed on the `core` branch. Each application lives in its own branch and pulls in `core`'s changes, so a fix or feature that belongs to every app is made once, on `core`, instead of being duplicated per application. Components remain independently versioned and deployed within any given branch — see "Independent versioning" below.

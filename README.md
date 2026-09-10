@@ -1,8 +1,18 @@
-# With FBraun — App Family Template
+# API Hub
 
-A shared foundation for a family of full-stack applications: a **FastAPI** backend, a **Vite + React + TypeScript** frontend, and deployment tooling — pre-wired to a shared, external authorization service so you don't have to build login, registration, or session handling from scratch.
+Aplikace pro evidenci API dokumentací s historickými verzemi a odkazy na dokumentace třetích stran. Import OpenAPI/Swagger dokumentace ze souboru nebo z odkazu.
 
 This repository doesn't ship a single app — it hosts a shared core plus one branch per application, so improvements to the shared foundation are made once and carried into every app instead of being duplicated per app.
+
+## O aplikaci
+
+Přihlášený uživatel si registruje dokumentace aplikací třetích stran – OpenAPI, Swagger nebo jiné odkazy. Dokumentaci lze založit odkazem (URL na OpenAPI/Swagger specifikaci) nebo nahráním lokálního souboru (JSON/YAML); pokud aplikace zatím nemá veřejně dostupnou dokumentaci, lze k ní odkaz doplnit později a zapojit ji tak do automatické kontroly. Každá nová verze aplikace podle dokumentace se archivuje, aby bylo možné nahlédnout i zpětně, i když už oficiálně dostupná nebude. K dokumentaci aplikace lze přidávat vlastní poznámky.
+
+Dokumentace aplikací lze sdružovat do kolekcí. Samostatné aplikace i celé kolekce lze kombinovat do integrace – např. integrace využívá jednu kolekci dokumentací a k tomu jednu samostatnou aplikaci navíc. Ke kolekci lze vytvořit knowledge base s vlastními poznámkami, postupy a návody; integrace má obdobně vlastní KB, které obsahuje KB všech svých kolekcí plus vlastní stránky navíc. Editace KB integrace upravuje jen její vlastní část a neupravuje KB kolekce; editace KB kolekce se naopak promítne do vnořené části KB každé integrace, která danou kolekci obsahuje. Stránky KB smí editovat jen člen vlastnícího týmu, a to i u veřejné dokumentace nebo kolekce.
+
+U dokumentace načtené z odkazu lze nastavit periodu automatické kontroly (denně/týdně/měsíčně) nebo ji kdykoliv vyvolat ručně z administrace dokumentace; ruční nahrání nové verze souboru se chová stejně jako automatická kontrola. Kontrola zatím porovnává jen verzi ze specifikace (pole `info.version`) – obsahové porovnání s využitím AI modelu je plánované budoucí rozšíření, prozatím se neimplementuje. Pokud se verze změnila, založí se nová verze a stará se archivuje.
+
+Dokumentace, kolekce i integrace mají od začátku vlastnící tým – sdílení v rámci týmu je součástí návrhu, nejen budoucí rozšíření. Autor může dokumentaci nebo kolekci označit jako veřejnou, kdy ji může prohlížet (ne editovat) kdokoliv v aplikaci; přihlášený uživatel se navíc může k dokumentaci nebo kolekci přihlásit k odběru, i když není členem vlastnícího týmu. O nové verzi se posílá e-mail všem se sdíleným přístupem a odběratelům, spolu s in-app notifikací (seznam pod ikonou zvonečku v hlavičce) a bannerem přímo na stránce dané dokumentace.
 
 ## Branches
 

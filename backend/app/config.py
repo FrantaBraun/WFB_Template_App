@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", extra="ignore")
 
     # Database
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/template_db"
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/api_hub_db"
 
     # Application
     app_base_url: str = "http://localhost:8000"
