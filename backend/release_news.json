@@ -1,4 +1,6 @@
 {
-    "unreleased": [],
+    "unreleased": [
+        "Add teams: create/rename teams, manage membership, and invite members by email with an accept link."
+    ],
     "releases": []
 }
