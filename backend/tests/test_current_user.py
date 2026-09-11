@@ -3,7 +3,8 @@
 # Freely available as a template for building custom applications.
 
 """Tests for app.api.deps.get_current_user: resolving or creating the local
-User row for a verified JWT sub, including the ON CONFLICT race it guards."""
+User row for a verified JWT sub (including the ON CONFLICT race it guards),
+and keeping its cached email in sync with the claim."""
 
 import uuid
 
@@ -48,3 +49,22 @@ async def test_conflicting_insert_does_not_raise(db_session):
 
     count = await db_session.scalar(select(func.count()).select_from(User).where(User.auth_sub == sub))
     assert count == 1
+
+
+async def test_email_set_on_first_creation_from_claim(db_session):
+    sub = uuid.uuid4()
+
+    user = await get_current_user(claims={"sub": str(sub), "email": "first@example.com"}, db=db_session)
+
+    assert user.email == "first@example.com"
+
+
+async def test_email_refreshed_when_claim_changes_on_later_login(db_session):
+    sub = uuid.uuid4()
+    first = await get_current_user(claims={"sub": str(sub), "email": "old@example.com"}, db=db_session)
+    assert first.email == "old@example.com"
+
+    second = await get_current_user(claims={"sub": str(sub), "email": "new@example.com"}, db=db_session)
+
+    assert second.id == first.id
+    assert second.email == "new@example.com"
