@@ -15,6 +15,7 @@ from app.config import get_settings
 from app.models.base import Base
 from app.models.user import User  # noqa: F401  (registers the table on Base.metadata)
 from app.models.team import Team, TeamMembership, TeamInvitation  # noqa: F401
+from app.models.api_document import ApiDocument, ApiDocumentVersion  # noqa: F401
 from app.modules.registry import import_all_module_models
 
 import_all_module_models()  # registers every discovered module's tables on Base.metadata too

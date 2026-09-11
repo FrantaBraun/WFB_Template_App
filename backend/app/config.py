@@ -22,6 +22,14 @@ class Settings(BaseSettings):
     cors_enabled: bool = True
     cors_origins: list[str] = ["http://localhost:5173"]
 
+    # API documents (app/services/spec_storage.py, openapi_spec.py) - where
+    # uploaded/fetched spec files are stored, and limits on ingesting them.
+    # uploads_dir matches scripts/upgrade.sh's UPLOADS_DIR env var, which
+    # already backs up/restores this directory across redeploys.
+    uploads_dir: str = "./uploads"
+    max_spec_file_size_bytes: int = 10_000_000
+    spec_fetch_timeout_seconds: float = 10.0
+
     # Feature modules (see app/modules/) - keys of the pluggable modules to
     # mount for this deployment. Empty by default: this template ships no
     # modules of its own. Toggling this never changes the DB schema - every
