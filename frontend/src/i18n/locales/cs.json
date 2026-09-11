@@ -310,5 +310,21 @@
         "viewSpec": "Zobrazit specifikaci"
       }
     }
+  },
+  "notifications": {
+    "bell": {
+      "title": "Oznámení",
+      "empty": "Zatím žádná oznámení.",
+      "itemText": "Nová verze {{version}}"
+    },
+    "banner": {
+      "text": "Nová verze k dispozici: {{versions}}",
+      "dismiss": "Skrýt"
+    },
+    "subscribe": {
+      "subscribe": "Přihlásit se k odběru",
+      "unsubscribe": "Odhlásit se z odběru",
+      "error": "Aktualizace odběru se nezdařila."
+    }
   }
 }

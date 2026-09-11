@@ -8,6 +8,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { apiFetch, apiUpload, getApiUrl } from '../api/client'
+import VersionBanner from '../components/VersionBanner'
 import usePageMeta from '../hooks/usePageMeta'
 
 interface ApiDocumentCurrentVersionData {
@@ -32,6 +33,7 @@ interface ApiDocumentDetailData {
   created_at: string
   current_version: ApiDocumentCurrentVersionData | null
   can_edit: boolean
+  is_subscribed: boolean | null
 }
 
 interface ApiDocumentVersionOutData {
@@ -91,6 +93,9 @@ export default function ApiDocDetail() {
   const [versionFile, setVersionFile] = useState<File | null>(null)
   const [uploadingVersion, setUploadingVersion] = useState(false)
   const [uploadVersionError, setUploadVersionError] = useState<string | null>(null)
+
+  const [subscribing, setSubscribing] = useState(false)
+  const [subscribeError, setSubscribeError] = useState<string | null>(null)
 
   usePageMeta({ title: doc?.title ?? t('apiDocs.detail.pageTitleFallback') })
 
@@ -221,6 +226,23 @@ export default function ApiDocDetail() {
     }
   }
 
+  async function handleToggleSubscribe() {
+    if (!doc || doc.is_subscribed === null) return
+    setSubscribing(true)
+    setSubscribeError(null)
+    try {
+      const resp = await apiFetch(`/api/api-docs/${doc.id}/subscribe`, {
+        method: doc.is_subscribed ? 'DELETE' : 'POST',
+      })
+      if (!resp.ok) throw new Error(t('notifications.subscribe.error'))
+      setDoc((prev) => (prev ? { ...prev, is_subscribed: !prev.is_subscribed } : prev))
+    } catch (err) {
+      setSubscribeError(err instanceof Error ? err.message : t('notifications.subscribe.error'))
+    } finally {
+      setSubscribing(false)
+    }
+  }
+
   if (notFound) {
     return (
       <div className="mx-auto flex max-w-2xl flex-col gap-4 px-6 py-16 text-center text-slate-900 dark:text-slate-100">
@@ -267,10 +289,33 @@ export default function ApiDocDetail() {
             {doc.is_public ? t('apiDocs.detail.public') : t('apiDocs.detail.private')}
           </span>
         </div>
-        <Link to="/api-docs" className="shrink-0 text-sm text-slate-600 underline dark:text-slate-400">
-          {t('apiDocs.detail.backToList')}
-        </Link>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          {doc.is_subscribed !== null && (
+            <button
+              type="button"
+              onClick={handleToggleSubscribe}
+              disabled={subscribing}
+              className={`rounded-lg border px-3 py-1.5 text-sm font-medium disabled:opacity-50 ${
+                doc.is_subscribed
+                  ? 'border-emerald-200 bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                  : 'border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-300'
+              }`}
+            >
+              {subscribing
+                ? t('common.saving')
+                : doc.is_subscribed
+                  ? t('notifications.subscribe.unsubscribe')
+                  : t('notifications.subscribe.subscribe')}
+            </button>
+          )}
+          <Link to="/api-docs" className="text-sm text-slate-600 underline dark:text-slate-400">
+            {t('apiDocs.detail.backToList')}
+          </Link>
+        </div>
       </div>
+      {subscribeError && <p className="text-sm text-red-600 dark:text-red-400">{subscribeError}</p>}
+
+      <VersionBanner documentationId={doc.id} />
 
       {doc.notes && <p className="text-slate-700 dark:text-slate-300">{doc.notes}</p>}
 

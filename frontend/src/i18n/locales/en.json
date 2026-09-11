@@ -310,5 +310,21 @@
         "viewSpec": "View spec"
       }
     }
+  },
+  "notifications": {
+    "bell": {
+      "title": "Notifications",
+      "empty": "No notifications yet.",
+      "itemText": "New version {{version}}"
+    },
+    "banner": {
+      "text": "New version available: {{versions}}",
+      "dismiss": "Dismiss"
+    },
+    "subscribe": {
+      "subscribe": "Subscribe",
+      "unsubscribe": "Unsubscribe",
+      "error": "Failed to update your subscription."
+    }
   }
 }

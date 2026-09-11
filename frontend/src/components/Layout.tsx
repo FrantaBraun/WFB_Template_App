@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { SUPPORTED_LANGUAGES } from '../i18n'
 import type { ModuleDefinition } from '../modules/types'
 import Footer from './Footer'
+import NotificationBell from './NotificationBell'
 import ThemeToggle from './ThemeToggle'
 
 /** Small control to switch the active i18next language between the supported locales. */
@@ -67,6 +68,7 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
               <Link to="/account" className="hover:text-slate-900 dark:hover:text-slate-100">
                 {t('common.account')}
               </Link>
+              <NotificationBell />
               <button onClick={() => logout()} className="hover:text-slate-900 dark:hover:text-slate-100">
                 {t('common.logout')}
               </button>
