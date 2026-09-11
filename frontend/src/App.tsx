@@ -20,6 +20,9 @@ import ReleaseNews from "./pages/ReleaseNews"
 import Teams from "./pages/Teams"
 import TeamDetail from "./pages/TeamDetail"
 import AcceptInvitation from "./pages/AcceptInvitation"
+import ApiDocs from "./pages/ApiDocs"
+import NewApiDoc from "./pages/NewApiDoc"
+import ApiDocDetail from "./pages/ApiDocDetail"
 import { useEnabledModules } from "./modules/registry"
 
 
@@ -35,6 +38,9 @@ function App() {
       <Route path="/teams" element={<Teams />} />
       <Route path="/teams/invitations/:token" element={<AcceptInvitation />} />
       <Route path="/teams/:id" element={<TeamDetail />} />
+      <Route path="/api-docs" element={<ApiDocs />} />
+      <Route path="/api-docs/new" element={<NewApiDoc />} />
+      <Route path="/api-docs/:id" element={<ApiDocDetail />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/consent" element={<Consent />} />
       <Route path="/consent-rejected" element={<ConsentRejected />} />

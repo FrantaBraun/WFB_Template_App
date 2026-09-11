@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add API Docs pages: browse public documentation, register new docs by URL or file upload, and view/edit/recheck the documentation your teams own, including its version history.",
         "Add Teams pages: view/create teams, manage members and roles, invite members by email, and accept team invitations."
     ],
     "releases": []

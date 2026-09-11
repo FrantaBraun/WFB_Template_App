@@ -83,6 +83,37 @@ export async function apiFetch(path: string, options: { method?: string; headers
 }
 
 /**
+ * Like apiFetch, but for multipart/form-data uploads (e.g. api-docs' file
+ * upload endpoints): same bearer-attach + 401-refresh-retry-once behavior,
+ * but deliberately never sets a Content-Type header, unlike apiFetch's
+ * unconditional 'application/json' - the browser must generate its own
+ * multipart boundary from the FormData body, which an explicit header would
+ * break.
+ */
+export async function apiUpload(path: string, formData: FormData, options: { method?: string; headers?: {Authorization?: string}, [key: string]: any } = { headers: {}, method: 'POST' }) {
+  const url = `${BASE_URL}${path}`
+  const method = options.method ?? 'POST'
+  const headers = { ...options.headers }
+  if (_access) headers.Authorization = `Bearer ${_access}`
+
+  let resp = await fetch(url, { ...options, method, body: formData, headers })
+
+  if (resp.status === 401 && _refresh) {
+    try {
+      const fresh = await doRefresh()
+      headers.Authorization = `Bearer ${fresh}`
+      resp = await fetch(url, { ...options, method, body: formData, headers })
+    } catch {
+      clearTokens()
+      window.location.href = '/login'
+      throw new Error('Session expired')
+    }
+  }
+
+  return resp
+}
+
+/**
  * Decodes a JWT's payload for client-side display purposes only (e.g.
  * reading claims to show in the UI). Does NOT verify the signature - this
  * is purely a base64url decode, so the result must never be trusted for

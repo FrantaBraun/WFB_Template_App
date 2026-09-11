@@ -12,7 +12,8 @@
     "account": "Account",
     "home": "Home",
     "toggleDarkMode": "Toggle dark mode",
-    "teams": "Teams"
+    "teams": "Teams",
+    "apiDocs": "API Docs"
   },
   "home": {
     "title": "Project template",
@@ -219,6 +220,95 @@
       "notFound": "This invitation could not be found.",
       "genericError": "Something went wrong accepting this invitation. Please try again.",
       "backToTeams": "Go to your teams"
+    }
+  },
+  "apiDocs": {
+    "pageTitle": "API Docs",
+    "pageDescription": "Browse public API documentation, or manage the docs your teams own.",
+    "newButton": "New",
+    "noTeamsMessage": "You need a team before you can register API documentation.",
+    "noTeamsLink": "Create or join a team",
+    "signInPrompt": "Sign in to see documentation owned by your teams.",
+    "tabs": {
+      "public": "Public",
+      "mine": "My Docs"
+    },
+    "list": {
+      "empty": "No documentation here yet.",
+      "loadError": "Failed to load API documentation.",
+      "version": "v{{version}}",
+      "noVersion": "No version yet"
+    },
+    "recheckPeriods": {
+      "manual": "Manual",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "versionSources": {
+      "initial": "Initial",
+      "manual_upload": "Manual upload",
+      "manual_recheck": "Manual recheck",
+      "auto_recheck": "Automatic recheck"
+    },
+    "new": {
+      "pageTitle": "New API Documentation",
+      "teamsLoadError": "Failed to load your teams.",
+      "teamLabel": "Team",
+      "titleLabel": "Title",
+      "notesLabel": "Notes",
+      "modeUrl": "From URL",
+      "modeUpload": "Upload a file",
+      "sourceUrlLabel": "Source URL",
+      "recheckPeriodLabel": "Recheck period",
+      "fileLabel": "Specification file (.json, .yaml, .yml)",
+      "fileRequired": "Please choose a file to upload.",
+      "submit": "Create",
+      "error": "Failed to create the documentation."
+    },
+    "detail": {
+      "pageTitleFallback": "API Documentation",
+      "backToList": "Back to API Docs",
+      "notFoundTitle": "Documentation not found",
+      "notFoundMessage": "This documentation doesn't exist, or you don't have access to it.",
+      "loadError": "Failed to load this documentation.",
+      "versionsLoadError": "Failed to load version history.",
+      "public": "Public",
+      "private": "Private",
+      "sourceUrlLabel": "Source URL",
+      "noSourceUrl": "Not set",
+      "recheckPeriodLabel": "Recheck period",
+      "lastCheckedAtLabel": "Last checked",
+      "lastCheckErrorLabel": "Last check error",
+      "currentVersionCard": {
+        "title": "Current version",
+        "version": "Version",
+        "specTitle": "Spec title",
+        "format": "Format",
+        "fetchedAt": "Fetched",
+        "none": "No version has been registered yet."
+      },
+      "actionsCard": {
+        "title": "Actions",
+        "recheckNow": "Recheck now",
+        "recheckDisabledHint": "Set a source URL to enable rechecking.",
+        "uploadVersionLabel": "Upload a new version",
+        "uploadVersionSubmit": "Upload"
+      },
+      "editCard": {
+        "title": "Edit",
+        "isPublicLabel": "Publicly visible",
+        "success": "Saved.",
+        "error": "Failed to save changes."
+      },
+      "recheckError": "Recheck failed.",
+      "uploadVersionError": "Upload failed.",
+      "versionsCard": {
+        "title": "Version history",
+        "empty": "No versions yet.",
+        "current": "current",
+        "viewSpec": "View spec"
+      }
     }
   }
 }

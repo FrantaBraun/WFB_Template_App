@@ -12,7 +12,8 @@
     "account": "Účet",
     "home": "Domů",
     "toggleDarkMode": "Přepnout tmavý režim",
-    "teams": "Týmy"
+    "teams": "Týmy",
+    "apiDocs": "API dokumentace"
   },
   "home": {
     "title": "Šablona projektu",
@@ -219,6 +220,95 @@
       "notFound": "Tuto pozvánku se nepodařilo najít.",
       "genericError": "Při přijímání pozvánky se něco pokazilo. Zkuste to prosím znovu.",
       "backToTeams": "Přejít na vaše týmy"
+    }
+  },
+  "apiDocs": {
+    "pageTitle": "API dokumentace",
+    "pageDescription": "Procházejte veřejnou API dokumentaci nebo spravujte dokumentaci vašich týmů.",
+    "newButton": "Nová",
+    "noTeamsMessage": "Pro registraci API dokumentace potřebujete tým.",
+    "noTeamsLink": "Vytvořit nebo se připojit k týmu",
+    "signInPrompt": "Přihlaste se, abyste viděli dokumentaci vlastněnou vašimi týmy.",
+    "tabs": {
+      "public": "Veřejné",
+      "mine": "Moje dokumentace"
+    },
+    "list": {
+      "empty": "Zatím tu není žádná dokumentace.",
+      "loadError": "Nepodařilo se načíst API dokumentaci.",
+      "version": "v{{version}}",
+      "noVersion": "Zatím žádná verze"
+    },
+    "recheckPeriods": {
+      "manual": "Ručně",
+      "daily": "Denně",
+      "weekly": "Týdně",
+      "monthly": "Měsíčně"
+    },
+    "versionSources": {
+      "initial": "Počáteční",
+      "manual_upload": "Ruční nahrání",
+      "manual_recheck": "Ruční kontrola",
+      "auto_recheck": "Automatická kontrola"
+    },
+    "new": {
+      "pageTitle": "Nová API dokumentace",
+      "teamsLoadError": "Nepodařilo se načíst vaše týmy.",
+      "teamLabel": "Tým",
+      "titleLabel": "Název",
+      "notesLabel": "Poznámky",
+      "modeUrl": "Z URL",
+      "modeUpload": "Nahrát soubor",
+      "sourceUrlLabel": "Zdrojová URL",
+      "recheckPeriodLabel": "Interval kontroly",
+      "fileLabel": "Soubor specifikace (.json, .yaml, .yml)",
+      "fileRequired": "Vyberte prosím soubor k nahrání.",
+      "submit": "Vytvořit",
+      "error": "Vytvoření dokumentace se nezdařilo."
+    },
+    "detail": {
+      "pageTitleFallback": "API dokumentace",
+      "backToList": "Zpět na API dokumentaci",
+      "notFoundTitle": "Dokumentace nenalezena",
+      "notFoundMessage": "Tato dokumentace neexistuje, nebo k ní nemáte přístup.",
+      "loadError": "Nepodařilo se načíst tuto dokumentaci.",
+      "versionsLoadError": "Nepodařilo se načíst historii verzí.",
+      "public": "Veřejné",
+      "private": "Soukromé",
+      "sourceUrlLabel": "Zdrojová URL",
+      "noSourceUrl": "Nenastaveno",
+      "recheckPeriodLabel": "Interval kontroly",
+      "lastCheckedAtLabel": "Naposledy zkontrolováno",
+      "lastCheckErrorLabel": "Chyba poslední kontroly",
+      "currentVersionCard": {
+        "title": "Aktuální verze",
+        "version": "Verze",
+        "specTitle": "Název specifikace",
+        "format": "Formát",
+        "fetchedAt": "Staženo",
+        "none": "Zatím nebyla zaregistrována žádná verze."
+      },
+      "actionsCard": {
+        "title": "Akce",
+        "recheckNow": "Zkontrolovat nyní",
+        "recheckDisabledHint": "Pro povolení kontroly nastavte zdrojovou URL.",
+        "uploadVersionLabel": "Nahrát novou verzi",
+        "uploadVersionSubmit": "Nahrát"
+      },
+      "editCard": {
+        "title": "Úprava",
+        "isPublicLabel": "Veřejně viditelné",
+        "success": "Uloženo.",
+        "error": "Uložení změn se nezdařilo."
+      },
+      "recheckError": "Kontrola se nezdařila.",
+      "uploadVersionError": "Nahrání se nezdařilo.",
+      "versionsCard": {
+        "title": "Historie verzí",
+        "empty": "Zatím žádné verze.",
+        "current": "aktuální",
+        "viewSpec": "Zobrazit specifikaci"
+      }
     }
   }
 }
