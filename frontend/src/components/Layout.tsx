@@ -57,6 +57,9 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
           ))}
           {user ? (
             <>
+              <Link to="/teams" className="hover:text-slate-900 dark:hover:text-slate-100">
+                {t('common.teams')}
+              </Link>
               <Link to="/account" className="hover:text-slate-900 dark:hover:text-slate-100">
                 {t('common.account')}
               </Link>

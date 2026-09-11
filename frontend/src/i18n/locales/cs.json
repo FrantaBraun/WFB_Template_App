@@ -11,7 +11,8 @@
     "register": "Registrace",
     "account": "Účet",
     "home": "Domů",
-    "toggleDarkMode": "Přepnout tmavý režim"
+    "toggleDarkMode": "Přepnout tmavý režim",
+    "teams": "Týmy"
   },
   "home": {
     "title": "Šablona projektu",
@@ -143,5 +144,81 @@
   "footer": {
     "ecosystem": "WithFBraun",
     "copyright": "© {{year}} František Braun"
+  },
+  "teams": {
+    "pageTitle": "Týmy",
+    "pageDescription": "Zobrazte a spravujte týmy, ve kterých jste členem.",
+    "loadError": "Nepodařilo se načíst vaše týmy.",
+    "roles": {
+      "owner": "Vlastník",
+      "member": "Člen"
+    },
+    "memberSingular": "člen",
+    "memberPlural": "členů",
+    "emptyState": {
+      "title": "Zatím nemáte žádný tým",
+      "description": "Vytvořte si níže svůj první tým a začněte evidovat API dokumentace. Osobní tým se automaticky nezakládá — musíte si nějaký vytvořit, nebo do něj být pozváni."
+    },
+    "createCard": {
+      "title": "Vytvořit tým",
+      "nameLabel": "Název týmu",
+      "submit": "Vytvořit tým",
+      "error": "Vytvoření týmu se nezdařilo."
+    },
+    "detail": {
+      "pageTitleFallback": "Tým",
+      "pageDescription": "Správa členů týmu a pozvánek.",
+      "backToList": "Zpět na týmy",
+      "notFoundTitle": "Tým nenalezen",
+      "notFoundMessage": "Tento tým neexistuje, nebo v něm nejste členem.",
+      "loadError": "Nepodařilo se načíst tento tým.",
+      "invitationsLoadError": "Nepodařilo se načíst čekající pozvánky.",
+      "renameCard": {
+        "title": "Název týmu",
+        "nameLabel": "Název",
+        "success": "Uloženo.",
+        "error": "Přejmenování týmu se nezdařilo."
+      },
+      "membersCard": {
+        "title": "Členové",
+        "unknownEmail": "Neznámý e-mail",
+        "you": "vy",
+        "joined": "Připojen(a)",
+        "leaveButton": "Opustit tým",
+        "removeButton": "Odebrat",
+        "removeError": "Odebrání člena se nezdařilo.",
+        "confirmLeave": "Opustit tento tým?",
+        "confirmRemove": "Odebrat tohoto člena z týmu?"
+      },
+      "inviteCard": {
+        "title": "Pozvat člena",
+        "emailLabel": "E-mailová adresa",
+        "submit": "Odeslat pozvánku",
+        "success": "Pozvánka odeslána.",
+        "error": "Odeslání pozvánky se nezdařilo."
+      },
+      "invitationsCard": {
+        "title": "Čekající pozvánky",
+        "empty": "Žádné čekající pozvánky.",
+        "expiresAt": "Vyprší",
+        "revoke": "Zrušit",
+        "revokeError": "Zrušení pozvánky se nezdařilo."
+      }
+    },
+    "accept": {
+      "pageTitle": "Přijetí pozvánky",
+      "pageDescription": "Přijměte pozvánku do týmu.",
+      "title": "Pozvánka do týmu",
+      "needsLogin": "Pro přijetí pozvánky se prosím přihlaste. Po přihlášení se na tento odkaz vraťte znovu.",
+      "successTitle": "Pozvánka přijata",
+      "successMessage": "Připojili jste se k týmu {{team}}.",
+      "viewTeam": "Zobrazit tým",
+      "errorTitle": "Pozvánku se nepodařilo přijmout",
+      "wrongEmail": "Tato pozvánka byla odeslána na jinou e-mailovou adresu, než pod kterou jste přihlášeni.",
+      "expiredOrRevoked": "Tato pozvánka již není platná — mohla vypršet, být zrušena nebo už byla použita.",
+      "notFound": "Tuto pozvánku se nepodařilo najít.",
+      "genericError": "Při přijímání pozvánky se něco pokazilo. Zkuste to prosím znovu.",
+      "backToTeams": "Přejít na vaše týmy"
+    }
   }
 }

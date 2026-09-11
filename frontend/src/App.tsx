@@ -17,6 +17,9 @@ import Register from "./pages/Register"
 import OAuthCallback from "./pages/OAuthCallback"
 import Version from "./pages/Version"
 import ReleaseNews from "./pages/ReleaseNews"
+import Teams from "./pages/Teams"
+import TeamDetail from "./pages/TeamDetail"
+import AcceptInvitation from "./pages/AcceptInvitation"
 import { useEnabledModules } from "./modules/registry"
 
 
@@ -29,6 +32,9 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/account" element={<Account />} />
+      <Route path="/teams" element={<Teams />} />
+      <Route path="/teams/invitations/:token" element={<AcceptInvitation />} />
+      <Route path="/teams/:id" element={<TeamDetail />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/consent" element={<Consent />} />
       <Route path="/consent-rejected" element={<ConsentRejected />} />

@@ -11,7 +11,8 @@
     "register": "Register",
     "account": "Account",
     "home": "Home",
-    "toggleDarkMode": "Toggle dark mode"
+    "toggleDarkMode": "Toggle dark mode",
+    "teams": "Teams"
   },
   "home": {
     "title": "Project template",
@@ -143,5 +144,81 @@
   "footer": {
     "ecosystem": "WithFBraun",
     "copyright": "© {{year}} František Braun"
+  },
+  "teams": {
+    "pageTitle": "Teams",
+    "pageDescription": "View and manage the teams you belong to.",
+    "loadError": "Failed to load your teams.",
+    "roles": {
+      "owner": "Owner",
+      "member": "Member"
+    },
+    "memberSingular": "member",
+    "memberPlural": "members",
+    "emptyState": {
+      "title": "You don't have any teams yet",
+      "description": "Create your first team below to start registering API documentation. There's no auto-provisioned personal team — you need to create one or be invited to one."
+    },
+    "createCard": {
+      "title": "Create a team",
+      "nameLabel": "Team name",
+      "submit": "Create team",
+      "error": "Failed to create the team."
+    },
+    "detail": {
+      "pageTitleFallback": "Team",
+      "pageDescription": "Manage team members and invitations.",
+      "backToList": "Back to teams",
+      "notFoundTitle": "Team not found",
+      "notFoundMessage": "This team doesn't exist, or you're not a member of it.",
+      "loadError": "Failed to load this team.",
+      "invitationsLoadError": "Failed to load pending invitations.",
+      "renameCard": {
+        "title": "Team name",
+        "nameLabel": "Name",
+        "success": "Saved.",
+        "error": "Failed to rename the team."
+      },
+      "membersCard": {
+        "title": "Members",
+        "unknownEmail": "Unknown email",
+        "you": "you",
+        "joined": "Joined",
+        "leaveButton": "Leave team",
+        "removeButton": "Remove",
+        "removeError": "Failed to remove this member.",
+        "confirmLeave": "Leave this team?",
+        "confirmRemove": "Remove this member from the team?"
+      },
+      "inviteCard": {
+        "title": "Invite a member",
+        "emailLabel": "Email address",
+        "submit": "Send invitation",
+        "success": "Invitation sent.",
+        "error": "Failed to send the invitation."
+      },
+      "invitationsCard": {
+        "title": "Pending invitations",
+        "empty": "No pending invitations.",
+        "expiresAt": "Expires",
+        "revoke": "Revoke",
+        "revokeError": "Failed to revoke the invitation."
+      }
+    },
+    "accept": {
+      "pageTitle": "Accept invitation",
+      "pageDescription": "Accept a team invitation.",
+      "title": "Team invitation",
+      "needsLogin": "Sign in to accept this invitation, then come back to this same link.",
+      "successTitle": "Invitation accepted",
+      "successMessage": "You've joined {{team}}.",
+      "viewTeam": "View team",
+      "errorTitle": "Couldn't accept invitation",
+      "wrongEmail": "This invitation was sent to a different email address than the one you're signed in with.",
+      "expiredOrRevoked": "This invitation is no longer valid — it may have expired, been revoked, or already been used.",
+      "notFound": "This invitation could not be found.",
+      "genericError": "Something went wrong accepting this invitation. Please try again.",
+      "backToTeams": "Go to your teams"
+    }
   }
 }
