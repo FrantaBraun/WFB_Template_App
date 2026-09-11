@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add API document registry: register third-party API docs by URL or file upload, browse version history, trigger manual rechecks/re-uploads, and share publicly or within your team.",
         "Add teams: create/rename teams, manage membership, and invite members by email with an accept link."
     ],
     "releases": []
