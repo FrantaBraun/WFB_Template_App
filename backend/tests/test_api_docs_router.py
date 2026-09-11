@@ -34,6 +34,7 @@ from sqlalchemy import select
 import app.security.jwt as jwt_module
 from app.config import Settings, get_settings
 from app.models.api_document import ApiDocument, ApiDocumentVersion
+from app.models.notification import Subscription
 from app.models.team import Team, TeamMembership
 from app.models.user import User
 from app.services.api_document_versions import process_new_spec
@@ -797,3 +798,151 @@ async def test_public_listing_only_includes_public_docs_no_team_scoping(db_sessi
     assert body[0]["title"] == "Public Doc"
     assert body[0]["team_id"] == str(team_a.id)
     assert body[0]["current_version"] == "1.0.0"
+
+
+# --- GET /{id} is_subscribed ---------------------------------------------------------
+
+
+async def test_get_document_is_subscribed_null_when_anonymous(db_session):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, is_public=True)
+
+    resp = await _request(db_session, "GET", f"/api/api-docs/{doc.id}")
+
+    assert resp.status_code == 200
+    assert resp.json()["is_subscribed"] is None
+
+
+async def test_get_document_is_subscribed_false_when_signed_in_not_subscribed(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, is_public=True)
+    outsider_token = make_access_token(sub=str(uuid.uuid4()))
+
+    resp = await _request(db_session, "GET", f"/api/api-docs/{doc.id}", token=outsider_token)
+
+    assert resp.status_code == 200
+    assert resp.json()["is_subscribed"] is False
+
+
+async def test_get_document_is_subscribed_true_when_signed_in_subscribed(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, is_public=True)
+    token = make_access_token(sub=str(owner.auth_sub))
+    db_session.add(Subscription(user_id=owner.id, documentation_id=doc.id))
+    await db_session.flush()
+
+    resp = await _request(db_session, "GET", f"/api/api-docs/{doc.id}", token=token)
+
+    assert resp.status_code == 200
+    assert resp.json()["is_subscribed"] is True
+
+
+# --- POST/DELETE /{id}/subscribe -----------------------------------------------------
+
+
+async def test_subscribe_non_member_public_doc_succeeds(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, is_public=True)
+    outsider = await _make_user(db_session, email="outsider@example.com")
+    outsider_token = make_access_token(sub=str(outsider.auth_sub))
+
+    resp = await _request(db_session, "POST", f"/api/api-docs/{doc.id}/subscribe", token=outsider_token)
+
+    assert resp.status_code == 204
+    rows = (
+        (
+            await db_session.execute(
+                select(Subscription).where(
+                    Subscription.user_id == outsider.id, Subscription.documentation_id == doc.id
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert len(rows) == 1
+
+
+async def test_subscribe_private_doc_non_member_returns_404(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, is_public=False)
+    outsider_token = make_access_token(sub=str(uuid.uuid4()))
+
+    resp = await _request(db_session, "POST", f"/api/api-docs/{doc.id}/subscribe", token=outsider_token)
+
+    assert resp.status_code == 404
+
+
+async def test_subscribe_twice_does_not_create_duplicate_row(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, is_public=True)
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    first = await _request(db_session, "POST", f"/api/api-docs/{doc.id}/subscribe", token=token)
+    second = await _request(db_session, "POST", f"/api/api-docs/{doc.id}/subscribe", token=token)
+
+    assert first.status_code == 204
+    assert second.status_code == 204
+    rows = (
+        (
+            await db_session.execute(
+                select(Subscription).where(
+                    Subscription.user_id == owner.id, Subscription.documentation_id == doc.id
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert len(rows) == 1
+
+
+async def test_unsubscribe_removes_subscription(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, is_public=True)
+    token = make_access_token(sub=str(owner.auth_sub))
+    await _request(db_session, "POST", f"/api/api-docs/{doc.id}/subscribe", token=token)
+
+    resp = await _request(db_session, "DELETE", f"/api/api-docs/{doc.id}/subscribe", token=token)
+
+    assert resp.status_code == 204
+    rows = (
+        (
+            await db_session.execute(
+                select(Subscription).where(
+                    Subscription.user_id == owner.id, Subscription.documentation_id == doc.id
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert rows == []
+
+
+async def test_unsubscribe_when_never_subscribed_still_succeeds(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, is_public=True)
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "DELETE", f"/api/api-docs/{doc.id}/subscribe", token=token)
+
+    assert resp.status_code == 204
+
+
+def test_subscribe_requires_auth(client):
+    resp = client.post(f"/api/api-docs/{uuid.uuid4()}/subscribe")
+    assert resp.status_code in (401, 403)
+
+
+def test_unsubscribe_requires_auth(client):
+    resp = client.delete(f"/api/api-docs/{uuid.uuid4()}/subscribe")
+    assert resp.status_code in (401, 403)

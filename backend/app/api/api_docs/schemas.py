@@ -62,6 +62,11 @@ class ApiDocumentCurrentVersion(BaseModel):
 
 
 class ApiDocumentDetail(BaseModel):
+    """is_subscribed is null for an anonymous caller (no identity to check a
+    Subscription row against) and true/false otherwise - see
+    api_docs/router.py's _build_detail, which computes it from the same
+    current_user already used for can_edit."""
+
     id: uuid.UUID
     team_id: uuid.UUID
     title: str
@@ -74,6 +79,7 @@ class ApiDocumentDetail(BaseModel):
     created_at: datetime
     current_version: ApiDocumentCurrentVersion | None
     can_edit: bool
+    is_subscribed: bool | None
 
 
 class ApiDocumentVersionOut(BaseModel):

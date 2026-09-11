@@ -7,6 +7,7 @@ import uuid
 import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.api_docs.schemas import (
@@ -21,6 +22,7 @@ from app.api.deps import get_current_user, get_current_user_optional
 from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.api_document import ApiDocument, ApiDocumentVersion
+from app.models.notification import Subscription
 from app.models.team import TeamMembership
 from app.models.user import User
 from app.services.api_document_versions import get_current_version, process_new_spec
@@ -96,7 +98,23 @@ def _to_summary(doc: ApiDocument, current_version: str | None) -> ApiDocumentSum
     )
 
 
-async def _build_detail(db: AsyncSession, doc: ApiDocument, can_edit: bool) -> ApiDocumentDetail:
+async def _get_is_subscribed(db: AsyncSession, document_id: uuid.UUID, user: User | None) -> bool | None:
+    """None for an anonymous caller (see ApiDocumentDetail.is_subscribed);
+    otherwise whether a Subscription row exists for this exact user+document
+    pair - not gated by team membership, per CLAUDE.md's domain model."""
+    if user is None:
+        return None
+    result = await db.execute(
+        select(Subscription.id).where(
+            Subscription.user_id == user.id, Subscription.documentation_id == document_id
+        )
+    )
+    return result.scalar_one_or_none() is not None
+
+
+async def _build_detail(
+    db: AsyncSession, doc: ApiDocument, can_edit: bool, current_user: User | None
+) -> ApiDocumentDetail:
     current = await get_current_version(db, doc.id)
     current_out = (
         ApiDocumentCurrentVersion(
@@ -110,6 +128,7 @@ async def _build_detail(db: AsyncSession, doc: ApiDocument, can_edit: bool) -> A
         if current is not None
         else None
     )
+    is_subscribed = await _get_is_subscribed(db, doc.id, current_user)
     return ApiDocumentDetail(
         id=doc.id,
         team_id=doc.team_id,
@@ -123,6 +142,7 @@ async def _build_detail(db: AsyncSession, doc: ApiDocument, can_edit: bool) -> A
         created_at=doc.created_at,
         current_version=current_out,
         can_edit=can_edit,
+        is_subscribed=is_subscribed,
     )
 
 
@@ -189,7 +209,7 @@ async def create_document(
     # POST /{id}/recheck once that's available.
     await _fetch_and_process(doc, source="initial", db=db, settings=settings)
 
-    return await _build_detail(db, doc, can_edit=True)
+    return await _build_detail(db, doc, can_edit=True, current_user=current_user)
 
 
 @router.post("/upload", status_code=201)
@@ -230,7 +250,7 @@ async def upload_document(
     except SpecValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    return await _build_detail(db, doc, can_edit=True)
+    return await _build_detail(db, doc, can_edit=True, current_user=current_user)
 
 
 @router.get("")
@@ -265,7 +285,7 @@ async def get_document(
     db: AsyncSession = Depends(get_db),
 ) -> ApiDocumentDetail:
     doc, is_member = await _require_visible_document(db, document_id, current_user)
-    return await _build_detail(db, doc, can_edit=is_member)
+    return await _build_detail(db, doc, can_edit=is_member, current_user=current_user)
 
 
 @router.patch("/{document_id}")
@@ -287,7 +307,7 @@ async def update_document(
     await db.commit()
     await db.refresh(doc)
 
-    return await _build_detail(db, doc, can_edit=True)
+    return await _build_detail(db, doc, can_edit=True, current_user=current_user)
 
 
 @router.post("/{document_id}/recheck")
@@ -303,7 +323,7 @@ async def recheck_document(
 
     await _fetch_and_process(doc, source="manual_recheck", db=db, settings=settings)
 
-    return await _build_detail(db, doc, can_edit=True)
+    return await _build_detail(db, doc, can_edit=True, current_user=current_user)
 
 
 @router.post("/{document_id}/upload-version")
@@ -329,7 +349,49 @@ async def upload_document_version(
     except SpecValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    return await _build_detail(db, doc, can_edit=True)
+    return await _build_detail(db, doc, can_edit=True, current_user=current_user)
+
+
+@router.post("/{document_id}/subscribe", status_code=204)
+async def subscribe_to_document(
+    document_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Any logged-in user may subscribe to any document they can currently
+    see - public, or their own team's - not gated by membership beyond that
+    (see CLAUDE.md's domain model). Idempotent via ON CONFLICT DO NOTHING
+    against Subscription's (user_id, documentation_id) unique constraint,
+    rather than a naive check-then-insert, for the same near-simultaneous-
+    request race reason as app/api/deps.py's _resolve_current_user."""
+    doc, _ = await _require_visible_document(db, document_id, current_user)
+    await db.execute(
+        pg_insert(Subscription)
+        .values(user_id=current_user.id, documentation_id=doc.id)
+        .on_conflict_do_nothing(index_elements=[Subscription.user_id, Subscription.documentation_id])
+    )
+    await db.commit()
+
+
+@router.delete("/{document_id}/subscribe", status_code=204)
+async def unsubscribe_from_document(
+    document_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Deliberately not gated on document visibility - a caller who already
+    subscribed can always remove their own subscription even if the
+    document's visibility changed since. Idempotent: removing zero matching
+    rows is a success, not an error."""
+    result = await db.execute(
+        select(Subscription).where(
+            Subscription.user_id == current_user.id, Subscription.documentation_id == document_id
+        )
+    )
+    subscription = result.scalar_one_or_none()
+    if subscription is not None:
+        await db.delete(subscription)
+        await db.commit()
 
 
 @router.get("/{document_id}/versions")
