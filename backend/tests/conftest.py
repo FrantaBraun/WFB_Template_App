@@ -6,8 +6,25 @@
 exercising app.security.jwt without a real auth service, and a rolled-back
 db_session for isolated database tests."""
 
+import os
 import time
 import uuid
+
+# MAIL_SUPPRESS_SEND must be forced on before any app.* import below - the
+# first one to resolve Settings (app.database's module-level get_settings()
+# call, triggered by `from app.database import engine` further down)
+# permanently caches its result via @lru_cache for the rest of the session,
+# and this repo's real backend/.env has MAIL_SUPPRESS_SEND=false pointed at
+# a placeholder SMTP host. Without this, any test path that reaches
+# app.services.email.send_email() without itself injecting
+# mail_test_settings - e.g. a service function called directly rather than
+# through a request whose get_settings dependency is overridden, such as
+# app.services.notifications.notify_new_version being invoked indirectly via
+# app.services.api_document_versions.process_new_spec - would attempt a real
+# outbound SMTP connection. setdefault, not a hard assignment, so a developer
+# who sets this in their own shell for some other reason isn't silently
+# overridden.
+os.environ.setdefault("MAIL_SUPPRESS_SEND", "true")
 
 import jwt as pyjwt
 import pytest

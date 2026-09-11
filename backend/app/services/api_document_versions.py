@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.api_document import ApiDocument, ApiDocumentVersion
+from app.services.notifications import notify_new_version
 from app.services.openapi_spec import SpecValidationError, parse_spec
 from app.services.spec_storage import save_spec_file
 
@@ -46,6 +47,12 @@ async def process_new_spec(
     Reused unchanged by create-by-URL/-upload, manual recheck, manual
     re-upload and (a later phase's) scheduled recheck - source is the only
     thing that varies between callers.
+
+    On an actual new/changed version, notify_new_version
+    (app/services/notifications.py) is called before returning - never on
+    the same-version no-op path above, and never on a failure path below,
+    since those don't reach this point. notify_new_version never raises, so
+    it can't turn this call's own success into a failure.
 
     On any failure (oversized content, parse_spec, or save_spec_file once a
     new version is actually needed) doc.last_check_error is set to a short
@@ -95,6 +102,7 @@ async def process_new_spec(
         doc.last_check_error = None
         await db.commit()
         await db.refresh(new_version)
+        await notify_new_version(doc, new_version, db)
         return new_version
     except Exception as exc:
         doc.last_check_error = str(exc)
