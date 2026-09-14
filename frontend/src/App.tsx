@@ -23,6 +23,8 @@ import AcceptInvitation from "./pages/AcceptInvitation"
 import ApiDocs from "./pages/ApiDocs"
 import NewApiDoc from "./pages/NewApiDoc"
 import ApiDocDetail from "./pages/ApiDocDetail"
+import Collections from "./pages/Collections"
+import CollectionDetail from "./pages/CollectionDetail"
 import { useEnabledModules } from "./modules/registry"
 
 
@@ -41,6 +43,8 @@ function App() {
       <Route path="/api-docs" element={<ApiDocs />} />
       <Route path="/api-docs/new" element={<NewApiDoc />} />
       <Route path="/api-docs/:id" element={<ApiDocDetail />} />
+      <Route path="/collections" element={<Collections />} />
+      <Route path="/collections/:id" element={<CollectionDetail />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/consent" element={<Consent />} />
       <Route path="/consent-rejected" element={<ConsentRejected />} />

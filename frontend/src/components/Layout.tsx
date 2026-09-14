@@ -60,6 +60,9 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
           <Link to="/api-docs" className="hover:text-slate-900 dark:hover:text-slate-100">
             {t('common.apiDocs')}
           </Link>
+          <Link to="/collections" className="hover:text-slate-900 dark:hover:text-slate-100">
+            {t('common.collections')}
+          </Link>
           {user ? (
             <>
               <Link to="/teams" className="hover:text-slate-900 dark:hover:text-slate-100">

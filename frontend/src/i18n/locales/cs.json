@@ -13,7 +13,8 @@
     "home": "Domů",
     "toggleDarkMode": "Přepnout tmavý režim",
     "teams": "Týmy",
-    "apiDocs": "API dokumentace"
+    "apiDocs": "API dokumentace",
+    "collections": "Kolekce"
   },
   "home": {
     "title": "Šablona projektu",
@@ -325,6 +326,63 @@
       "subscribe": "Přihlásit se k odběru",
       "unsubscribe": "Odhlásit se z odběru",
       "error": "Aktualizace odběru se nezdařila."
+    }
+  },
+  "collections": {
+    "pageTitle": "Kolekce",
+    "pageDescription": "Procházejte veřejné kolekce API dokumentace nebo spravujte kolekce vašich týmů.",
+    "newButton": "Nová",
+    "noTeamsMessage": "Pro vytvoření kolekce potřebujete tým.",
+    "noTeamsLink": "Vytvořit nebo se připojit k týmu",
+    "signInPrompt": "Přihlaste se, abyste viděli kolekce vlastněné vašimi týmy.",
+    "tabs": {
+      "public": "Veřejné",
+      "mine": "Moje kolekce"
+    },
+    "list": {
+      "empty": "Zatím tu nejsou žádné kolekce.",
+      "loadError": "Nepodařilo se načíst kolekce.",
+      "documentSingular": "dokument",
+      "documentPlural": "dokumentů"
+    },
+    "create": {
+      "title": "Vytvořit kolekci",
+      "teamLabel": "Tým",
+      "nameLabel": "Název",
+      "descriptionLabel": "Popis",
+      "submit": "Vytvořit",
+      "error": "Vytvoření kolekce se nezdařilo."
+    },
+    "detail": {
+      "pageTitleFallback": "Kolekce",
+      "backToList": "Zpět na kolekce",
+      "notFoundTitle": "Kolekce nenalezena",
+      "notFoundMessage": "Tato kolekce neexistuje, nebo k ní nemáte přístup.",
+      "loadError": "Nepodařilo se načíst tuto kolekci.",
+      "documentsLoadError": "Nepodařilo se načíst dokumenty této kolekce.",
+      "public": "Veřejné",
+      "private": "Soukromé",
+      "documentsCard": {
+        "title": "Dokumenty",
+        "empty": "Tato kolekce zatím neobsahuje žádné dokumenty.",
+        "removeButton": "Odebrat",
+        "removeError": "Odebrání dokumentu se nezdařilo."
+      },
+      "addDocumentCard": {
+        "title": "Přidat dokument",
+        "empty": "Není k dispozici žádný dokument k přidání.",
+        "addButton": "Přidat",
+        "addError": "Přidání dokumentu se nezdařilo.",
+        "loadError": "Nepodařilo se načíst dostupné dokumenty."
+      },
+      "editCard": {
+        "title": "Úprava",
+        "nameLabel": "Název",
+        "descriptionLabel": "Popis",
+        "isPublicLabel": "Veřejně viditelné",
+        "success": "Uloženo.",
+        "error": "Uložení změn se nezdařilo."
+      }
     }
   }
 }

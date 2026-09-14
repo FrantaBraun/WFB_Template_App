@@ -13,7 +13,8 @@
     "home": "Home",
     "toggleDarkMode": "Toggle dark mode",
     "teams": "Teams",
-    "apiDocs": "API Docs"
+    "apiDocs": "API Docs",
+    "collections": "Collections"
   },
   "home": {
     "title": "Project template",
@@ -325,6 +326,63 @@
       "subscribe": "Subscribe",
       "unsubscribe": "Unsubscribe",
       "error": "Failed to update your subscription."
+    }
+  },
+  "collections": {
+    "pageTitle": "Collections",
+    "pageDescription": "Browse public collections of API documentation, or manage the collections your teams own.",
+    "newButton": "New",
+    "noTeamsMessage": "You need a team before you can create a collection.",
+    "noTeamsLink": "Create or join a team",
+    "signInPrompt": "Sign in to see collections owned by your teams.",
+    "tabs": {
+      "public": "Public",
+      "mine": "My Collections"
+    },
+    "list": {
+      "empty": "No collections here yet.",
+      "loadError": "Failed to load collections.",
+      "documentSingular": "document",
+      "documentPlural": "documents"
+    },
+    "create": {
+      "title": "Create a collection",
+      "teamLabel": "Team",
+      "nameLabel": "Name",
+      "descriptionLabel": "Description",
+      "submit": "Create",
+      "error": "Failed to create the collection."
+    },
+    "detail": {
+      "pageTitleFallback": "Collection",
+      "backToList": "Back to Collections",
+      "notFoundTitle": "Collection not found",
+      "notFoundMessage": "This collection doesn't exist, or you don't have access to it.",
+      "loadError": "Failed to load this collection.",
+      "documentsLoadError": "Failed to load this collection's documents.",
+      "public": "Public",
+      "private": "Private",
+      "documentsCard": {
+        "title": "Documents",
+        "empty": "This collection has no documents yet.",
+        "removeButton": "Remove",
+        "removeError": "Failed to remove this document."
+      },
+      "addDocumentCard": {
+        "title": "Add a document",
+        "empty": "No documents available to add.",
+        "addButton": "Add",
+        "addError": "Failed to add this document.",
+        "loadError": "Failed to load available documents."
+      },
+      "editCard": {
+        "title": "Edit",
+        "nameLabel": "Name",
+        "descriptionLabel": "Description",
+        "isPublicLabel": "Publicly visible",
+        "success": "Saved.",
+        "error": "Failed to save changes."
+      }
     }
   }
 }
