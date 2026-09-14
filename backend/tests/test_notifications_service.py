@@ -3,10 +3,11 @@
 # Freely available as a template for building custom applications.
 
 """Tests for app.services.notifications.notify_new_version: recipient dedup
-across team members and subscribers, the in-app-notification-without-email
-case, the zero-recipients/zero-email skip of send_email, email content, and
-- the most important case - that a notification failure never disturbs
-process_new_spec's own success path.
+across team members, direct document subscribers and collection subscribers
+(Phase 5), the in-app-notification-without-email case, the zero-recipients/
+zero-email skip of send_email, email content, and - the most important case -
+that a notification failure never disturbs process_new_spec's own success
+path.
 
 Every test below that expects an email attempt passes mail_test_settings
 explicitly (the same opt-in pattern test_teams_router.py already uses for
@@ -23,6 +24,7 @@ from sqlalchemy import select
 
 import app.services.notifications as notifications_module
 from app.models.api_document import ApiDocument, ApiDocumentVersion
+from app.models.collection import Collection, CollectionDocument
 from app.models.notification import Notification, Subscription
 from app.models.team import Team, TeamMembership
 from app.models.user import User
@@ -70,6 +72,31 @@ async def _add_member(db_session, team: Team, user: User, role: str = "member") 
 
 async def _add_subscription(db_session, user: User, doc: ApiDocument) -> Subscription:
     subscription = Subscription(user_id=user.id, documentation_id=doc.id)
+    db_session.add(subscription)
+    await db_session.flush()
+    return subscription
+
+
+async def _make_collection(db_session, team: Team, creator: User, **overrides) -> Collection:
+    fields = dict(team_id=team.id, name="Example Collection", created_by_user_id=creator.id)
+    fields.update(overrides)
+    collection = Collection(**fields)
+    db_session.add(collection)
+    await db_session.flush()
+    return collection
+
+
+async def _add_document_to_collection(
+    db_session, collection: Collection, doc: ApiDocument, added_by: User
+) -> CollectionDocument:
+    link = CollectionDocument(collection_id=collection.id, documentation_id=doc.id, added_by_user_id=added_by.id)
+    db_session.add(link)
+    await db_session.flush()
+    return link
+
+
+async def _add_collection_subscription(db_session, user: User, collection: Collection) -> Subscription:
+    subscription = Subscription(user_id=user.id, collection_id=collection.id)
     db_session.add(subscription)
     await db_session.flush()
     return subscription
@@ -169,6 +196,56 @@ async def test_zero_recipients_skips_send_email_and_creates_no_notifications(
 
     assert called is False
     assert await _notification_count(db_session, doc.id, version.id) == 0
+
+
+# --- collection-subscriber fan-out (Phase 5) --------------------------------------------
+
+
+async def test_triple_dedup_team_member_doc_subscriber_and_collection_subscriber_gets_one_notification(
+    db_session, mail_test_settings
+):
+    """The same person can be reachable through all three recipient sources
+    at once - team member, direct document subscriber, and subscriber to a
+    collection containing the document - and must still get exactly one
+    Notification row and appear exactly once in the email recipients."""
+    team = await _make_team(db_session)
+    triple_user = await _make_user(db_session, email="triple@example.com")
+    await _add_member(db_session, team, triple_user)
+    doc = await _make_document(db_session, team, triple_user)
+    await _add_subscription(db_session, triple_user, doc)
+    collection = await _make_collection(db_session, team, triple_user)
+    await _add_document_to_collection(db_session, collection, doc, triple_user)
+    await _add_collection_subscription(db_session, triple_user, collection)
+    version = await _make_version(db_session, doc)
+
+    mail = FastMail(_connection_config(mail_test_settings))
+    with mail.record_messages() as outbox:
+        await notify_new_version(doc, version, db_session, settings=mail_test_settings)
+
+    assert await _notification_count(db_session, doc.id, version.id) == 1
+    assert len(outbox) == 1
+    assert _recipients(outbox[0]) == ["triple@example.com"]
+
+
+async def test_collection_only_subscriber_gets_notified(db_session, mail_test_settings):
+    """Not a team member, not a direct document subscriber - reachable only
+    through the Collection this document belongs to."""
+    team = await _make_team(db_session)
+    creator = await _make_user(db_session)  # no membership row - see _make_document
+    doc = await _make_document(db_session, team, creator)
+    collection = await _make_collection(db_session, team, creator)
+    await _add_document_to_collection(db_session, collection, doc, creator)
+    outsider = await _make_user(db_session, email="outsider@example.com")
+    await _add_collection_subscription(db_session, outsider, collection)
+    version = await _make_version(db_session, doc)
+
+    mail = FastMail(_connection_config(mail_test_settings))
+    with mail.record_messages() as outbox:
+        await notify_new_version(doc, version, db_session, settings=mail_test_settings)
+
+    assert await _notification_count(db_session, doc.id, version.id) == 1
+    assert len(outbox) == 1
+    assert _recipients(outbox[0]) == ["outsider@example.com"]
 
 
 # --- email content --------------------------------------------------------------------

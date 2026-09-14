@@ -11,6 +11,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.models.team import TeamMembership
 from app.models.user import User
 from app.security.jwt import get_current_user_claims
 
@@ -90,3 +91,31 @@ async def get_current_user_optional(
         return None
 
     return await _resolve_current_user(claims, db)
+
+
+async def require_team_membership(db: AsyncSession, team_id: UUID, user: User) -> None:
+    """A team the caller isn't a member of is indistinguishable from one
+    that doesn't exist - 404, not 403 (same rule/pattern as
+    app/api/teams/router.py's own _require_membership, which returns the
+    TeamMembership row itself for callers that need it - this one is just
+    the yes/no gate). Originally private to app/api/api_docs/router.py,
+    moved here so app/api/collections/router.py (and a later
+    integrations/router.py) can share the identical check instead of a
+    third near-duplicate copy."""
+    result = await db.execute(
+        select(TeamMembership.id).where(TeamMembership.team_id == team_id, TeamMembership.user_id == user.id)
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+
+async def is_team_member(db: AsyncSession, team_id: UUID, user_id: UUID) -> bool:
+    """Plain boolean membership check, for endpoints that behave differently
+    for members vs. non-members rather than rejecting non-members outright
+    (e.g. a visibility check that also lets a public resource through) - see
+    require_team_membership above for the reject-outright case. Moved here
+    alongside it, for the same reason."""
+    result = await db.execute(
+        select(TeamMembership.id).where(TeamMembership.team_id == team_id, TeamMembership.user_id == user_id)
+    )
+    return result.scalar_one_or_none() is not None

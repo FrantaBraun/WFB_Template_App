@@ -18,7 +18,7 @@ from app.api.api_docs.schemas import (
     ApiDocumentUpdate,
     ApiDocumentVersionOut,
 )
-from app.api.deps import get_current_user, get_current_user_optional
+from app.api.deps import get_current_user, get_current_user_optional, is_team_member, require_team_membership
 from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.api_document import ApiDocument, ApiDocumentVersion
@@ -30,24 +30,6 @@ from app.services.openapi_spec import SpecValidationError
 from app.services.spec_storage import read_spec_file
 
 router = APIRouter()
-
-
-async def _require_team_membership(db: AsyncSession, team_id: uuid.UUID, user: User) -> None:
-    """A team the caller isn't a member of is indistinguishable from one
-    that doesn't exist - 404, not 403 (same rule/pattern as
-    app/api/teams/router.py's _require_membership)."""
-    result = await db.execute(
-        select(TeamMembership.id).where(TeamMembership.team_id == team_id, TeamMembership.user_id == user.id)
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=404, detail="Team not found")
-
-
-async def _is_team_member(db: AsyncSession, team_id: uuid.UUID, user_id: uuid.UUID) -> bool:
-    result = await db.execute(
-        select(TeamMembership.id).where(TeamMembership.team_id == team_id, TeamMembership.user_id == user_id)
-    )
-    return result.scalar_one_or_none() is not None
 
 
 async def _get_document_or_404(db: AsyncSession, document_id: uuid.UUID) -> ApiDocument:
@@ -65,7 +47,7 @@ async def _require_visible_document(
     is a team member, else 404 - never 403, so an unauthorized caller can't
     tell a private document from one that doesn't exist."""
     doc = await _get_document_or_404(db, document_id)
-    is_member = current_user is not None and await _is_team_member(db, doc.team_id, current_user.id)
+    is_member = current_user is not None and await is_team_member(db, doc.team_id, current_user.id)
     if not doc.is_public and not is_member:
         raise HTTPException(status_code=404, detail="Document not found")
     return doc, is_member
@@ -73,7 +55,7 @@ async def _require_visible_document(
 
 async def _require_member_document(db: AsyncSession, document_id: uuid.UUID, user: User) -> ApiDocument:
     doc = await _get_document_or_404(db, document_id)
-    if not await _is_team_member(db, doc.team_id, user.id):
+    if not await is_team_member(db, doc.team_id, user.id):
         raise HTTPException(status_code=404, detail="Document not found")
     return doc
 
@@ -169,7 +151,7 @@ async def create_document(
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ) -> ApiDocumentDetail:
-    await _require_team_membership(db, body.team_id, current_user)
+    await require_team_membership(db, body.team_id, current_user)
 
     if not body.source_url:
         raise HTTPException(
@@ -211,7 +193,7 @@ async def upload_document(
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ) -> ApiDocumentDetail:
-    await _require_team_membership(db, team_id, current_user)
+    await require_team_membership(db, team_id, current_user)
 
     raw = await file.read()
 
@@ -350,14 +332,23 @@ async def subscribe_to_document(
     """Any logged-in user may subscribe to any document they can currently
     see - public, or their own team's - not gated by membership beyond that
     (see CLAUDE.md's domain model). Idempotent via ON CONFLICT DO NOTHING
-    against Subscription's (user_id, documentation_id) unique constraint,
-    rather than a naive check-then-insert, for the same near-simultaneous-
-    request race reason as app/api/deps.py's _resolve_current_user."""
+    against Subscription's (user_id, documentation_id) partial unique index
+    (app/models/notification.py - Phase 5 replaced the plain unique
+    constraint with two partial ones, one per subscription target), rather
+    than a naive check-then-insert, for the same near-simultaneous-request
+    race reason as app/api/deps.py's _resolve_current_user. Postgres only
+    infers a partial index as the ON CONFLICT arbiter when the inference
+    clause's own index_where matches the index's predicate - index_elements
+    alone (sufficient back when this was a plain unique constraint) silently
+    stops matching anything once the index becomes partial."""
     doc, _ = await _require_visible_document(db, document_id, current_user)
     await db.execute(
         pg_insert(Subscription)
         .values(user_id=current_user.id, documentation_id=doc.id)
-        .on_conflict_do_nothing(index_elements=[Subscription.user_id, Subscription.documentation_id])
+        .on_conflict_do_nothing(
+            index_elements=[Subscription.user_id, Subscription.documentation_id],
+            index_where=Subscription.documentation_id.isnot(None),
+        )
     )
     await db.commit()
 

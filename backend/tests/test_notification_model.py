@@ -13,6 +13,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.models.api_document import ApiDocument, ApiDocumentVersion
+from app.models.collection import Collection
 from app.models.notification import Notification, Subscription
 from app.models.team import Team
 from app.models.user import User
@@ -36,6 +37,19 @@ async def _make_document(db_session, **overrides) -> ApiDocument:
     db_session.add(document)
     await db_session.flush()
     return document
+
+
+async def _make_collection(db_session, **overrides) -> Collection:
+    team = Team(name="Test Team")
+    db_session.add(team)
+    await db_session.flush()
+    creator = await _make_user(db_session)
+    fields = dict(team_id=team.id, name="Some Collection", created_by_user_id=creator.id)
+    fields.update(overrides)
+    collection = Collection(**fields)
+    db_session.add(collection)
+    await db_session.flush()
+    return collection
 
 
 async def _make_version(db_session, doc: ApiDocument, version: str = "1.0.0") -> ApiDocumentVersion:
@@ -84,6 +98,62 @@ async def test_subscription_same_user_can_subscribe_to_different_documents(db_se
 
     db_session.add(Subscription(user_id=user.id, documentation_id=doc_a.id))
     db_session.add(Subscription(user_id=user.id, documentation_id=doc_b.id))
+    await db_session.flush()  # must not raise
+
+
+async def test_collection_subscription_create_sets_defaults(db_session):
+    collection = await _make_collection(db_session)
+    user = await _make_user(db_session)
+
+    subscription = Subscription(user_id=user.id, collection_id=collection.id)
+    db_session.add(subscription)
+    await db_session.flush()
+
+    assert subscription.id is not None
+    assert subscription.documentation_id is None
+    assert subscription.created_at is not None
+
+
+async def test_subscription_user_collection_pair_must_be_unique(db_session):
+    collection = await _make_collection(db_session)
+    user = await _make_user(db_session)
+    db_session.add(Subscription(user_id=user.id, collection_id=collection.id))
+    await db_session.flush()
+
+    db_session.add(Subscription(user_id=user.id, collection_id=collection.id))
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_subscription_check_constraint_rejects_both_targets_set(db_session):
+    doc = await _make_document(db_session)
+    collection = await _make_collection(db_session)
+    user = await _make_user(db_session)
+
+    db_session.add(Subscription(user_id=user.id, documentation_id=doc.id, collection_id=collection.id))
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_subscription_check_constraint_rejects_neither_target_set(db_session):
+    user = await _make_user(db_session)
+
+    db_session.add(Subscription(user_id=user.id))
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_subscription_document_and_collection_subscription_for_same_user_coexist(db_session):
+    """documentation_id and collection_id are each enforced by their own
+    partial unique index (see app/models/notification.py), independent
+    scopes - a user subscribed to both a document and a collection at the
+    same time is not a conflict."""
+    doc = await _make_document(db_session)
+    collection = await _make_collection(db_session)
+    user = await _make_user(db_session)
+
+    db_session.add(Subscription(user_id=user.id, documentation_id=doc.id))
+    db_session.add(Subscription(user_id=user.id, collection_id=collection.id))
     await db_session.flush()  # must not raise
 
 

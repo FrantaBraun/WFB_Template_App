@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
 from app.models.api_document import ApiDocument, ApiDocumentVersion
+from app.models.collection import CollectionDocument
 from app.models.notification import Notification, Subscription
 from app.models.team import TeamMembership
 from app.models.user import User
@@ -24,8 +25,10 @@ async def notify_new_version(
     settings: Settings | None = None,
 ) -> None:
     """Notify a newly-archived version's recipients: every member of
-    doc.team_id, unioned with every Subscription to doc.id, deduplicated by
-    user id. Inserts one Notification row per recipient - in-app, regardless
+    doc.team_id, unioned with every direct Subscription to doc.id, unioned
+    with every Subscription to a Collection that contains doc.id (via
+    CollectionDocument - see app/models/collection.py), deduplicated by user
+    id. Inserts one Notification row per recipient - in-app, regardless
     of whether they have a cached email - then sends a single email to
     whichever recipients have one, skipped entirely (not attempted) when
     there are zero recipients or zero with an email.
@@ -54,7 +57,17 @@ async def notify_new_version(
         subscriber_ids = (
             await db.execute(select(Subscription.user_id).where(Subscription.documentation_id == doc.id))
         ).scalars().all()
-        recipient_ids = set(member_ids) | set(subscriber_ids)
+        collection_subscriber_ids = (
+            await db.execute(
+                select(Subscription.user_id)
+                .join(CollectionDocument, CollectionDocument.collection_id == Subscription.collection_id)
+                .where(
+                    Subscription.collection_id.isnot(None),
+                    CollectionDocument.documentation_id == doc.id,
+                )
+            )
+        ).scalars().all()
+        recipient_ids = set(member_ids) | set(subscriber_ids) | set(collection_subscriber_ids)
         if not recipient_ids:
             return
 
