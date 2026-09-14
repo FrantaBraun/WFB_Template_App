@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add integrations: combine collections and standalone API documents into a team-only integration, with a merged, de-duplicated document view tagged by source.",
         "Add collections: group API documents into a collection, share it publicly or within your team, and subscribe to be notified when any of its documents gets a new version.",
         "Add automatic recheck scheduler: API documents with a daily/weekly/monthly recheck period are now checked periodically in the background, not just on demand.",
         "Add subscriptions and notifications: subscribe to any visible API document to get notified of new versions, view your notifications with unread counts, and mark them as read.",
