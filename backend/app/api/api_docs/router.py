@@ -25,8 +25,8 @@ from app.models.api_document import ApiDocument, ApiDocumentVersion
 from app.models.notification import Subscription
 from app.models.team import TeamMembership
 from app.models.user import User
-from app.services.api_document_versions import get_current_version, process_new_spec
-from app.services.openapi_spec import SpecValidationError, fetch_spec_from_url
+from app.services.api_document_versions import fetch_and_process, get_current_version, process_new_spec
+from app.services.openapi_spec import SpecValidationError
 from app.services.spec_storage import read_spec_file
 
 router = APIRouter()
@@ -149,27 +149,16 @@ async def _build_detail(
 async def _fetch_and_process(
     doc: ApiDocument, source: str, db: AsyncSession, settings: Settings
 ) -> ApiDocumentVersion | None:
-    """Shared by create-by-URL and recheck. process_new_spec only ever sees
-    already-fetched bytes (it takes raw: bytes, not a URL) so a fetch
-    failure can't reach its own error handling - handled the same way here
-    instead: set last_check_error, commit, surface as 422."""
+    """Thin HTTP-error-translation wrapper around the service-layer
+    fetch_and_process (app/services/api_document_versions.py) - shared by
+    create-by-URL and manual recheck. fetch_and_process itself has no
+    FastAPI dependency and lets httpx.HTTPError/SpecValidationError
+    propagate as plain exceptions (app/services/scheduler.py's automatic
+    recheck reuses it and reacts to those directly); this layer is the one
+    place that turns either into HTTPException(422)."""
     try:
-        raw = await fetch_spec_from_url(doc.source_url, settings.spec_fetch_timeout_seconds)
-    except httpx.HTTPError as exc:
-        doc.last_check_error = str(exc)
-        await db.commit()
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-
-    try:
-        return await process_new_spec(
-            doc,
-            raw,
-            source=source,
-            db=db,
-            uploads_dir=settings.uploads_dir,
-            max_size_bytes=settings.max_spec_file_size_bytes,
-        )
-    except SpecValidationError as exc:
+        return await fetch_and_process(doc, source=source, db=db, settings=settings)
+    except (httpx.HTTPError, SpecValidationError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 

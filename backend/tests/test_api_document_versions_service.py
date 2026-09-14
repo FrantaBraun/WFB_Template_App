@@ -10,13 +10,16 @@ different version, and the parse-failure error-handling contract
 import json
 import uuid
 
+import httpx
 import pytest
+import respx
 from sqlalchemy import select
 
+from app.config import Settings
 from app.models.api_document import ApiDocument, ApiDocumentVersion
 from app.models.team import Team
 from app.models.user import User
-from app.services.api_document_versions import process_new_spec
+from app.services.api_document_versions import fetch_and_process, process_new_spec
 from app.services.openapi_spec import SpecValidationError
 from app.services.spec_storage import read_spec_file
 
@@ -195,3 +198,54 @@ async def test_parse_failure_after_existing_version_does_not_archive_it(db_sessi
     current = await _current_version_row(db_session, doc.id)
     assert current is not None
     assert current.id == first.id
+
+
+# --- fetch_and_process (fetch + process_new_spec, no FastAPI dependency) ------------
+
+
+@respx.mock
+async def test_fetch_and_process_success_returns_new_version(db_session, tmp_path):
+    doc = await _make_document(db_session, source_url="https://example.com/openapi.json")
+    respx.get("https://example.com/openapi.json").mock(
+        return_value=httpx.Response(200, content=_spec_bytes("1.0.0"))
+    )
+    settings = Settings(uploads_dir=str(tmp_path))
+
+    result = await fetch_and_process(doc, source="auto_recheck", db=db_session, settings=settings)
+
+    assert result is not None
+    assert result.version == "1.0.0"
+    assert result.source == "auto_recheck"
+
+
+@respx.mock
+async def test_fetch_and_process_propagates_http_error_not_http_exception(db_session, tmp_path):
+    """fetch_and_process has no FastAPI dependency (app.services.* never
+    imports fastapi) - a fetch failure must propagate as httpx's own
+    exception, not HTTPException. Converting it to HTTPException(422) is
+    app/api/api_docs/router.py's job, one layer up; app/services/scheduler.py
+    reuses this same function and reacts to the plain exception directly."""
+    doc = await _make_document(db_session, source_url="https://example.com/openapi.json")
+    respx.get("https://example.com/openapi.json").mock(return_value=httpx.Response(500))
+    settings = Settings(uploads_dir=str(tmp_path))
+
+    with pytest.raises(httpx.HTTPError):
+        await fetch_and_process(doc, source="auto_recheck", db=db_session, settings=settings)
+
+    await db_session.refresh(doc)
+    assert doc.last_check_error is not None
+
+
+@respx.mock
+async def test_fetch_and_process_propagates_spec_validation_error_not_http_exception(db_session, tmp_path):
+    doc = await _make_document(db_session, source_url="https://example.com/openapi.json")
+    respx.get("https://example.com/openapi.json").mock(
+        return_value=httpx.Response(200, content=b"\xff\xff\xff\xff")
+    )
+    settings = Settings(uploads_dir=str(tmp_path))
+
+    with pytest.raises(SpecValidationError):
+        await fetch_and_process(doc, source="auto_recheck", db=db_session, settings=settings)
+
+    await db_session.refresh(doc)
+    assert doc.last_check_error is not None
