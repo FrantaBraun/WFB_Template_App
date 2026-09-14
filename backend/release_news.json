@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add automatic recheck scheduler: API documents with a daily/weekly/monthly recheck period are now checked periodically in the background, not just on demand.",
         "Add subscriptions and notifications: subscribe to any visible API document to get notified of new versions, view your notifications with unread counts, and mark them as read.",
         "Add API document registry: register third-party API docs by URL or file upload, browse version history, trigger manual rechecks/re-uploads, and share publicly or within your team.",
         "Add teams: create/rename teams, manage membership, and invite members by email with an accept link."

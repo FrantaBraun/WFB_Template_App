@@ -14,6 +14,7 @@ from app.config import get_settings
 from app.database import engine
 from app.logging_config import configure_logging
 from app.services.auth_client import auth_client
+from app.services.scheduler import shutdown_scheduler, start_scheduler
 
 settings = get_settings()
 configure_logging(settings)
@@ -23,11 +24,19 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """FastAPI startup/shutdown hook: closes the shared AuthClient's HTTP
-    connection and disposes the DB engine's connection pool on shutdown."""
+    """FastAPI startup/shutdown hook: starts/stops the automatic recheck
+    scheduler (guarded by settings.scheduler_enabled, so tests can disable
+    it) and closes the shared AuthClient's HTTP connection and disposes the
+    DB engine's connection pool on shutdown. The scheduler is stopped before
+    either of those, since its job uses the DB engine - it must not still be
+    running once that engine is disposed."""
     logger.info("Application startup")
+    if settings.scheduler_enabled:
+        start_scheduler()
     yield
     logger.info("Application shutdown")
+    if settings.scheduler_enabled:
+        shutdown_scheduler()
     await auth_client.aclose()
     await engine.dispose()
 

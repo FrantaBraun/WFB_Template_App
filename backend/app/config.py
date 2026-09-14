@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     max_spec_file_size_bytes: int = 10_000_000
     spec_fetch_timeout_seconds: float = 10.0
 
+    # Automatic recheck scheduler (app/services/scheduler.py) - periodically
+    # scans ApiDocuments for a due recheck_period and reuses the same
+    # fetch_and_process logic as a manual recheck.
+    scheduler_enabled: bool = True
+    recheck_scan_interval_minutes: int = 60
+
     # Feature modules (see app/modules/) - keys of the pluggable modules to
     # mount for this deployment. Empty by default: this template ships no
     # modules of its own. Toggling this never changes the DB schema - every
