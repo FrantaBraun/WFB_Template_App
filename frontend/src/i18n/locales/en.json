@@ -14,7 +14,8 @@
     "toggleDarkMode": "Toggle dark mode",
     "teams": "Teams",
     "apiDocs": "API Docs",
-    "collections": "Collections"
+    "collections": "Collections",
+    "integrations": "Integrations"
   },
   "home": {
     "title": "Project template",
@@ -382,6 +383,78 @@
         "isPublicLabel": "Publicly visible",
         "success": "Saved.",
         "error": "Failed to save changes."
+      }
+    }
+  },
+  "integrations": {
+    "pageTitle": "Integrations",
+    "pageDescription": "Manage the integrations your teams own, combining collections and standalone API documentation.",
+    "newButton": "New",
+    "noTeamsMessage": "You need a team before you can create an integration.",
+    "noTeamsLink": "Create or join a team",
+    "list": {
+      "empty": "No integrations here yet.",
+      "loadError": "Failed to load your integrations.",
+      "collectionSingular": "collection",
+      "collectionPlural": "collections",
+      "documentSingular": "document",
+      "documentPlural": "documents"
+    },
+    "create": {
+      "title": "Create an integration",
+      "teamLabel": "Team",
+      "nameLabel": "Name",
+      "descriptionLabel": "Description",
+      "submit": "Create",
+      "error": "Failed to create the integration."
+    },
+    "detail": {
+      "pageTitleFallback": "Integration",
+      "backToList": "Back to Integrations",
+      "notFoundTitle": "Integration not found",
+      "notFoundMessage": "This integration doesn't exist, or you're not a member of its team.",
+      "loadError": "Failed to load this integration.",
+      "collectionsLoadError": "Failed to load this integration's collections.",
+      "documentsLoadError": "Failed to load this integration's effective documents.",
+      "editCard": {
+        "title": "Edit",
+        "nameLabel": "Name",
+        "descriptionLabel": "Description",
+        "success": "Saved.",
+        "error": "Failed to save changes."
+      },
+      "collectionsCard": {
+        "title": "Collections",
+        "empty": "No collections linked yet.",
+        "removeButton": "Remove",
+        "removeError": "Failed to remove this collection."
+      },
+      "addCollectionCard": {
+        "title": "Add a collection",
+        "empty": "No collections available to add.",
+        "addButton": "Add",
+        "addError": "Failed to add this collection.",
+        "loadError": "Failed to load available collections."
+      },
+      "directDocumentsCard": {
+        "title": "Direct documents",
+        "empty": "No documents linked directly yet.",
+        "removeButton": "Remove",
+        "removeError": "Failed to remove this document."
+      },
+      "addDocumentCard": {
+        "title": "Add a document",
+        "empty": "No documents available to add.",
+        "addButton": "Add",
+        "addError": "Failed to add this document.",
+        "loadError": "Failed to load available documents."
+      },
+      "effectiveDocumentsCard": {
+        "title": "Effective documents",
+        "description": "Every document reachable from this integration, directly or through a linked collection.",
+        "empty": "No documents reachable yet.",
+        "sourceDirect": "Direct",
+        "sourceCollection": "via {{collectionName}}"
       }
     }
   }

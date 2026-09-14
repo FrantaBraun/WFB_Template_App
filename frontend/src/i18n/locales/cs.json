@@ -14,7 +14,8 @@
     "toggleDarkMode": "Přepnout tmavý režim",
     "teams": "Týmy",
     "apiDocs": "API dokumentace",
-    "collections": "Kolekce"
+    "collections": "Kolekce",
+    "integrations": "Integrace"
   },
   "home": {
     "title": "Šablona projektu",
@@ -382,6 +383,78 @@
         "isPublicLabel": "Veřejně viditelné",
         "success": "Uloženo.",
         "error": "Uložení změn se nezdařilo."
+      }
+    }
+  },
+  "integrations": {
+    "pageTitle": "Integrace",
+    "pageDescription": "Spravujte integrace vašich týmů, které kombinují kolekce a samostatnou API dokumentaci.",
+    "newButton": "Nová",
+    "noTeamsMessage": "Pro vytvoření integrace potřebujete tým.",
+    "noTeamsLink": "Vytvořit nebo se připojit k týmu",
+    "list": {
+      "empty": "Zatím tu nejsou žádné integrace.",
+      "loadError": "Nepodařilo se načíst vaše integrace.",
+      "collectionSingular": "kolekce",
+      "collectionPlural": "kolekcí",
+      "documentSingular": "dokument",
+      "documentPlural": "dokumentů"
+    },
+    "create": {
+      "title": "Vytvořit integraci",
+      "teamLabel": "Tým",
+      "nameLabel": "Název",
+      "descriptionLabel": "Popis",
+      "submit": "Vytvořit",
+      "error": "Vytvoření integrace se nezdařilo."
+    },
+    "detail": {
+      "pageTitleFallback": "Integrace",
+      "backToList": "Zpět na integrace",
+      "notFoundTitle": "Integrace nenalezena",
+      "notFoundMessage": "Tato integrace neexistuje, nebo nejste členem jejího týmu.",
+      "loadError": "Nepodařilo se načíst tuto integraci.",
+      "collectionsLoadError": "Nepodařilo se načíst kolekce této integrace.",
+      "documentsLoadError": "Nepodařilo se načíst efektivní dokumenty této integrace.",
+      "editCard": {
+        "title": "Úprava",
+        "nameLabel": "Název",
+        "descriptionLabel": "Popis",
+        "success": "Uloženo.",
+        "error": "Uložení změn se nezdařilo."
+      },
+      "collectionsCard": {
+        "title": "Kolekce",
+        "empty": "Zatím nejsou propojené žádné kolekce.",
+        "removeButton": "Odebrat",
+        "removeError": "Odebrání kolekce se nezdařilo."
+      },
+      "addCollectionCard": {
+        "title": "Přidat kolekci",
+        "empty": "Není k dispozici žádná kolekce k přidání.",
+        "addButton": "Přidat",
+        "addError": "Přidání kolekce se nezdařilo.",
+        "loadError": "Nepodařilo se načíst dostupné kolekce."
+      },
+      "directDocumentsCard": {
+        "title": "Přímé dokumenty",
+        "empty": "Zatím nejsou přímo propojené žádné dokumenty.",
+        "removeButton": "Odebrat",
+        "removeError": "Odebrání dokumentu se nezdařilo."
+      },
+      "addDocumentCard": {
+        "title": "Přidat dokument",
+        "empty": "Není k dispozici žádný dokument k přidání.",
+        "addButton": "Přidat",
+        "addError": "Přidání dokumentu se nezdařilo.",
+        "loadError": "Nepodařilo se načíst dostupné dokumenty."
+      },
+      "effectiveDocumentsCard": {
+        "title": "Efektivní dokumenty",
+        "description": "Všechny dokumenty dostupné z této integrace, ať už přímo nebo přes propojenou kolekci.",
+        "empty": "Zatím nejsou dostupné žádné dokumenty.",
+        "sourceDirect": "Přímo",
+        "sourceCollection": "přes {{collectionName}}"
       }
     }
   }
