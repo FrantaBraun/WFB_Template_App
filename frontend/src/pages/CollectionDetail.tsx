@@ -8,6 +8,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import KnowledgeBaseSection, { type KnowledgeBasePageData } from '../components/KnowledgeBaseSection'
 import usePageMeta from '../hooks/usePageMeta'
 
 interface CollectionDetailData {
@@ -55,6 +56,9 @@ export default function CollectionDetail() {
   const [documents, setDocuments] = useState<ApiDocumentSummaryData[] | null>(null)
   const [documentsError, setDocumentsError] = useState<string | null>(null)
 
+  const [kbPages, setKbPages] = useState<KnowledgeBasePageData[] | null>(null)
+  const [kbError, setKbError] = useState<string | null>(null)
+
   const [editName, setEditName] = useState('')
   const [editDescription, setEditDescription] = useState('')
   const [editIsPublic, setEditIsPublic] = useState(false)
@@ -86,6 +90,8 @@ export default function CollectionDetail() {
     setLoadError(null)
     setDocuments(null)
     setDocumentsError(null)
+    setKbPages(null)
+    setKbError(null)
     setAvailableDocs(null)
     setAvailableDocsError(null)
 
@@ -116,6 +122,15 @@ export default function CollectionDetail() {
       })
       .catch(() => {
         if (!cancelled) setDocumentsError(t('collections.detail.documentsLoadError'))
+      })
+
+    apiFetch(`/api/collections/${id}/kb/pages`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: KnowledgeBasePageData[]) => {
+        if (!cancelled) setKbPages(data)
+      })
+      .catch(() => {
+        if (!cancelled) setKbError(t('collections.detail.kbLoadError'))
       })
 
     return () => {
@@ -196,6 +211,29 @@ export default function CollectionDetail() {
     } finally {
       setRemovingDocumentId(null)
     }
+  }
+
+  async function handleCreateKbPage(data: { title: string; content: string }) {
+    if (!id) return
+    const resp = await apiFetch(`/api/collections/${id}/kb/pages`, { method: 'POST', body: JSON.stringify(data) })
+    if (!resp.ok) throw new Error(t('knowledgeBase.addError'))
+    const created: KnowledgeBasePageData = await resp.json()
+    setKbPages((prev) => [...(prev ?? []), created])
+  }
+
+  async function handleUpdateKbPage(pageId: string, data: { title: string; content: string }) {
+    if (!id) return
+    const resp = await apiFetch(`/api/collections/${id}/kb/pages/${pageId}`, { method: 'PATCH', body: JSON.stringify(data) })
+    if (!resp.ok) throw new Error(t('knowledgeBase.editError'))
+    const updated: KnowledgeBasePageData = await resp.json()
+    setKbPages((prev) => (prev ? prev.map((p) => (p.id === pageId ? updated : p)) : prev))
+  }
+
+  async function handleDeleteKbPage(pageId: string) {
+    if (!id) return
+    const resp = await apiFetch(`/api/collections/${id}/kb/pages/${pageId}`, { method: 'DELETE' })
+    if (!resp.ok) throw new Error(t('knowledgeBase.deleteError'))
+    setKbPages((prev) => (prev ? prev.filter((p) => p.id !== pageId) : prev))
   }
 
   async function handleToggleSubscribe() {
@@ -326,6 +364,16 @@ export default function CollectionDetail() {
           </ul>
         )}
       </div>
+
+      {kbError && <p className="text-sm text-red-600 dark:text-red-400">{kbError}</p>}
+      <KnowledgeBaseSection
+        heading={t('knowledgeBase.heading')}
+        pages={kbPages ?? []}
+        canEdit={collection.can_edit}
+        onCreate={collection.can_edit ? handleCreateKbPage : undefined}
+        onUpdate={collection.can_edit ? handleUpdateKbPage : undefined}
+        onDelete={collection.can_edit ? handleDeleteKbPage : undefined}
+      />
 
       {collection.can_edit && (
         <>

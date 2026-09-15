@@ -361,6 +361,7 @@
       "notFoundMessage": "This collection doesn't exist, or you don't have access to it.",
       "loadError": "Failed to load this collection.",
       "documentsLoadError": "Failed to load this collection's documents.",
+      "kbLoadError": "Failed to load this collection's knowledge base.",
       "public": "Public",
       "private": "Private",
       "documentsCard": {
@@ -416,6 +417,7 @@
       "loadError": "Failed to load this integration.",
       "collectionsLoadError": "Failed to load this integration's collections.",
       "documentsLoadError": "Failed to load this integration's effective documents.",
+      "kbLoadError": "Failed to load this integration's knowledge base.",
       "editCard": {
         "title": "Edit",
         "nameLabel": "Name",
@@ -457,5 +459,21 @@
         "sourceCollection": "via {{collectionName}}"
       }
     }
+  },
+  "knowledgeBase": {
+    "heading": "Knowledge Base",
+    "ownPagesHeading": "This integration's own pages",
+    "fromCollection": "From {{collectionName}}",
+    "addPage": "Add page",
+    "edit": "Edit",
+    "delete": "Delete",
+    "titleLabel": "Title",
+    "contentLabel": "Content",
+    "contentHint": "Supports Markdown formatting.",
+    "empty": "No knowledge base pages yet.",
+    "addError": "Failed to add this page.",
+    "editError": "Failed to save changes.",
+    "deleteError": "Failed to delete this page.",
+    "confirmDelete": "Delete this page? This cannot be undone."
   }
 }

@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add Knowledge Base sections to Collection and Integration pages: write Markdown notes, rendered safely (sanitized) for every viewer, with an integration always showing the latest pages from its collections plus its own.",
         "Add Integrations pages: create and manage integrations that combine collections and standalone API documentation, with an effective-documents view showing where each document is reachable from.",
         "Add Collections pages: browse public collections, create and manage the collections your teams own, add or remove documents, and subscribe to be notified of new versions.",
         "Add notifications: a header bell with unread badge and dropdown, a new-version banner on documentation pages, and a subscribe/unsubscribe button for any visible API document.",

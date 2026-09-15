@@ -361,6 +361,7 @@
       "notFoundMessage": "Tato kolekce neexistuje, nebo k ní nemáte přístup.",
       "loadError": "Nepodařilo se načíst tuto kolekci.",
       "documentsLoadError": "Nepodařilo se načíst dokumenty této kolekce.",
+      "kbLoadError": "Nepodařilo se načíst znalostní bázi této kolekce.",
       "public": "Veřejné",
       "private": "Soukromé",
       "documentsCard": {
@@ -416,6 +417,7 @@
       "loadError": "Nepodařilo se načíst tuto integraci.",
       "collectionsLoadError": "Nepodařilo se načíst kolekce této integrace.",
       "documentsLoadError": "Nepodařilo se načíst efektivní dokumenty této integrace.",
+      "kbLoadError": "Nepodařilo se načíst znalostní bázi této integrace.",
       "editCard": {
         "title": "Úprava",
         "nameLabel": "Název",
@@ -457,5 +459,21 @@
         "sourceCollection": "přes {{collectionName}}"
       }
     }
+  },
+  "knowledgeBase": {
+    "heading": "Znalostní báze",
+    "ownPagesHeading": "Vlastní stránky této integrace",
+    "fromCollection": "Z kolekce {{collectionName}}",
+    "addPage": "Přidat stránku",
+    "edit": "Upravit",
+    "delete": "Smazat",
+    "titleLabel": "Název",
+    "contentLabel": "Obsah",
+    "contentHint": "Podporuje formátování Markdown.",
+    "empty": "Zatím žádné stránky znalostní báze.",
+    "addError": "Přidání stránky se nezdařilo.",
+    "editError": "Uložení změn se nezdařilo.",
+    "deleteError": "Smazání stránky se nezdařilo.",
+    "confirmDelete": "Smazat tuto stránku? Tuto akci nelze vrátit zpět."
   }
 }

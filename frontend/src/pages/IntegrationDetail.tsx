@@ -8,6 +8,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import KnowledgeBaseSection, { type KnowledgeBasePageData } from '../components/KnowledgeBaseSection'
 import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
 
@@ -51,6 +52,17 @@ interface IntegrationDocumentOutData extends ApiDocumentSummaryData {
   sources: IntegrationDocumentSourceData[]
 }
 
+interface IntegrationKBCollectionGroupData {
+  collection_id: string
+  collection_name: string
+  pages: KnowledgeBasePageData[]
+}
+
+interface IntegrationKBOutData {
+  collection_pages: IntegrationKBCollectionGroupData[]
+  own_pages: KnowledgeBasePageData[]
+}
+
 type Message = { type: 'success' | 'error'; text: string } | null
 
 /**
@@ -85,6 +97,9 @@ export default function IntegrationDetail() {
 
   const [effectiveDocuments, setEffectiveDocuments] = useState<IntegrationDocumentOutData[] | null>(null)
   const [documentsError, setDocumentsError] = useState<string | null>(null)
+
+  const [kb, setKb] = useState<IntegrationKBOutData | null>(null)
+  const [kbError, setKbError] = useState<string | null>(null)
 
   const [editName, setEditName] = useState('')
   const [editDescription, setEditDescription] = useState('')
@@ -127,6 +142,8 @@ export default function IntegrationDetail() {
     setCollectionsError(null)
     setEffectiveDocuments(null)
     setDocumentsError(null)
+    setKb(null)
+    setKbError(null)
     setAvailableCollections(null)
     setAvailableCollectionsError(null)
     setAvailableDocuments(null)
@@ -167,6 +184,15 @@ export default function IntegrationDetail() {
       })
       .catch(() => {
         if (!cancelled) setDocumentsError(t('integrations.detail.documentsLoadError'))
+      })
+
+    apiFetch(`/api/integrations/${id}/kb`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: IntegrationKBOutData) => {
+        if (!cancelled) setKb(data)
+      })
+      .catch(() => {
+        if (!cancelled) setKbError(t('integrations.detail.kbLoadError'))
       })
 
     return () => {
@@ -235,6 +261,29 @@ export default function IntegrationDetail() {
       // transient failure here just leaves the previous list displayed
       // instead of piling a second error on top of a successful action.
     }
+  }
+
+  async function handleCreateKbPage(data: { title: string; content: string }) {
+    if (!id) return
+    const resp = await apiFetch(`/api/integrations/${id}/kb/pages`, { method: 'POST', body: JSON.stringify(data) })
+    if (!resp.ok) throw new Error(t('knowledgeBase.addError'))
+    const created: KnowledgeBasePageData = await resp.json()
+    setKb((prev) => (prev ? { ...prev, own_pages: [...prev.own_pages, created] } : prev))
+  }
+
+  async function handleUpdateKbPage(pageId: string, data: { title: string; content: string }) {
+    if (!id) return
+    const resp = await apiFetch(`/api/integrations/${id}/kb/pages/${pageId}`, { method: 'PATCH', body: JSON.stringify(data) })
+    if (!resp.ok) throw new Error(t('knowledgeBase.editError'))
+    const updated: KnowledgeBasePageData = await resp.json()
+    setKb((prev) => (prev ? { ...prev, own_pages: prev.own_pages.map((p) => (p.id === pageId ? updated : p)) } : prev))
+  }
+
+  async function handleDeleteKbPage(pageId: string) {
+    if (!id) return
+    const resp = await apiFetch(`/api/integrations/${id}/kb/pages/${pageId}`, { method: 'DELETE' })
+    if (!resp.ok) throw new Error(t('knowledgeBase.deleteError'))
+    setKb((prev) => (prev ? { ...prev, own_pages: prev.own_pages.filter((p) => p.id !== pageId) } : prev))
   }
 
   async function handleEditSubmit(e: FormEvent) {
@@ -605,6 +654,28 @@ export default function IntegrationDetail() {
           </ul>
         )}
       </div>
+
+      {kbError && <p className="text-sm text-red-600 dark:text-red-400">{kbError}</p>}
+      {kb?.collection_pages.map((group) => (
+        <KnowledgeBaseSection
+          key={group.collection_id}
+          heading={
+            <Link to={`/collections/${group.collection_id}`} className="hover:underline">
+              {t('knowledgeBase.fromCollection', { collectionName: group.collection_name })}
+            </Link>
+          }
+          pages={group.pages}
+          canEdit={false}
+        />
+      ))}
+      <KnowledgeBaseSection
+        heading={t('knowledgeBase.ownPagesHeading')}
+        pages={kb?.own_pages ?? []}
+        canEdit
+        onCreate={handleCreateKbPage}
+        onUpdate={handleUpdateKbPage}
+        onDelete={handleDeleteKbPage}
+      />
     </div>
   )
 }
