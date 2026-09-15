@@ -18,6 +18,7 @@ from app.models.team import Team, TeamMembership, TeamInvitation  # noqa: F401
 from app.models.api_document import ApiDocument, ApiDocumentVersion  # noqa: F401
 from app.models.collection import Collection, CollectionDocument  # noqa: F401
 from app.models.integration import Integration, IntegrationCollection, IntegrationDocument  # noqa: F401
+from app.models.knowledge_base import KnowledgeBasePage  # noqa: F401
 from app.models.notification import Notification, Subscription  # noqa: F401
 from app.modules.registry import import_all_module_models
 
