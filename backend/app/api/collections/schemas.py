@@ -54,3 +54,42 @@ class CollectionDetail(BaseModel):
     created_at: datetime
     can_edit: bool
     is_subscribed: bool | None
+
+
+class KnowledgeBasePageCreate(BaseModel):
+    """Shared by both app/api/collections/router.py's and
+    app/api/integrations/router.py's create-page endpoints - the latter
+    imports this class directly rather than redefining an identical one, see
+    integrations/router.py's own KB section."""
+
+    title: str = Field(..., min_length=1, max_length=255)
+    content: str = ""
+    position: int = 0
+
+
+class KnowledgeBasePageUpdate(BaseModel):
+    """PATCH body - every field optional/partial, same exclude_unset
+    semantics as CollectionUpdate above. Shared with integrations/router.py,
+    same reasoning as KnowledgeBasePageCreate."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    content: str | None = None
+    position: int | None = None
+
+
+class KnowledgeBasePageOut(BaseModel):
+    """A single KnowledgeBasePage (app/models/knowledge_base.py), regardless
+    of whether it's collection-owned or integration-owned - the owner id
+    itself is never part of this shape since it's always implied by the URL
+    (or, for an integration's merged view, by IntegrationKBCollectionGroup's
+    own collection_id wrapping a list of these - see
+    app/api/integrations/schemas.py). content is raw Markdown source, never
+    rendered server-side (CLAUDE.md's "freeform text is never rendered as
+    raw HTML" rule)."""
+
+    id: uuid.UUID
+    title: str
+    content: str
+    position: int
+    created_at: datetime
+    updated_at: datetime

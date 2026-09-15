@@ -10,11 +10,20 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.api_docs.schemas import ApiDocumentSummary
-from app.api.collections.schemas import CollectionCreate, CollectionDetail, CollectionSummary, CollectionUpdate
+from app.api.collections.schemas import (
+    CollectionCreate,
+    CollectionDetail,
+    CollectionSummary,
+    CollectionUpdate,
+    KnowledgeBasePageCreate,
+    KnowledgeBasePageOut,
+    KnowledgeBasePageUpdate,
+)
 from app.api.deps import get_current_user, get_current_user_optional, is_team_member, require_team_membership
 from app.database import get_db
 from app.models.api_document import ApiDocument, ApiDocumentVersion
 from app.models.collection import Collection, CollectionDocument
+from app.models.knowledge_base import KnowledgeBasePage
 from app.models.notification import Subscription
 from app.models.team import TeamMembership
 from app.models.user import User
@@ -322,3 +331,112 @@ async def unsubscribe_from_collection(
     if subscription is not None:
         await db.delete(subscription)
         await db.commit()
+
+
+async def _get_kb_page_or_404(db: AsyncSession, collection_id: uuid.UUID, page_id: uuid.UUID) -> KnowledgeBasePage:
+    """404s if page_id doesn't belong to this exact collection_id - this is
+    what guarantees editing one collection's KB can never touch a page
+    belonging to a different collection or to an integration (an
+    integration-owned page always has collection_id NULL, so it can never
+    match here either)."""
+    result = await db.execute(
+        select(KnowledgeBasePage).where(
+            KnowledgeBasePage.id == page_id, KnowledgeBasePage.collection_id == collection_id
+        )
+    )
+    page = result.scalar_one_or_none()
+    if page is None:
+        raise HTTPException(status_code=404, detail="Knowledge base page not found")
+    return page
+
+
+def _to_kb_page_out(page: KnowledgeBasePage) -> KnowledgeBasePageOut:
+    return KnowledgeBasePageOut(
+        id=page.id,
+        title=page.title,
+        content=page.content,
+        position=page.position,
+        created_at=page.created_at,
+        updated_at=page.updated_at,
+    )
+
+
+@router.post("/{collection_id}/kb/pages", status_code=201)
+async def create_kb_page(
+    collection_id: uuid.UUID,
+    body: KnowledgeBasePageCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> KnowledgeBasePageOut:
+    collection = await _require_member_collection(db, collection_id, current_user)
+
+    page = KnowledgeBasePage(
+        collection_id=collection.id,
+        title=body.title,
+        content=body.content,
+        position=body.position,
+        created_by_user_id=current_user.id,
+    )
+    db.add(page)
+    await db.commit()
+    await db.refresh(page)
+
+    return _to_kb_page_out(page)
+
+
+@router.get("/{collection_id}/kb/pages")
+async def list_kb_pages(
+    collection_id: uuid.UUID,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+) -> list[KnowledgeBasePageOut]:
+    """Same visibility as the collection itself - a public collection's KB is
+    publicly readable, only editing is member-gated (CLAUDE.md's KB
+    section)."""
+    collection, _ = await _require_visible_collection(db, collection_id, current_user)
+
+    rows = (
+        (
+            await db.execute(
+                select(KnowledgeBasePage)
+                .where(KnowledgeBasePage.collection_id == collection.id)
+                .order_by(KnowledgeBasePage.position.asc(), KnowledgeBasePage.created_at.asc())
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return [_to_kb_page_out(page) for page in rows]
+
+
+@router.patch("/{collection_id}/kb/pages/{page_id}")
+async def update_kb_page(
+    collection_id: uuid.UUID,
+    page_id: uuid.UUID,
+    body: KnowledgeBasePageUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> KnowledgeBasePageOut:
+    await _require_member_collection(db, collection_id, current_user)
+    page = await _get_kb_page_or_404(db, collection_id, page_id)
+
+    updates = body.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(page, field, value)
+    await db.commit()
+    await db.refresh(page)
+
+    return _to_kb_page_out(page)
+
+
+@router.delete("/{collection_id}/kb/pages/{page_id}", status_code=204)
+async def delete_kb_page(
+    collection_id: uuid.UUID,
+    page_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    await _require_member_collection(db, collection_id, current_user)
+    page = await _get_kb_page_or_404(db, collection_id, page_id)
+    await db.delete(page)
+    await db.commit()

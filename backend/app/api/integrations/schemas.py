@@ -9,6 +9,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from app.api.api_docs.schemas import ApiDocumentSummary
+from app.api.collections.schemas import KnowledgeBasePageOut
 
 
 class IntegrationCreate(BaseModel):
@@ -80,3 +81,29 @@ class IntegrationDocumentOut(ApiDocumentSummary):
     ways."""
 
     sources: list[IntegrationDocumentSource]
+
+
+class IntegrationKBCollectionGroup(BaseModel):
+    """One member Collection's own KB pages, as seen through an Integration's
+    merged view (GET /{id}/kb) - see integrations/router.py's _compute_kb.
+    Read-only from the integration's perspective: editing one of these pages
+    only ever happens through the collection's own endpoints
+    (app/api/collections/router.py's kb/pages routes), never through this
+    router."""
+
+    collection_id: uuid.UUID
+    collection_name: str
+    pages: list[KnowledgeBasePageOut]
+
+
+class IntegrationKBOut(BaseModel):
+    """GET /{id}/kb response. collection_pages is computed live at read time
+    from every currently member Collection - never copied, so editing a
+    collection's page through the collection's own endpoint is reflected
+    here immediately with no extra step. own_pages is this integration's own
+    KnowledgeBasePage rows (integration_id set, collection_id null) -
+    created/edited only through this router's own kb/pages endpoints below,
+    never touching any collection."""
+
+    collection_pages: list[IntegrationKBCollectionGroup]
+    own_pages: list[KnowledgeBasePageOut]

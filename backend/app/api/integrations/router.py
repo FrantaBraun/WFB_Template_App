@@ -9,13 +9,20 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.collections.schemas import CollectionSummary
+from app.api.collections.schemas import (
+    CollectionSummary,
+    KnowledgeBasePageCreate,
+    KnowledgeBasePageOut,
+    KnowledgeBasePageUpdate,
+)
 from app.api.deps import get_current_user, is_team_member, require_team_membership
 from app.api.integrations.schemas import (
     IntegrationCreate,
     IntegrationDetail,
     IntegrationDocumentOut,
     IntegrationDocumentSource,
+    IntegrationKBCollectionGroup,
+    IntegrationKBOut,
     IntegrationSummary,
     IntegrationUpdate,
 )
@@ -23,6 +30,7 @@ from app.database import get_db
 from app.models.api_document import ApiDocument, ApiDocumentVersion
 from app.models.collection import Collection, CollectionDocument
 from app.models.integration import Integration, IntegrationCollection, IntegrationDocument
+from app.models.knowledge_base import KnowledgeBasePage
 from app.models.team import TeamMembership
 from app.models.user import User
 
@@ -429,3 +437,163 @@ async def remove_document_from_integration(
     if link is not None:
         await db.delete(link)
         await db.commit()
+
+
+async def _get_kb_page_or_404(db: AsyncSession, integration_id: uuid.UUID, page_id: uuid.UUID) -> KnowledgeBasePage:
+    """404s if page_id doesn't belong to this exact integration_id - this is
+    what guarantees editing an integration's own KB can never touch a
+    collection's page: the lookup is filtered to integration_id == this
+    integration, and a collection-owned page always has integration_id
+    NULL, so it can never match."""
+    result = await db.execute(
+        select(KnowledgeBasePage).where(
+            KnowledgeBasePage.id == page_id, KnowledgeBasePage.integration_id == integration_id
+        )
+    )
+    page = result.scalar_one_or_none()
+    if page is None:
+        raise HTTPException(status_code=404, detail="Knowledge base page not found")
+    return page
+
+
+def _to_kb_page_out(page: KnowledgeBasePage) -> KnowledgeBasePageOut:
+    return KnowledgeBasePageOut(
+        id=page.id,
+        title=page.title,
+        content=page.content,
+        position=page.position,
+        created_at=page.created_at,
+        updated_at=page.updated_at,
+    )
+
+
+async def _compute_kb(db: AsyncSession, integration_id: uuid.UUID) -> IntegrationKBOut:
+    """Merged, read-time-computed knowledge base view - see CLAUDE.md's KB
+    section and this module's own docstring above on why this lives here
+    rather than in a separate service module (Phase 6 precedent). Union of
+    every currently member Collection's own KB pages (grouped and tagged by
+    collection) plus this integration's own integration_id-owned pages.
+    Computed live on every call, never copied: editing a collection's page
+    through the collection's own endpoint (app/api/collections/router.py) is
+    reflected here immediately, with zero extra step, since this issues a
+    genuinely live query against KnowledgeBasePage.collection_id for every
+    currently linked collection rather than a snapshot taken when the
+    collection was added. Same batched-query shape as
+    _compute_document_sources above: one query per model, not one query per
+    member collection."""
+    collection_rows = (
+        await db.execute(
+            select(IntegrationCollection.collection_id, Collection.name)
+            .join(Collection, Collection.id == IntegrationCollection.collection_id)
+            .where(IntegrationCollection.integration_id == integration_id)
+            .order_by(Collection.name.asc())
+        )
+    ).all()
+
+    pages_by_collection: dict[uuid.UUID, list[KnowledgeBasePageOut]] = {
+        collection_id: [] for collection_id, _ in collection_rows
+    }
+    if pages_by_collection:
+        page_rows = (
+            (
+                await db.execute(
+                    select(KnowledgeBasePage)
+                    .where(KnowledgeBasePage.collection_id.in_(pages_by_collection.keys()))
+                    .order_by(KnowledgeBasePage.position.asc(), KnowledgeBasePage.created_at.asc())
+                )
+            )
+            .scalars()
+            .all()
+        )
+        for page in page_rows:
+            pages_by_collection[page.collection_id].append(_to_kb_page_out(page))
+
+    own_page_rows = (
+        (
+            await db.execute(
+                select(KnowledgeBasePage)
+                .where(KnowledgeBasePage.integration_id == integration_id)
+                .order_by(KnowledgeBasePage.position.asc(), KnowledgeBasePage.created_at.asc())
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    return IntegrationKBOut(
+        collection_pages=[
+            IntegrationKBCollectionGroup(
+                collection_id=collection_id, collection_name=name, pages=pages_by_collection[collection_id]
+            )
+            for collection_id, name in collection_rows
+        ],
+        own_pages=[_to_kb_page_out(page) for page in own_page_rows],
+    )
+
+
+@router.get("/{integration_id}/kb")
+async def get_integration_kb(
+    integration_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> IntegrationKBOut:
+    integration = await _require_member_integration(db, integration_id, current_user)
+    return await _compute_kb(db, integration.id)
+
+
+@router.post("/{integration_id}/kb/pages", status_code=201)
+async def create_integration_kb_page(
+    integration_id: uuid.UUID,
+    body: KnowledgeBasePageCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> KnowledgeBasePageOut:
+    """Creates an "own page" - integration_id set, collection_id null. Never
+    touches any collection's pages."""
+    integration = await _require_member_integration(db, integration_id, current_user)
+
+    page = KnowledgeBasePage(
+        integration_id=integration.id,
+        title=body.title,
+        content=body.content,
+        position=body.position,
+        created_by_user_id=current_user.id,
+    )
+    db.add(page)
+    await db.commit()
+    await db.refresh(page)
+
+    return _to_kb_page_out(page)
+
+
+@router.patch("/{integration_id}/kb/pages/{page_id}")
+async def update_integration_kb_page(
+    integration_id: uuid.UUID,
+    page_id: uuid.UUID,
+    body: KnowledgeBasePageUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> KnowledgeBasePageOut:
+    await _require_member_integration(db, integration_id, current_user)
+    page = await _get_kb_page_or_404(db, integration_id, page_id)
+
+    updates = body.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(page, field, value)
+    await db.commit()
+    await db.refresh(page)
+
+    return _to_kb_page_out(page)
+
+
+@router.delete("/{integration_id}/kb/pages/{page_id}", status_code=204)
+async def delete_integration_kb_page(
+    integration_id: uuid.UUID,
+    page_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    await _require_member_integration(db, integration_id, current_user)
+    page = await _get_kb_page_or_404(db, integration_id, page_id)
+    await db.delete(page)
+    await db.commit()
