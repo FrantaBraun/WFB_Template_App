@@ -43,6 +43,7 @@ export default function NewApiDoc() {
   const [mode, setMode] = useState<SourceMode>('url')
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
+  const [docsUrl, setDocsUrl] = useState('')
   const [sourceUrl, setSourceUrl] = useState('')
   const [recheckPeriod, setRecheckPeriod] = useState<RecheckPeriod>('manual')
   const [file, setFile] = useState<File | null>(null)
@@ -94,6 +95,7 @@ export default function NewApiDoc() {
             title,
             notes: notes || null,
             source_url: sourceUrl,
+            docs_url: docsUrl || null,
             recheck_period: recheckPeriod,
           }),
         })
@@ -107,6 +109,7 @@ export default function NewApiDoc() {
         formData.append('team_id', teamId)
         formData.append('title', title)
         if (notes) formData.append('notes', notes)
+        if (docsUrl) formData.append('docs_url', docsUrl)
         formData.append('file', file)
         resp = await apiUpload('/api/api-docs/upload', formData)
       }
@@ -188,6 +191,19 @@ export default function NewApiDoc() {
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="doc-docs-url" className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
+              {t('apiDocs.new.docsUrlLabel')}
+            </label>
+            <input
+              id="doc-docs-url"
+              type="url"
+              value={docsUrl}
+              onChange={(e) => setDocsUrl(e.target.value)}
               className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
             />
           </div>

@@ -6,7 +6,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch, apiUpload, getApiUrl } from '../api/client'
 import VersionBanner from '../components/VersionBanner'
 import usePageMeta from '../hooks/usePageMeta'
@@ -26,6 +26,7 @@ interface ApiDocumentDetailData {
   title: string
   notes: string | null
   source_url: string | null
+  docs_url: string | null
   recheck_period: string
   is_public: boolean
   last_checked_at: string | null
@@ -71,6 +72,7 @@ function formatDateTime(iso: string, locale: string): string {
 export default function ApiDocDetail() {
   const { t, i18n } = useTranslation()
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
 
   const [doc, setDoc] = useState<ApiDocumentDetailData | null>(null)
   const [notFound, setNotFound] = useState(false)
@@ -83,9 +85,13 @@ export default function ApiDocDetail() {
   const [editNotes, setEditNotes] = useState('')
   const [editRecheckPeriod, setEditRecheckPeriod] = useState<RecheckPeriod>('manual')
   const [editSourceUrl, setEditSourceUrl] = useState('')
+  const [editDocsUrl, setEditDocsUrl] = useState('')
   const [editIsPublic, setEditIsPublic] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
   const [editMessage, setEditMessage] = useState<Message>(null)
+
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const [rechecking, setRechecking] = useState(false)
   const [recheckError, setRecheckError] = useState<string | null>(null)
@@ -128,6 +134,7 @@ export default function ApiDocDetail() {
         setEditNotes(data.notes ?? '')
         setEditRecheckPeriod(data.recheck_period as RecheckPeriod)
         setEditSourceUrl(data.source_url ?? '')
+        setEditDocsUrl(data.docs_url ?? '')
         setEditIsPublic(data.is_public)
       })
       .catch(() => {
@@ -167,6 +174,7 @@ export default function ApiDocDetail() {
           notes: editNotes || null,
           recheck_period: editRecheckPeriod,
           source_url: editSourceUrl || null,
+          docs_url: editDocsUrl || null,
           is_public: editIsPublic,
         }),
       })
@@ -240,6 +248,21 @@ export default function ApiDocDetail() {
       setSubscribeError(err instanceof Error ? err.message : t('notifications.subscribe.error'))
     } finally {
       setSubscribing(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!doc) return
+    if (!window.confirm(t('apiDocs.detail.confirmDelete'))) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const resp = await apiFetch(`/api/api-docs/${doc.id}`, { method: 'DELETE' })
+      if (!resp.ok) throw new Error(t('apiDocs.detail.deleteError'))
+      navigate('/api-docs')
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : t('apiDocs.detail.deleteError'))
+      setDeleting(false)
     }
   }
 
@@ -354,6 +377,16 @@ export default function ApiDocDetail() {
               t('apiDocs.detail.noSourceUrl')
             )}
           </dd>
+          {doc.docs_url && (
+            <>
+              <dt className="text-slate-500 dark:text-slate-400">{t('apiDocs.detail.docsUrlLabel')}</dt>
+              <dd className="break-all text-slate-900 dark:text-slate-100">
+                <a href={doc.docs_url} target="_blank" rel="noopener noreferrer" className="underline">
+                  {doc.docs_url}
+                </a>
+              </dd>
+            </>
+          )}
           <dt className="text-slate-500 dark:text-slate-400">{t('apiDocs.detail.recheckPeriodLabel')}</dt>
           <dd className="text-slate-900 dark:text-slate-100">
             {t(`apiDocs.recheckPeriods.${doc.recheck_period}`, { defaultValue: doc.recheck_period })}
@@ -471,6 +504,19 @@ export default function ApiDocDetail() {
             </div>
 
             <div>
+              <label htmlFor="edit-docs-url" className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
+                {t('apiDocs.new.docsUrlLabel')}
+              </label>
+              <input
+                id="edit-docs-url"
+                type="url"
+                value={editDocsUrl}
+                onChange={(e) => setEditDocsUrl(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
               <label htmlFor="edit-recheck-period" className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
                 {t('apiDocs.new.recheckPeriodLabel')}
               </label>
@@ -516,6 +562,18 @@ export default function ApiDocDetail() {
               {editSaving ? t('common.saving') : t('common.save')}
             </button>
           </form>
+
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 disabled:opacity-50 dark:border-red-900 dark:text-red-400"
+            >
+              {deleting ? t('common.saving') : t('apiDocs.detail.deleteButton')}
+            </button>
+            {deleteError && <p className="text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
+          </div>
         </>
       )}
 

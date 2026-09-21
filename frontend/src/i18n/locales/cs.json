@@ -259,6 +259,7 @@
       "teamLabel": "Tým",
       "titleLabel": "Název",
       "notesLabel": "Poznámky",
+      "docsUrlLabel": "Dokumentační URL",
       "modeUrl": "Z URL",
       "modeUpload": "Nahrát soubor",
       "sourceUrlLabel": "Zdrojová URL",
@@ -279,6 +280,7 @@
       "private": "Soukromé",
       "sourceUrlLabel": "Zdrojová URL",
       "noSourceUrl": "Nenastaveno",
+      "docsUrlLabel": "Dokumentační URL",
       "recheckPeriodLabel": "Interval kontroly",
       "lastCheckedAtLabel": "Naposledy zkontrolováno",
       "lastCheckErrorLabel": "Chyba poslední kontroly",
@@ -310,7 +312,10 @@
         "empty": "Zatím žádné verze.",
         "current": "aktuální",
         "viewSpec": "Zobrazit specifikaci"
-      }
+      },
+      "deleteButton": "Smazat dokumentaci",
+      "confirmDelete": "Smazat tuto dokumentaci? Tuto akci nelze vrátit zpět.",
+      "deleteError": "Smazání dokumentace se nezdařilo."
     }
   },
   "notifications": {
@@ -384,7 +389,10 @@
         "isPublicLabel": "Veřejně viditelné",
         "success": "Uloženo.",
         "error": "Uložení změn se nezdařilo."
-      }
+      },
+      "deleteButton": "Smazat kolekci",
+      "confirmDelete": "Smazat tuto kolekci? Tuto akci nelze vrátit zpět.",
+      "deleteError": "Smazání kolekce se nezdařilo."
     }
   },
   "integrations": {

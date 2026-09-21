@@ -259,6 +259,7 @@
       "teamLabel": "Team",
       "titleLabel": "Title",
       "notesLabel": "Notes",
+      "docsUrlLabel": "Documentation URL",
       "modeUrl": "From URL",
       "modeUpload": "Upload a file",
       "sourceUrlLabel": "Source URL",
@@ -279,6 +280,7 @@
       "private": "Private",
       "sourceUrlLabel": "Source URL",
       "noSourceUrl": "Not set",
+      "docsUrlLabel": "Documentation URL",
       "recheckPeriodLabel": "Recheck period",
       "lastCheckedAtLabel": "Last checked",
       "lastCheckErrorLabel": "Last check error",
@@ -310,7 +312,10 @@
         "empty": "No versions yet.",
         "current": "current",
         "viewSpec": "View spec"
-      }
+      },
+      "deleteButton": "Delete documentation",
+      "confirmDelete": "Delete this documentation? This cannot be undone.",
+      "deleteError": "Failed to delete this documentation."
     }
   },
   "notifications": {
@@ -384,7 +389,10 @@
         "isPublicLabel": "Publicly visible",
         "success": "Saved.",
         "error": "Failed to save changes."
-      }
+      },
+      "deleteButton": "Delete collection",
+      "confirmDelete": "Delete this collection? This cannot be undone.",
+      "deleteError": "Failed to delete this collection."
     }
   },
   "integrations": {

@@ -6,7 +6,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import KnowledgeBaseSection, { type KnowledgeBasePageData } from '../components/KnowledgeBaseSection'
 import usePageMeta from '../hooks/usePageMeta'
@@ -48,6 +48,7 @@ type Message = { type: 'success' | 'error'; text: string } | null
 export default function CollectionDetail() {
   const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
 
   const [collection, setCollection] = useState<CollectionDetailData | null>(null)
   const [notFound, setNotFound] = useState(false)
@@ -75,6 +76,9 @@ export default function CollectionDetail() {
 
   const [subscribing, setSubscribing] = useState(false)
   const [subscribeError, setSubscribeError] = useState<string | null>(null)
+
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   usePageMeta({ title: collection?.name ?? t('collections.detail.pageTitleFallback') })
 
@@ -250,6 +254,21 @@ export default function CollectionDetail() {
       setSubscribeError(err instanceof Error ? err.message : t('notifications.subscribe.error'))
     } finally {
       setSubscribing(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!collection) return
+    if (!window.confirm(t('collections.detail.confirmDelete'))) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const resp = await apiFetch(`/api/collections/${collection.id}`, { method: 'DELETE' })
+      if (!resp.ok) throw new Error(t('collections.detail.deleteError'))
+      navigate('/collections')
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : t('collections.detail.deleteError'))
+      setDeleting(false)
     }
   }
 
@@ -471,6 +490,18 @@ export default function CollectionDetail() {
               {editSaving ? t('common.saving') : t('common.save')}
             </button>
           </form>
+
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 disabled:opacity-50 dark:border-red-900 dark:text-red-400"
+            >
+              {deleting ? t('common.saving') : t('collections.detail.deleteButton')}
+            </button>
+            {deleteError && <p className="text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
+          </div>
         </>
       )}
     </div>

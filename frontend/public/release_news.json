@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add a documentation link field to API documentation, shown as a clickable link on its page and editable alongside the other fields, and add a Delete button for API documentation and collections you can edit.",
         "Add Knowledge Base sections to Collection and Integration pages: write Markdown notes, rendered safely (sanitized) for every viewer, with an integration always showing the latest pages from its collections plus its own.",
         "Add Integrations pages: create and manage integrations that combine collections and standalone API documentation, with an effective-documents view showing where each document is reachable from.",
         "Add Collections pages: browse public collections, create and manage the collections your teams own, add or remove documents, and subscribe to be notified of new versions.",
