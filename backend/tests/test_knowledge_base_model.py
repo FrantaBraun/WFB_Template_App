@@ -62,6 +62,7 @@ async def test_collection_page_create_sets_defaults(db_session):
     assert page.id is not None
     assert page.title == "Getting started"
     assert page.content == ""
+    assert page.content_format == "markdown"
     assert page.position == 0
     assert page.integration_id is None
     assert page.created_at is not None
@@ -79,8 +80,43 @@ async def test_integration_page_create_sets_defaults(db_session):
 
     assert page.id is not None
     assert page.content == ""
+    assert page.content_format == "markdown"
     assert page.position == 0
     assert page.collection_id is None
+
+
+async def test_page_content_format_markdown_persists(db_session):
+    team = await _make_team(db_session)
+    creator = await _make_user(db_session)
+    collection = await _make_collection(db_session, team, creator)
+
+    page = KnowledgeBasePage(
+        collection_id=collection.id,
+        title="Markdown page",
+        content_format="markdown",
+        created_by_user_id=creator.id,
+    )
+    db_session.add(page)
+    await db_session.flush()
+
+    assert page.content_format == "markdown"
+
+
+async def test_page_content_format_html_persists(db_session):
+    team = await _make_team(db_session)
+    creator = await _make_user(db_session)
+    collection = await _make_collection(db_session, team, creator)
+
+    page = KnowledgeBasePage(
+        collection_id=collection.id,
+        title="HTML page",
+        content_format="html",
+        created_by_user_id=creator.id,
+    )
+    db_session.add(page)
+    await db_session.flush()
+
+    assert page.content_format == "html"
 
 
 async def test_check_constraint_rejects_both_owners_set(db_session):

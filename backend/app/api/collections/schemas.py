@@ -4,6 +4,7 @@
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -64,6 +65,7 @@ class KnowledgeBasePageCreate(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=255)
     content: str = ""
+    content_format: Literal["markdown", "html"] = "markdown"
     position: int = 0
 
 
@@ -74,6 +76,7 @@ class KnowledgeBasePageUpdate(BaseModel):
 
     title: str | None = Field(default=None, min_length=1, max_length=255)
     content: str | None = None
+    content_format: Literal["markdown", "html"] | None = None
     position: int | None = None
 
 
@@ -83,13 +86,14 @@ class KnowledgeBasePageOut(BaseModel):
     itself is never part of this shape since it's always implied by the URL
     (or, for an integration's merged view, by IntegrationKBCollectionGroup's
     own collection_id wrapping a list of these - see
-    app/api/integrations/schemas.py). content is raw Markdown source, never
-    rendered server-side (CLAUDE.md's "freeform text is never rendered as
-    raw HTML" rule)."""
+    app/api/integrations/schemas.py). content is raw Markdown or HTML source
+    per content_format, never rendered server-side either way (CLAUDE.md's
+    "freeform text is never rendered as raw HTML" rule)."""
 
     id: uuid.UUID
     title: str
     content: str
+    content_format: str
     position: int
     created_at: datetime
     updated_at: datetime

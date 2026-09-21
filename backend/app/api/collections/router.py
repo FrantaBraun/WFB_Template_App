@@ -372,6 +372,7 @@ def _to_kb_page_out(page: KnowledgeBasePage) -> KnowledgeBasePageOut:
         id=page.id,
         title=page.title,
         content=page.content,
+        content_format=page.content_format,
         position=page.position,
         created_at=page.created_at,
         updated_at=page.updated_at,
@@ -391,6 +392,7 @@ async def create_kb_page(
         collection_id=collection.id,
         title=body.title,
         content=body.content,
+        content_format=body.content_format,
         position=body.position,
         created_by_user_id=current_user.id,
     )
@@ -424,6 +426,22 @@ async def list_kb_pages(
         .all()
     )
     return [_to_kb_page_out(page) for page in rows]
+
+
+@router.get("/{collection_id}/kb/pages/{page_id}")
+async def get_kb_page(
+    collection_id: uuid.UUID,
+    page_id: uuid.UUID,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+) -> KnowledgeBasePageOut:
+    """Same visibility as the collection itself, mirroring list_kb_pages
+    above - a public collection's KB page is publicly readable. 404 (via
+    _get_kb_page_or_404) if page_id doesn't belong to this exact
+    collection_id."""
+    collection, _ = await _require_visible_collection(db, collection_id, current_user)
+    page = await _get_kb_page_or_404(db, collection.id, page_id)
+    return _to_kb_page_out(page)
 
 
 @router.patch("/{collection_id}/kb/pages/{page_id}")

@@ -21,10 +21,12 @@ class KnowledgeBasePage(Base):
     Subscription - position has no uniqueness requirement, duplicates and
     gaps are both fine).
 
-    content is raw Markdown source - this backend never parses or renders it
-    as HTML, that happens frontend-side only (marked + DOMPurify), matching
-    CLAUDE.md's "freeform text is never rendered as raw HTML" rule. position
-    is a plain manual-ordering hint with no reorder endpoint this phase."""
+    content is raw Markdown or HTML source depending on content_format - this
+    backend never parses or renders it as HTML itself either way, that
+    happens frontend-side only (marked + DOMPurify for markdown, DOMPurify
+    only for html), matching CLAUDE.md's "freeform text is never rendered as
+    raw HTML" rule. position is a plain manual-ordering hint with no reorder
+    endpoint this phase."""
 
     __tablename__ = "knowledge_base_pages"
     __table_args__ = (
@@ -52,6 +54,10 @@ class KnowledgeBasePage(Base):
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    # server_default (not just a Python-side default=) so ALTER TABLE backfills
+    # pre-existing rows at the database level too, not only rows inserted after
+    # this column was added.
+    content_format: Mapped[str] = mapped_column(String(20), nullable=False, server_default="markdown")
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_by_user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False

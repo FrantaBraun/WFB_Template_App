@@ -461,6 +461,7 @@ def _to_kb_page_out(page: KnowledgeBasePage) -> KnowledgeBasePageOut:
         id=page.id,
         title=page.title,
         content=page.content,
+        content_format=page.content_format,
         position=page.position,
         created_at=page.created_at,
         updated_at=page.updated_at,
@@ -556,6 +557,7 @@ async def create_integration_kb_page(
         integration_id=integration.id,
         title=body.title,
         content=body.content,
+        content_format=body.content_format,
         position=body.position,
         created_by_user_id=current_user.id,
     )
@@ -563,6 +565,25 @@ async def create_integration_kb_page(
     await db.commit()
     await db.refresh(page)
 
+    return _to_kb_page_out(page)
+
+
+@router.get("/{integration_id}/kb/pages/{page_id}")
+async def get_integration_kb_page(
+    integration_id: uuid.UUID,
+    page_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> KnowledgeBasePageOut:
+    """Member-only, no anonymous path (matching every other endpoint on this
+    router). Only ever resolves this integration's OWN pages, via the same
+    ownership-filtered _get_kb_page_or_404 used by PATCH/DELETE below - a
+    collection-owned page reachable through this integration's merged KB
+    view (GET /{integration_id}/kb) is fetched via the collection's own
+    single-page endpoint instead, using that page's actual owning
+    collection_id."""
+    await _require_member_integration(db, integration_id, current_user)
+    page = await _get_kb_page_or_404(db, integration_id, page_id)
     return _to_kb_page_out(page)
 
 

@@ -5,14 +5,14 @@
 """Tests for the Phase 7 Knowledge Base endpoints on both
 /api/collections/{id}/kb/pages* and /api/integrations/{id}/kb*:
 
-- Collection KB page CRUD with the same visibility matrix (member/
-  non-member/anonymous x private/public) as every other collection GET, and
-  member-only write access.
-- The cross-owner 404 guarantee: patching/deleting a page through a
+- Collection KB page CRUD, including the single-page GET, with the same
+  visibility matrix (member/non-member/anonymous x private/public) as every
+  other collection GET, and member-only write access.
+- The cross-owner 404 guarantee: fetching/patching/deleting a page through a
   collection (or integration) whose id doesn't match the page's own owner
   never succeeds, even when the page belongs to a *related* owner (e.g. a
   collection that's a genuine member of the integration being used to try
-  to edit it).
+  to read or edit it).
 - Integration own-page CRUD, strict member-only (no anonymous path at all,
   matching every other integration endpoint).
 - GET /{integration_id}/kb's merged view assembly, and the load-bearing
@@ -295,6 +295,117 @@ async def test_list_kb_pages_ordered_by_position_then_created_at(db_session, mak
     assert titles == ["First", "Second", "Third"]
 
 
+# --- GET /{collection_id}/kb/pages/{page_id} (single page, same visibility as the collection) --
+
+
+async def test_get_kb_page_member_private_returns_200(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    collection = await _make_collection(db_session, team, owner, is_public=False)
+    page = await _make_kb_page(
+        db_session, owner, collection_id=collection.id, title="Private Page", content="Body", content_format="html"
+    )
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "GET", f"/api/collections/{collection.id}/kb/pages/{page.id}", token=token)
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["id"] == str(page.id)
+    assert body["title"] == "Private Page"
+    assert body["content"] == "Body"
+    assert body["content_format"] == "html"
+
+
+async def test_get_kb_page_member_public_returns_200(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    collection = await _make_collection(db_session, team, owner, is_public=True)
+    page = await _make_kb_page(db_session, owner, collection_id=collection.id)
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "GET", f"/api/collections/{collection.id}/kb/pages/{page.id}", token=token)
+
+    assert resp.status_code == 200
+
+
+async def test_get_kb_page_non_member_private_returns_404(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    collection = await _make_collection(db_session, team, owner, is_public=False)
+    page = await _make_kb_page(db_session, owner, collection_id=collection.id)
+    outsider_token = make_access_token(sub=str(uuid.uuid4()))
+
+    resp = await _request(
+        db_session, "GET", f"/api/collections/{collection.id}/kb/pages/{page.id}", token=outsider_token
+    )
+
+    assert resp.status_code == 404
+
+
+async def test_get_kb_page_non_member_public_returns_200(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    collection = await _make_collection(db_session, team, owner, is_public=True)
+    page = await _make_kb_page(db_session, owner, collection_id=collection.id)
+    outsider_token = make_access_token(sub=str(uuid.uuid4()))
+
+    resp = await _request(
+        db_session, "GET", f"/api/collections/{collection.id}/kb/pages/{page.id}", token=outsider_token
+    )
+
+    assert resp.status_code == 200
+
+
+async def test_get_kb_page_anonymous_private_returns_404(db_session):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    collection = await _make_collection(db_session, team, owner, is_public=False)
+    page = await _make_kb_page(db_session, owner, collection_id=collection.id)
+
+    resp = await _request(db_session, "GET", f"/api/collections/{collection.id}/kb/pages/{page.id}")
+
+    assert resp.status_code == 404
+
+
+async def test_get_kb_page_anonymous_public_returns_200(db_session):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    collection = await _make_collection(db_session, team, owner, is_public=True)
+    page = await _make_kb_page(db_session, owner, collection_id=collection.id)
+
+    resp = await _request(db_session, "GET", f"/api/collections/{collection.id}/kb/pages/{page.id}")
+
+    assert resp.status_code == 200
+
+
+async def test_get_kb_page_different_collection_returns_404(db_session, make_access_token):
+    """A page belonging to collection A is never fetchable through collection
+    B's single-page endpoint, even for a member of the same team that owns
+    both."""
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    collection_a = await _make_collection(db_session, team, owner, name="Collection A")
+    collection_b = await _make_collection(db_session, team, owner, name="Collection B")
+    page = await _make_kb_page(db_session, owner, collection_id=collection_a.id, title="Belongs to A")
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "GET", f"/api/collections/{collection_b.id}/kb/pages/{page.id}", token=token)
+
+    assert resp.status_code == 404
+
+
+async def test_get_kb_page_unknown_page_returns_404(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    collection = await _make_collection(db_session, team, owner)
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "GET", f"/api/collections/{collection.id}/kb/pages/{uuid.uuid4()}", token=token)
+
+    assert resp.status_code == 404
+
+
 # --- PATCH /{collection_id}/kb/pages/{page_id} -------------------------------------------
 
 
@@ -546,6 +657,87 @@ async def test_create_integration_kb_page_anonymous_returns_401_or_403(db_sessio
 def test_create_integration_kb_page_requires_auth(client):
     resp = client.post(f"/api/integrations/{uuid.uuid4()}/kb/pages", json={"title": "X"})
     assert resp.status_code in (401, 403)
+
+
+# --- GET /{integration_id}/kb/pages/{page_id} (own pages only) -----------------------------
+
+
+async def test_get_integration_kb_page_member_success(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    integration = await _make_integration(db_session, team, owner)
+    page = await _make_kb_page(
+        db_session, owner, integration_id=integration.id, title="Overview", content="Body", content_format="html"
+    )
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "GET", f"/api/integrations/{integration.id}/kb/pages/{page.id}", token=token)
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["id"] == str(page.id)
+    assert body["title"] == "Overview"
+    assert body["content"] == "Body"
+    assert body["content_format"] == "html"
+
+
+async def test_get_integration_kb_page_non_member_returns_404(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    integration = await _make_integration(db_session, team, owner)
+    page = await _make_kb_page(db_session, owner, integration_id=integration.id)
+    outsider_token = make_access_token(sub=str(uuid.uuid4()))
+
+    resp = await _request(
+        db_session, "GET", f"/api/integrations/{integration.id}/kb/pages/{page.id}", token=outsider_token
+    )
+
+    assert resp.status_code == 404
+
+
+async def test_get_integration_kb_page_anonymous_returns_401_or_403(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    integration = await _make_integration(db_session, team, owner)
+    page = await _make_kb_page(db_session, owner, integration_id=integration.id)
+
+    resp = await _request(
+        db_session, "GET", f"/api/integrations/{integration.id}/kb/pages/{page.id}"
+    )  # no token at all
+
+    assert resp.status_code in (401, 403)
+
+
+async def test_get_integration_kb_page_belonging_to_collection_returns_404(db_session, make_access_token):
+    """Mirrors test_update_integration_kb_page_belonging_to_collection_returns_404:
+    a page owned by a Collection that IS a genuine member of this integration
+    still 404s via the integration's own single-page endpoint, since the
+    lookup is filtered to integration_id == this integration and the
+    collection-owned page's integration_id is NULL."""
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    integration = await _make_integration(db_session, team, owner)
+    collection = await _make_collection(db_session, team, owner)
+    await _add_collection_to_integration(db_session, integration, collection, owner)
+    page = await _make_kb_page(db_session, owner, collection_id=collection.id, title="Collection's page")
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "GET", f"/api/integrations/{integration.id}/kb/pages/{page.id}", token=token)
+
+    assert resp.status_code == 404
+
+
+async def test_get_integration_kb_page_unknown_page_returns_404(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    integration = await _make_integration(db_session, team, owner)
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(
+        db_session, "GET", f"/api/integrations/{integration.id}/kb/pages/{uuid.uuid4()}", token=token
+    )
+
+    assert resp.status_code == 404
 
 
 # --- PATCH /{integration_id}/kb/pages/{page_id} --------------------------------------------
