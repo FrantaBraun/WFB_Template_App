@@ -482,6 +482,32 @@
     "addError": "Přidání stránky se nezdařilo.",
     "editError": "Uložení změn se nezdařilo.",
     "deleteError": "Smazání stránky se nezdařilo.",
-    "confirmDelete": "Smazat tuto stránku? Tuto akci nelze vrátit zpět."
+    "confirmDelete": "Smazat tuto stránku? Tuto akci nelze vrátit zpět.",
+    "pageLoadError": "Nepodařilo se načíst tuto stránku.",
+    "notFoundTitle": "Stránka nenalezena",
+    "notFoundMessage": "Tato stránka neexistuje, nebo k ní nemáte přístup.",
+    "backToBrowse": "Zpět na znalostní bázi",
+    "backToCollection": "Zpět na kolekci",
+    "backToIntegration": "Zpět na integraci",
+    "untitledPlaceholder": "Bez názvu",
+    "formatMarkdown": "Markdown",
+    "formatHtml": "HTML",
+    "richTextMode": "Formátovaný text",
+    "markdownMode": "Markdown",
+    "conversionNote": "Přepnutí režimu obsah automaticky převede — formátování nemusí zůstat zachováno přesně.",
+    "pageCountSingular": "stránka",
+    "pageCountPlural": "stránek",
+    "browseLink": "Zobrazit znalostní bázi",
+    "toolbar": {
+      "bold": "Tučně",
+      "italic": "Kurzíva",
+      "heading1": "Nadpis 1",
+      "heading2": "Nadpis 2",
+      "heading3": "Nadpis 3",
+      "bulletList": "Odrážkový seznam",
+      "orderedList": "Číslovaný seznam",
+      "blockquote": "Citace",
+      "codeBlock": "Blok kódu"
+    }
   }
 }

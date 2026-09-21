@@ -25,8 +25,12 @@ import NewApiDoc from "./pages/NewApiDoc"
 import ApiDocDetail from "./pages/ApiDocDetail"
 import Collections from "./pages/Collections"
 import CollectionDetail from "./pages/CollectionDetail"
+import CollectionKnowledgeBase from "./pages/CollectionKnowledgeBase"
 import Integrations from "./pages/Integrations"
 import IntegrationDetail from "./pages/IntegrationDetail"
+import IntegrationKnowledgeBase from "./pages/IntegrationKnowledgeBase"
+import KnowledgeBasePageView from "./pages/KnowledgeBasePageView"
+import KnowledgeBasePageEdit from "./pages/KnowledgeBasePageEdit"
 import { useEnabledModules } from "./modules/registry"
 
 
@@ -47,8 +51,14 @@ function App() {
       <Route path="/api-docs/:id" element={<ApiDocDetail />} />
       <Route path="/collections" element={<Collections />} />
       <Route path="/collections/:id" element={<CollectionDetail />} />
+      <Route path="/collections/:id/kb" element={<CollectionKnowledgeBase />} />
+      <Route path="/collections/:id/kb/:pageId" element={<KnowledgeBasePageView ownerType="collection" />} />
+      <Route path="/collections/:id/kb/:pageId/edit" element={<KnowledgeBasePageEdit ownerType="collection" />} />
       <Route path="/integrations" element={<Integrations />} />
       <Route path="/integrations/:id" element={<IntegrationDetail />} />
+      <Route path="/integrations/:id/kb" element={<IntegrationKnowledgeBase />} />
+      <Route path="/integrations/:id/kb/:pageId" element={<KnowledgeBasePageView ownerType="integration" />} />
+      <Route path="/integrations/:id/kb/:pageId/edit" element={<KnowledgeBasePageEdit ownerType="integration" />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/consent" element={<Consent />} />
       <Route path="/consent-rejected" element={<ConsentRejected />} />

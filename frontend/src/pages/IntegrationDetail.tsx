@@ -8,7 +8,6 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../api/client'
-import KnowledgeBaseSection, { type KnowledgeBasePageData } from '../components/KnowledgeBaseSection'
 import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
 
@@ -54,13 +53,12 @@ interface IntegrationDocumentOutData extends ApiDocumentSummaryData {
 
 interface IntegrationKBCollectionGroupData {
   collection_id: string
-  collection_name: string
-  pages: KnowledgeBasePageData[]
+  pages: { id: string }[]
 }
 
 interface IntegrationKBOutData {
   collection_pages: IntegrationKBCollectionGroupData[]
-  own_pages: KnowledgeBasePageData[]
+  own_pages: { id: string }[]
 }
 
 type Message = { type: 'success' | 'error'; text: string } | null
@@ -263,29 +261,6 @@ export default function IntegrationDetail() {
     }
   }
 
-  async function handleCreateKbPage(data: { title: string; content: string }) {
-    if (!id) return
-    const resp = await apiFetch(`/api/integrations/${id}/kb/pages`, { method: 'POST', body: JSON.stringify(data) })
-    if (!resp.ok) throw new Error(t('knowledgeBase.addError'))
-    const created: KnowledgeBasePageData = await resp.json()
-    setKb((prev) => (prev ? { ...prev, own_pages: [...prev.own_pages, created] } : prev))
-  }
-
-  async function handleUpdateKbPage(pageId: string, data: { title: string; content: string }) {
-    if (!id) return
-    const resp = await apiFetch(`/api/integrations/${id}/kb/pages/${pageId}`, { method: 'PATCH', body: JSON.stringify(data) })
-    if (!resp.ok) throw new Error(t('knowledgeBase.editError'))
-    const updated: KnowledgeBasePageData = await resp.json()
-    setKb((prev) => (prev ? { ...prev, own_pages: prev.own_pages.map((p) => (p.id === pageId ? updated : p)) } : prev))
-  }
-
-  async function handleDeleteKbPage(pageId: string) {
-    if (!id) return
-    const resp = await apiFetch(`/api/integrations/${id}/kb/pages/${pageId}`, { method: 'DELETE' })
-    if (!resp.ok) throw new Error(t('knowledgeBase.deleteError'))
-    setKb((prev) => (prev ? { ...prev, own_pages: prev.own_pages.filter((p) => p.id !== pageId) } : prev))
-  }
-
   async function handleEditSubmit(e: FormEvent) {
     e.preventDefault()
     if (!id) return
@@ -409,6 +384,8 @@ export default function IntegrationDetail() {
   const directDocuments = (effectiveDocuments ?? []).filter((d) => d.sources.some((s) => s.type === 'direct'))
   const directDocumentIds = new Set(directDocuments.map((d) => d.id))
   const addableDocuments = (availableDocuments ?? []).filter((d) => !directDocumentIds.has(d.id))
+
+  const kbPageTotal = kb ? kb.own_pages.length + kb.collection_pages.reduce((sum, group) => sum + group.pages.length, 0) : null
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-16 text-slate-900 dark:text-slate-100">
@@ -655,27 +632,18 @@ export default function IntegrationDetail() {
         )}
       </div>
 
-      {kbError && <p className="text-sm text-red-600 dark:text-red-400">{kbError}</p>}
-      {kb?.collection_pages.map((group) => (
-        <KnowledgeBaseSection
-          key={group.collection_id}
-          heading={
-            <Link to={`/collections/${group.collection_id}`} className="hover:underline">
-              {t('knowledgeBase.fromCollection', { collectionName: group.collection_name })}
-            </Link>
-          }
-          pages={group.pages}
-          canEdit={false}
-        />
-      ))}
-      <KnowledgeBaseSection
-        heading={t('knowledgeBase.ownPagesHeading')}
-        pages={kb?.own_pages ?? []}
-        canEdit
-        onCreate={handleCreateKbPage}
-        onUpdate={handleUpdateKbPage}
-        onDelete={handleDeleteKbPage}
-      />
+      <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{t('knowledgeBase.heading')}</h2>
+        {kbError && <p className="text-sm text-red-600 dark:text-red-400">{kbError}</p>}
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          {kbPageTotal === null
+            ? t('common.loading')
+            : `${kbPageTotal} ${t(kbPageTotal === 1 ? 'knowledgeBase.pageCountSingular' : 'knowledgeBase.pageCountPlural')}`}
+        </p>
+        <Link to={`/integrations/${id}/kb`} className="text-sm text-slate-900 underline dark:text-slate-100">
+          {t('knowledgeBase.browseLink')}
+        </Link>
+      </div>
     </div>
   )
 }

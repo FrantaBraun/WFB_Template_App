@@ -8,7 +8,6 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../api/client'
-import KnowledgeBaseSection, { type KnowledgeBasePageData } from '../components/KnowledgeBaseSection'
 import usePageMeta from '../hooks/usePageMeta'
 
 interface CollectionDetailData {
@@ -57,7 +56,7 @@ export default function CollectionDetail() {
   const [documents, setDocuments] = useState<ApiDocumentSummaryData[] | null>(null)
   const [documentsError, setDocumentsError] = useState<string | null>(null)
 
-  const [kbPages, setKbPages] = useState<KnowledgeBasePageData[] | null>(null)
+  const [kbPageCount, setKbPageCount] = useState<number | null>(null)
   const [kbError, setKbError] = useState<string | null>(null)
 
   const [editName, setEditName] = useState('')
@@ -94,7 +93,7 @@ export default function CollectionDetail() {
     setLoadError(null)
     setDocuments(null)
     setDocumentsError(null)
-    setKbPages(null)
+    setKbPageCount(null)
     setKbError(null)
     setAvailableDocs(null)
     setAvailableDocsError(null)
@@ -130,8 +129,8 @@ export default function CollectionDetail() {
 
     apiFetch(`/api/collections/${id}/kb/pages`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data: KnowledgeBasePageData[]) => {
-        if (!cancelled) setKbPages(data)
+      .then((data: { id: string }[]) => {
+        if (!cancelled) setKbPageCount(data.length)
       })
       .catch(() => {
         if (!cancelled) setKbError(t('collections.detail.kbLoadError'))
@@ -215,29 +214,6 @@ export default function CollectionDetail() {
     } finally {
       setRemovingDocumentId(null)
     }
-  }
-
-  async function handleCreateKbPage(data: { title: string; content: string }) {
-    if (!id) return
-    const resp = await apiFetch(`/api/collections/${id}/kb/pages`, { method: 'POST', body: JSON.stringify(data) })
-    if (!resp.ok) throw new Error(t('knowledgeBase.addError'))
-    const created: KnowledgeBasePageData = await resp.json()
-    setKbPages((prev) => [...(prev ?? []), created])
-  }
-
-  async function handleUpdateKbPage(pageId: string, data: { title: string; content: string }) {
-    if (!id) return
-    const resp = await apiFetch(`/api/collections/${id}/kb/pages/${pageId}`, { method: 'PATCH', body: JSON.stringify(data) })
-    if (!resp.ok) throw new Error(t('knowledgeBase.editError'))
-    const updated: KnowledgeBasePageData = await resp.json()
-    setKbPages((prev) => (prev ? prev.map((p) => (p.id === pageId ? updated : p)) : prev))
-  }
-
-  async function handleDeleteKbPage(pageId: string) {
-    if (!id) return
-    const resp = await apiFetch(`/api/collections/${id}/kb/pages/${pageId}`, { method: 'DELETE' })
-    if (!resp.ok) throw new Error(t('knowledgeBase.deleteError'))
-    setKbPages((prev) => (prev ? prev.filter((p) => p.id !== pageId) : prev))
   }
 
   async function handleToggleSubscribe() {
@@ -384,15 +360,18 @@ export default function CollectionDetail() {
         )}
       </div>
 
-      {kbError && <p className="text-sm text-red-600 dark:text-red-400">{kbError}</p>}
-      <KnowledgeBaseSection
-        heading={t('knowledgeBase.heading')}
-        pages={kbPages ?? []}
-        canEdit={collection.can_edit}
-        onCreate={collection.can_edit ? handleCreateKbPage : undefined}
-        onUpdate={collection.can_edit ? handleUpdateKbPage : undefined}
-        onDelete={collection.can_edit ? handleDeleteKbPage : undefined}
-      />
+      <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{t('knowledgeBase.heading')}</h2>
+        {kbError && <p className="text-sm text-red-600 dark:text-red-400">{kbError}</p>}
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          {kbPageCount === null
+            ? t('common.loading')
+            : `${kbPageCount} ${t(kbPageCount === 1 ? 'knowledgeBase.pageCountSingular' : 'knowledgeBase.pageCountPlural')}`}
+        </p>
+        <Link to={`/collections/${id}/kb`} className="text-sm text-slate-900 underline dark:text-slate-100">
+          {t('knowledgeBase.browseLink')}
+        </Link>
+      </div>
 
       {collection.can_edit && (
         <>

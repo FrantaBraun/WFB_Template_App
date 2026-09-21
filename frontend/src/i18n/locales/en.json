@@ -482,6 +482,32 @@
     "addError": "Failed to add this page.",
     "editError": "Failed to save changes.",
     "deleteError": "Failed to delete this page.",
-    "confirmDelete": "Delete this page? This cannot be undone."
+    "confirmDelete": "Delete this page? This cannot be undone.",
+    "pageLoadError": "Failed to load this page.",
+    "notFoundTitle": "Page not found",
+    "notFoundMessage": "This page doesn't exist, or you don't have access to it.",
+    "backToBrowse": "Back to knowledge base",
+    "backToCollection": "Back to collection",
+    "backToIntegration": "Back to integration",
+    "untitledPlaceholder": "Untitled",
+    "formatMarkdown": "Markdown",
+    "formatHtml": "HTML",
+    "richTextMode": "Rich text",
+    "markdownMode": "Markdown",
+    "conversionNote": "Switching modes converts your content automatically — formatting may not be preserved perfectly.",
+    "pageCountSingular": "page",
+    "pageCountPlural": "pages",
+    "browseLink": "Browse knowledge base",
+    "toolbar": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "heading3": "Heading 3",
+      "bulletList": "Bullet list",
+      "orderedList": "Numbered list",
+      "blockquote": "Quote",
+      "codeBlock": "Code block"
+    }
   }
 }
