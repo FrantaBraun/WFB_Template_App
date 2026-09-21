@@ -29,6 +29,7 @@ class ApiDocument(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    docs_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     recheck_period: Mapped[str] = mapped_column(String(20), nullable=False, default="manual")
     is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     last_checked_at: Mapped[datetime | None] = mapped_column(

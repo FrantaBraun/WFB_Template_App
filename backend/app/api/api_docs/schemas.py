@@ -15,6 +15,7 @@ class ApiDocumentCreate(BaseModel):
     team_id: uuid.UUID
     title: str = Field(..., min_length=1, max_length=255)
     source_url: str | None = Field(default=None, max_length=2048)
+    docs_url: str | None = Field(default=None, max_length=2048)
     recheck_period: RecheckPeriod = "manual"
     notes: str | None = None
 
@@ -30,6 +31,7 @@ class ApiDocumentUpdate(BaseModel):
     recheck_period: RecheckPeriod | None = None
     is_public: bool | None = None
     source_url: str | None = Field(default=None, max_length=2048)
+    docs_url: str | None = Field(default=None, max_length=2048)
 
 
 class ApiDocumentSummary(BaseModel):
@@ -72,6 +74,7 @@ class ApiDocumentDetail(BaseModel):
     title: str
     notes: str | None
     source_url: str | None
+    docs_url: str | None
     recheck_period: str
     is_public: bool
     last_checked_at: datetime | None

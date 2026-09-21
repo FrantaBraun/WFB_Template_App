@@ -24,6 +24,8 @@ from sqlalchemy import select
 import app.security.jwt as jwt_module
 from app.models.api_document import ApiDocument
 from app.models.collection import Collection, CollectionDocument
+from app.models.integration import Integration, IntegrationCollection
+from app.models.knowledge_base import KnowledgeBasePage
 from app.models.notification import Subscription
 from app.models.team import Team, TeamMembership
 from app.models.user import User
@@ -452,6 +454,114 @@ async def test_patch_non_member_returns_404(db_session, make_access_token):
     )
 
     assert resp.status_code == 404
+
+
+# --- DELETE /{collection_id} -------------------------------------------------------
+
+
+async def test_delete_collection_member_succeeds(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    collection = await _make_collection(db_session, team, owner)
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "DELETE", f"/api/collections/{collection.id}", token=token)
+
+    assert resp.status_code == 204
+    rows = (await db_session.execute(select(Collection).where(Collection.id == collection.id))).scalars().all()
+    assert rows == []
+
+
+async def test_delete_collection_non_member_returns_404_and_leaves_row(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    collection = await _make_collection(db_session, team, owner)
+    outsider_token = make_access_token(sub=str(uuid.uuid4()))
+
+    resp = await _request(db_session, "DELETE", f"/api/collections/{collection.id}", token=outsider_token)
+
+    assert resp.status_code == 404
+    rows = (await db_session.execute(select(Collection).where(Collection.id == collection.id))).scalars().all()
+    assert len(rows) == 1
+
+
+async def test_delete_collection_unknown_id_returns_404(db_session, make_access_token):
+    token = make_access_token(sub=str(uuid.uuid4()))
+
+    resp = await _request(db_session, "DELETE", f"/api/collections/{uuid.uuid4()}", token=token)
+
+    assert resp.status_code == 404
+
+
+def test_delete_collection_requires_auth(client):
+    resp = client.delete(f"/api/collections/{uuid.uuid4()}")
+    assert resp.status_code in (401, 403)
+
+
+async def test_delete_collection_cascades_every_related_row(db_session, make_access_token):
+    """Full fan-out around one collection - a CollectionDocument (a document
+    it holds), an IntegrationCollection (its own membership in an
+    integration), a direct Subscription and a KnowledgeBasePage - then
+    delete the collection and assert every one of those FK-CASCADE rows is
+    actually gone, not just that the FK declarations look right."""
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    collection = await _make_collection(db_session, team, owner)
+    doc = await _make_document(db_session, team, owner)
+    await _add_document(db_session, collection, doc, owner)
+
+    integration = Integration(team_id=team.id, name="Some Integration", created_by_user_id=owner.id)
+    db_session.add(integration)
+    await db_session.flush()
+    db_session.add(
+        IntegrationCollection(integration_id=integration.id, collection_id=collection.id, added_by_user_id=owner.id)
+    )
+
+    db_session.add(Subscription(user_id=owner.id, collection_id=collection.id))
+    db_session.add(KnowledgeBasePage(collection_id=collection.id, title="Some Page", created_by_user_id=owner.id))
+    await db_session.flush()
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "DELETE", f"/api/collections/{collection.id}", token=token)
+
+    assert resp.status_code == 204
+    assert (await db_session.execute(select(Collection).where(Collection.id == collection.id))).scalars().all() == []
+    assert (
+        (await db_session.execute(select(CollectionDocument).where(CollectionDocument.collection_id == collection.id)))
+        .scalars()
+        .all()
+        == []
+    )
+    assert (
+        (
+            await db_session.execute(
+                select(IntegrationCollection).where(IntegrationCollection.collection_id == collection.id)
+            )
+        )
+        .scalars()
+        .all()
+        == []
+    )
+    assert (
+        (await db_session.execute(select(Subscription).where(Subscription.collection_id == collection.id)))
+        .scalars()
+        .all()
+        == []
+    )
+    assert (
+        (await db_session.execute(select(KnowledgeBasePage).where(KnowledgeBasePage.collection_id == collection.id)))
+        .scalars()
+        .all()
+        == []
+    )
+
+    # The collection's own deletion doesn't ripple beyond rows with a direct
+    # FK to it - the document it held and the integration it belonged to
+    # both survive.
+    assert (await db_session.execute(select(ApiDocument).where(ApiDocument.id == doc.id))).scalar_one_or_none() is not None
+    assert (
+        await db_session.execute(select(Integration).where(Integration.id == integration.id))
+    ).scalar_one_or_none() is not None
 
 
 # --- POST/DELETE /{id}/documents/{documentation_id} -----------------------------------

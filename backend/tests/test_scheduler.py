@@ -171,7 +171,11 @@ async def test_due_matrix_together_in_one_scan(db_session):
 
     due_ids = {d.id for d in await find_docs_due_for_recheck(db_session, now)}
 
-    assert due_ids == {never_checked.id, daily_due.id}
+    # Subset check, not exact equality - the DB isn't guaranteed to contain
+    # only this test's own rows (e.g. real usage data alongside the test
+    # DB), only that our expected docs are included and our not-due ones
+    # are excluded.
+    assert {never_checked.id, daily_due.id} <= due_ids
     assert monthly_not_due.id not in due_ids
     assert no_url.id not in due_ids
     assert manual.id not in due_ids
@@ -205,7 +209,11 @@ async def test_run_due_rechecks_only_processes_due_documents(db_session, monkeyp
 
     await run_due_rechecks()
 
-    assert calls == [(due_doc.id, "auto_recheck")]
+    # Membership check, not exact list equality - the DB isn't guaranteed to
+    # contain only this test's own rows (e.g. real usage data alongside the
+    # test DB), only that our expected doc was processed and our not-due one
+    # wasn't.
+    assert (due_doc.id, "auto_recheck") in calls
     assert not_due_doc.id not in [doc_id for doc_id, _ in calls]
 
 

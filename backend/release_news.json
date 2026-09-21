@@ -1,5 +1,7 @@
 {
     "unreleased": [
+        "Add the ability to delete an API document or a collection, cleaning up every version, membership, subscription and notification that referenced it.",
+        "Add a docs_url field to API documents for linking to the third-party API's own official documentation site, separate from the machine-readable spec URL used for fetching/parsing.",
         "Add knowledge base pages: write Markdown notes on a collection or integration, with an integration's knowledge base automatically merging in every one of its collections' pages, always up to date.",
         "Add integrations: combine collections and standalone API documents into a team-only integration, with a merged, de-duplicated document view tagged by source.",
         "Add collections: group API documents into a collection, share it publicly or within your team, and subscribe to be notified when any of its documents gets a new version.",

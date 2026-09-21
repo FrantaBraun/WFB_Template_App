@@ -27,7 +27,7 @@ from app.models.team import TeamMembership
 from app.models.user import User
 from app.services.api_document_versions import fetch_and_process, get_current_version, process_new_spec
 from app.services.openapi_spec import SpecValidationError
-from app.services.spec_storage import read_spec_file
+from app.services.spec_storage import delete_document_files, read_spec_file
 
 router = APIRouter()
 
@@ -117,6 +117,7 @@ async def _build_detail(
         title=doc.title,
         notes=doc.notes,
         source_url=doc.source_url,
+        docs_url=doc.docs_url,
         recheck_period=doc.recheck_period,
         is_public=doc.is_public,
         last_checked_at=doc.last_checked_at,
@@ -168,6 +169,7 @@ async def create_document(
         title=body.title,
         notes=body.notes,
         source_url=body.source_url,
+        docs_url=body.docs_url,
         recheck_period=body.recheck_period,
         created_by_user_id=current_user.id,
     )
@@ -188,6 +190,7 @@ async def upload_document(
     team_id: uuid.UUID = Form(...),
     title: str = Form(...),
     notes: str | None = Form(None),
+    docs_url: str | None = Form(None),
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -202,6 +205,7 @@ async def upload_document(
         title=title,
         notes=notes,
         source_url=None,
+        docs_url=docs_url,
         recheck_period="manual",
         created_by_user_id=current_user.id,
     )
@@ -279,6 +283,26 @@ async def update_document(
     await db.refresh(doc)
 
     return await _build_detail(db, doc, can_edit=True, current_user=current_user)
+
+
+@router.delete("/{document_id}", status_code=204)
+async def delete_document(
+    document_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> None:
+    """Every other table referencing this document (ApiDocumentVersion,
+    CollectionDocument, IntegrationDocument, Subscription, Notification) has
+    ondelete="CASCADE" on its FK to api_documents.id, so db.delete here is
+    enough to clean up all of those rows too - no manual cleanup needed.
+    On-disk spec files aren't covered by that cascade, so they're removed
+    first via delete_document_files (best-effort - see its own docstring)."""
+    doc = await _require_member_document(db, document_id, current_user)
+
+    delete_document_files(settings.uploads_dir, doc.id)
+    await db.delete(doc)
+    await db.commit()
 
 
 @router.post("/{document_id}/recheck")

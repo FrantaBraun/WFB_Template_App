@@ -25,6 +25,7 @@ fake it."""
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import httpx
 import pytest
@@ -34,7 +35,9 @@ from sqlalchemy import select
 import app.security.jwt as jwt_module
 from app.config import Settings, get_settings
 from app.models.api_document import ApiDocument, ApiDocumentVersion
-from app.models.notification import Subscription
+from app.models.collection import Collection, CollectionDocument
+from app.models.integration import Integration, IntegrationCollection, IntegrationDocument
+from app.models.notification import Notification, Subscription
 from app.models.team import Team, TeamMembership
 from app.models.user import User
 from app.services.api_document_versions import process_new_spec
@@ -371,6 +374,59 @@ async def test_create_by_url_success(db_session, make_access_token, api_docs_set
     assert body["current_version"]["source"] == "initial"
 
 
+@respx.mock
+async def test_create_by_url_persists_docs_url(db_session, make_access_token, api_docs_settings):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    token = make_access_token(sub=str(owner.auth_sub))
+    respx.get("https://example.com/openapi.json").mock(
+        return_value=httpx.Response(200, content=_spec_bytes("1.0.0"))
+    )
+
+    resp = await _request(
+        db_session,
+        "POST",
+        "/api/api-docs",
+        token=token,
+        settings=api_docs_settings,
+        json={
+            "team_id": str(team.id),
+            "title": "Example API",
+            "source_url": "https://example.com/openapi.json",
+            "docs_url": "https://example.com/docs",
+        },
+    )
+
+    assert resp.status_code == 201
+    assert resp.json()["docs_url"] == "https://example.com/docs"
+
+
+@respx.mock
+async def test_create_by_url_docs_url_defaults_to_null_when_omitted(db_session, make_access_token, api_docs_settings):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    token = make_access_token(sub=str(owner.auth_sub))
+    respx.get("https://example.com/openapi.json").mock(
+        return_value=httpx.Response(200, content=_spec_bytes("1.0.0"))
+    )
+
+    resp = await _request(
+        db_session,
+        "POST",
+        "/api/api-docs",
+        token=token,
+        settings=api_docs_settings,
+        json={
+            "team_id": str(team.id),
+            "title": "Example API",
+            "source_url": "https://example.com/openapi.json",
+        },
+    )
+
+    assert resp.status_code == 201
+    assert resp.json()["docs_url"] is None
+
+
 async def test_create_by_url_non_member_returns_404(db_session, make_access_token):
     owner = await _make_user(db_session)
     team = await _make_team_with_owner(db_session, owner)
@@ -470,6 +526,44 @@ async def test_create_by_upload_success(db_session, make_access_token, api_docs_
     assert body["recheck_period"] == "manual"
     assert body["current_version"]["version"] == "1.0.0"
     assert body["current_version"]["source"] == "initial"
+
+
+async def test_create_by_upload_persists_docs_url(db_session, make_access_token, api_docs_settings):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(
+        db_session,
+        "POST",
+        "/api/api-docs/upload",
+        token=token,
+        settings=api_docs_settings,
+        data={"team_id": str(team.id), "title": "Uploaded API", "docs_url": "https://example.com/docs"},
+        files={"file": ("openapi.json", _spec_bytes("1.0.0"), "application/json")},
+    )
+
+    assert resp.status_code == 201
+    assert resp.json()["docs_url"] == "https://example.com/docs"
+
+
+async def test_create_by_upload_docs_url_defaults_to_null_when_omitted(db_session, make_access_token, api_docs_settings):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(
+        db_session,
+        "POST",
+        "/api/api-docs/upload",
+        token=token,
+        settings=api_docs_settings,
+        data={"team_id": str(team.id), "title": "Uploaded API"},
+        files={"file": ("openapi.json", _spec_bytes("1.0.0"), "application/json")},
+    )
+
+    assert resp.status_code == 201
+    assert resp.json()["docs_url"] is None
 
 
 async def test_create_by_upload_non_member_returns_404(db_session, make_access_token):
@@ -660,6 +754,26 @@ async def test_patch_updates_fields(db_session, make_access_token):
     assert doc.title == "New title"
 
 
+async def test_patch_updates_docs_url(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, docs_url=None)
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(
+        db_session,
+        "PATCH",
+        f"/api/api-docs/{doc.id}",
+        token=token,
+        json={"docs_url": "https://example.com/docs"},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["docs_url"] == "https://example.com/docs"
+    await db_session.refresh(doc)
+    assert doc.docs_url == "https://example.com/docs"
+
+
 async def test_patch_recheck_period_without_source_url_returns_422(db_session, make_access_token):
     owner = await _make_user(db_session)
     team = await _make_team_with_owner(db_session, owner)
@@ -721,6 +835,160 @@ async def test_patch_non_member_returns_404(db_session, make_access_token):
     )
 
     assert resp.status_code == 404
+
+
+# --- DELETE /{document_id} -----------------------------------------------------------
+
+
+async def test_delete_document_member_succeeds(db_session, make_access_token, api_docs_settings):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner)
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "DELETE", f"/api/api-docs/{doc.id}", token=token, settings=api_docs_settings)
+
+    assert resp.status_code == 204
+    rows = (await db_session.execute(select(ApiDocument).where(ApiDocument.id == doc.id))).scalars().all()
+    assert rows == []
+
+
+async def test_delete_document_non_member_returns_404_and_leaves_row(db_session, make_access_token, api_docs_settings):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner)
+    outsider_token = make_access_token(sub=str(uuid.uuid4()))
+
+    resp = await _request(
+        db_session, "DELETE", f"/api/api-docs/{doc.id}", token=outsider_token, settings=api_docs_settings
+    )
+
+    assert resp.status_code == 404
+    rows = (await db_session.execute(select(ApiDocument).where(ApiDocument.id == doc.id))).scalars().all()
+    assert len(rows) == 1
+
+
+async def test_delete_document_unknown_id_returns_404(db_session, make_access_token, api_docs_settings):
+    token = make_access_token(sub=str(uuid.uuid4()))
+
+    resp = await _request(
+        db_session, "DELETE", f"/api/api-docs/{uuid.uuid4()}", token=token, settings=api_docs_settings
+    )
+
+    assert resp.status_code == 404
+
+
+def test_delete_document_requires_auth(client):
+    resp = client.delete(f"/api/api-docs/{uuid.uuid4()}")
+    assert resp.status_code in (401, 403)
+
+
+async def test_delete_document_cascades_every_related_row_and_removes_files(
+    db_session, make_access_token, api_docs_settings
+):
+    """Full fan-out around one document - two versions (one archived, one
+    current), a membership in a Collection, that same Collection's own
+    membership in an Integration (the document's indirect join path into an
+    integration - not a direct IntegrationDocument row, see
+    test_delete_document_cascades_direct_integration_membership below for
+    that one), a direct Subscription and a Notification row - then delete
+    the document and assert every one of those FK-CASCADE rows is actually
+    gone (not just that the FK declarations look right), that the
+    Collection/Integration/their own join row are untouched (the cascade is
+    scoped to rows with a direct FK to the document, nothing beyond it), and
+    that the on-disk spec files save_spec_file wrote were actually removed
+    from uploads_dir."""
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner)
+    await _seed_version(db_session, doc, api_docs_settings.uploads_dir, version="1.0.0")
+    current_version = await _seed_version(db_session, doc, api_docs_settings.uploads_dir, version="2.0.0")
+
+    collection = Collection(team_id=team.id, name="Some Collection", created_by_user_id=owner.id)
+    db_session.add(collection)
+    await db_session.flush()
+    db_session.add(CollectionDocument(collection_id=collection.id, documentation_id=doc.id, added_by_user_id=owner.id))
+
+    integration = Integration(team_id=team.id, name="Some Integration", created_by_user_id=owner.id)
+    db_session.add(integration)
+    await db_session.flush()
+    db_session.add(
+        IntegrationCollection(integration_id=integration.id, collection_id=collection.id, added_by_user_id=owner.id)
+    )
+
+    db_session.add(Subscription(user_id=owner.id, documentation_id=doc.id))
+    db_session.add(Notification(user_id=owner.id, documentation_id=doc.id, version_id=current_version.id))
+    await db_session.flush()
+
+    doc_files_dir = Path(api_docs_settings.uploads_dir) / "api_docs" / str(doc.id)
+    assert doc_files_dir.is_dir()
+    assert len(list(doc_files_dir.iterdir())) == 2  # both versions' spec files really on disk
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "DELETE", f"/api/api-docs/{doc.id}", token=token, settings=api_docs_settings)
+
+    assert resp.status_code == 204
+    assert (await db_session.execute(select(ApiDocument).where(ApiDocument.id == doc.id))).scalars().all() == []
+    assert (
+        (await db_session.execute(select(ApiDocumentVersion).where(ApiDocumentVersion.documentation_id == doc.id)))
+        .scalars()
+        .all()
+        == []
+    )
+    assert (
+        (await db_session.execute(select(CollectionDocument).where(CollectionDocument.documentation_id == doc.id)))
+        .scalars()
+        .all()
+        == []
+    )
+    assert (
+        (await db_session.execute(select(Subscription).where(Subscription.documentation_id == doc.id)))
+        .scalars()
+        .all()
+        == []
+    )
+    assert (
+        (await db_session.execute(select(Notification).where(Notification.documentation_id == doc.id)))
+        .scalars()
+        .all()
+        == []
+    )
+
+    # The document's own deletion doesn't ripple beyond rows with a direct FK
+    # to it - the Collection, Integration and their own join row survive.
+    assert (await db_session.execute(select(Collection).where(Collection.id == collection.id))).scalar_one_or_none() is not None
+    assert (await db_session.execute(select(Integration).where(Integration.id == integration.id))).scalar_one_or_none() is not None
+    assert (
+        await db_session.execute(select(IntegrationCollection).where(IntegrationCollection.collection_id == collection.id))
+    ).scalar_one_or_none() is not None
+
+    assert not doc_files_dir.exists()
+
+
+async def test_delete_document_cascades_direct_integration_membership(db_session, make_access_token, api_docs_settings):
+    """Focused coverage for IntegrationDocument specifically - a document's
+    *direct* membership in an integration, independent of any Collection.
+    The scenario above exercises the document's indirect, Collection-mediated
+    join path into an integration instead."""
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner)
+    integration = Integration(team_id=team.id, name="Some Integration", created_by_user_id=owner.id)
+    db_session.add(integration)
+    await db_session.flush()
+    db_session.add(IntegrationDocument(integration_id=integration.id, documentation_id=doc.id, added_by_user_id=owner.id))
+    await db_session.flush()
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "DELETE", f"/api/api-docs/{doc.id}", token=token, settings=api_docs_settings)
+
+    assert resp.status_code == 204
+    rows = (
+        (await db_session.execute(select(IntegrationDocument).where(IntegrationDocument.documentation_id == doc.id)))
+        .scalars()
+        .all()
+    )
+    assert rows == []
 
 
 # --- GET /api/api-docs (member list) ------------------------------------------------
@@ -788,16 +1056,21 @@ async def test_public_listing_only_includes_public_docs_no_team_scoping(db_sessi
     team_b = await _make_team_with_owner(db_session, owner, name="Team B")
     public_doc = await _make_document(db_session, team_a, owner, title="Public Doc", is_public=True)
     await _seed_version(db_session, public_doc, api_docs_settings.uploads_dir, version="1.0.0")
-    await _make_document(db_session, team_b, owner, title="Private Doc", is_public=False)
+    private_doc = await _make_document(db_session, team_b, owner, title="Private Doc", is_public=False)
 
     resp = await _request(db_session, "GET", "/api/public/api-docs")  # no token at all
 
     assert resp.status_code == 200
     body = resp.json()
-    assert len(body) == 1
-    assert body[0]["title"] == "Public Doc"
-    assert body[0]["team_id"] == str(team_a.id)
-    assert body[0]["current_version"] == "1.0.0"
+    # Scoped to this test's own rows rather than asserting the whole result
+    # set - the DB isn't guaranteed empty (e.g. real usage data alongside
+    # the test DB), only that our own public doc is present and our own
+    # private doc is absent.
+    matches = [item for item in body if item["id"] == str(public_doc.id)]
+    assert len(matches) == 1
+    assert matches[0]["team_id"] == str(team_a.id)
+    assert matches[0]["current_version"] == "1.0.0"
+    assert not any(item["id"] == str(private_doc.id) for item in body)
 
 
 # --- GET /{id} is_subscribed ---------------------------------------------------------

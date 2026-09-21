@@ -188,6 +188,23 @@ async def update_collection(
     return await _build_detail(db, collection, can_edit=True, current_user=current_user)
 
 
+@router.delete("/{collection_id}", status_code=204)
+async def delete_collection(
+    collection_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """CollectionDocument, IntegrationCollection, Subscription
+    (collection_id) and KnowledgeBasePage (collection_id) all have
+    ondelete="CASCADE" on their FK to collections.id, so db.delete here is
+    enough to clean up all of those rows too. Unlike ApiDocument, a
+    Collection has no on-disk files of its own, so no storage cleanup step is
+    needed here (see api_docs/router.py's delete_document)."""
+    collection = await _require_member_collection(db, collection_id, current_user)
+    await db.delete(collection)
+    await db.commit()
+
+
 @router.get("/{collection_id}/documents")
 async def list_collection_documents(
     collection_id: uuid.UUID,

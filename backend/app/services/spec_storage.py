@@ -2,6 +2,7 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
+import shutil
 import uuid
 from pathlib import Path
 
@@ -37,3 +38,13 @@ def read_spec_file(uploads_dir: str, storage_path: str) -> bytes:
     """Read back a spec file previously written by save_spec_file, given the
     storage_path relative to uploads_dir (ApiDocumentVersion.storage_path)."""
     return (Path(uploads_dir) / storage_path).read_bytes()
+
+
+def delete_document_files(uploads_dir: str, document_id: uuid.UUID) -> None:
+    """Remove uploads_dir/api_docs/{document_id}/ and everything under it -
+    every version's spec file for this document, since save_spec_file always
+    writes into that one directory. ignore_errors=True deliberately: a
+    filesystem hiccup while cleaning up orphaned files must never block the
+    actual document deletion this is a best-effort side effect of (see
+    api_docs/router.py's delete_document)."""
+    shutil.rmtree(Path(uploads_dir) / "api_docs" / str(document_id), ignore_errors=True)
