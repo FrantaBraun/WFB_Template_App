@@ -18,8 +18,65 @@
     "integrations": "Integrace"
   },
   "home": {
-    "title": "Šablona projektu",
-    "description": "Toto je výchozí šablona pro tvorbu dalších aplikací. Neobsahuje žádnou funkční logiku — jen předpřipravené prostředí, na kterém lze začít stavět."
+    "pageTitle": "API Hub",
+    "pageDescription": "API Hub eviduje API dokumentaci třetích stran s historií verzí, automatickými kontrolami, kolekcemi, integracemi a znalostní bází pro váš tým.",
+    "hero": {
+      "title": "API Hub",
+      "tagline": "Přehledná evidence API dokumentace – s historií, upozorněními a týmovou spoluprací.",
+      "description": "Nahrajte OpenAPI/Swagger specifikaci ze souboru, nebo na ni jen odkažte – API Hub sám hlídá nové verze a archivuje každou z nich, takže se k nim můžete vrátit i poté, co originál zmizí. Dokumentace patří vašemu týmu, dá se sdružovat do kolekcí a integrací a doplnit o vlastní poznámky ve znalostní bázi.",
+      "ctaBrowse": "Prohlédnout API dokumentaci",
+      "ctaTeamsLoggedIn": "Spravovat své týmy",
+      "ctaTeamsLoggedOut": "Založit si účet"
+    },
+    "features": {
+      "heading": "Co všechno API Hub nabízí",
+      "subheading": "Najeďte myší na kartu a zobrazí se víc podrobností.",
+      "registry": {
+        "title": "Centrální evidence s historií verzí",
+        "summary": "Jedno místo pro API dokumentaci všech aplikací třetích stran – s archivem každé verze.",
+        "detail": "Dokumentaci založíte odkazem na OpenAPI/Swagger specifikaci, nebo nahrajete soubor JSON/YAML. Každá nová verze se archivuje, takže se k ní můžete vrátit, i když už oficiálně dostupná nebude."
+      },
+      "notifications": {
+        "title": "Automatická kontrola a upozornění",
+        "summary": "Nastavte periodu kontroly a nechte si nové verze hlídat automaticky.",
+        "detail": "Denní, týdenní nebo měsíční kontrola porovná verzi ze specifikace a při změně založí novou verzi. O novince pošleme e-mail, in-app notifikaci i banner přímo na stránce dokumentace."
+      },
+      "collections": {
+        "title": "Kolekce pro související API",
+        "summary": "Seskupte dokumentace, které patří k sobě, do jedné sdílené kolekce.",
+        "detail": "Ať jde o sadu mikroslužeb, nebo konkurenční poskytovatele stejné služby – kolekce drží jejich dokumentaci pohromadě a nabízí i vlastní znalostní bázi."
+      },
+      "integrations": {
+        "title": "Integrace napříč kolekcemi",
+        "summary": "Zkombinujte kolekce a samostatné dokumentace do jednoho pohledu pro konkrétní projekt.",
+        "detail": "Integrace může využívat celou kolekci a k tomu jednu či více samostatných dokumentací navíc – přesně podle toho, co daný projekt potřebuje. Její znalostní báze automaticky obsahuje i znalostní báze všech použitých kolekcí."
+      },
+      "knowledgeBase": {
+        "title": "Znalostní báze týmu",
+        "summary": "Poznámky, postupy a návody přímo u dokumentace, kterou používáte.",
+        "detail": "Ke kolekci i integraci si vytvoříte vlastní stránky se zkušenostmi týmu. Úprava znalostní báze kolekce se promítne do všech integrací, které ji obsahují – nemusíte psát dvakrát to samé."
+      },
+      "sharing": {
+        "title": "Sdílení v týmu i navenek",
+        "summary": "Dokumentace i kolekce od začátku patří týmu – a volitelně je uvidí i ostatní.",
+        "detail": "Autor může dokumentaci nebo kolekci označit jako veřejnou – kdokoliv v aplikaci si ji pak může prohlédnout a přihlásit se k odběru novinek, i bez členství v týmu."
+      }
+    },
+    "examples": {
+      "heading": "Jak to pomáhá v praxi",
+      "microservices": {
+        "title": "Tým se sadou mikroslužeb",
+        "text": "API dokumentace pěti mikroslužeb se kontroluje týdně automaticky. Jakmile se u kterékoli z nich změní verze specifikace, dostane celý tým e-mail i notifikaci v aplikaci – nemusíte nic sledovat ručně."
+      },
+      "paymentProviders": {
+        "title": "Srovnání poskytovatelů plateb",
+        "text": "Dokumentaci tří platebních bran přidáte do jedné kolekce „Platby“. Kdokoliv v týmu ji pak najde na jednom místě, místo hledání odkazů v chatu nebo starých poznámkách."
+      },
+      "integrationScoped": {
+        "title": "Nová funkce, přesně vymezená integrace",
+        "text": "Pro novou funkci vytvoříte integraci jen z API, na kterých skutečně závisí – jedna kolekce a k tomu jedna samostatná dokumentace navíc. Do znalostní báze integrace přidáte poznámky týmu k limitům a specifikům autentizace."
+      }
+    }
   },
   "login": {
     "pageTitle": "Přihlášení",

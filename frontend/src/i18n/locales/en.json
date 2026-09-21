@@ -18,8 +18,65 @@
     "integrations": "Integrations"
   },
   "home": {
-    "title": "Project template",
-    "description": "This is a default template for building further applications. It contains no functional logic — just a ready-made environment to start building on."
+    "pageTitle": "API Hub",
+    "pageDescription": "API Hub tracks third-party API documentation with version history, automatic rechecks, collections, integrations, and a knowledge base for your team.",
+    "hero": {
+      "title": "API Hub",
+      "tagline": "A clear record of your API documentation — with history, alerts, and team collaboration built in.",
+      "description": "Upload an OpenAPI/Swagger specification from a file, or just link to it — API Hub watches for new versions on its own and archives every one, so you can look back even after the original disappears. Documentation belongs to your team, groups into collections and integrations, and can carry your own notes in a knowledge base.",
+      "ctaBrowse": "Browse API documentation",
+      "ctaTeamsLoggedIn": "Manage your teams",
+      "ctaTeamsLoggedOut": "Create an account"
+    },
+    "features": {
+      "heading": "Everything API Hub gives you",
+      "subheading": "Hover a card to see more detail.",
+      "registry": {
+        "title": "Central registry with version history",
+        "summary": "One place for the API documentation of every third-party app you work with — with every version archived.",
+        "detail": "Register a doc from an OpenAPI/Swagger URL, or upload a JSON/YAML file directly. Every new version is archived automatically, so you can look back even after it's no longer officially available."
+      },
+      "notifications": {
+        "title": "Automatic rechecks and alerts",
+        "summary": "Set a recheck period and let new versions get caught automatically.",
+        "detail": "A daily, weekly or monthly check compares the specification's version, and archives a new one when it changes. We send an email, an in-app notification, and a banner right on the documentation page."
+      },
+      "collections": {
+        "title": "Collections for related APIs",
+        "summary": "Group documentation that belongs together into one shared collection.",
+        "detail": "Whether it's a set of microservices or competing providers of the same service, a collection keeps their documentation together — with its own knowledge base."
+      },
+      "integrations": {
+        "title": "Integrations across collections",
+        "summary": "Combine collections and standalone docs into one view scoped to a specific project.",
+        "detail": "An integration can use a whole collection plus one or more standalone docs on top — exactly what that project needs. Its knowledge base automatically includes the knowledge base of every collection it uses."
+      },
+      "knowledgeBase": {
+        "title": "A knowledge base for your team",
+        "summary": "Notes, procedures and how-tos, kept right next to the docs you use.",
+        "detail": "Create your own pages of team know-how for any collection or integration. Editing a collection's knowledge base is reflected in every integration that includes it — no need to write the same thing twice."
+      },
+      "sharing": {
+        "title": "Team-owned, optionally public",
+        "summary": "Documentation and collections belong to a team from day one — and can be opened up to everyone.",
+        "detail": "The author can mark documentation or a collection as public, so anyone in the app can browse it and subscribe to update notifications, even without being on the owning team."
+      }
+    },
+    "examples": {
+      "heading": "How this helps in practice",
+      "microservices": {
+        "title": "A team with several microservices",
+        "text": "Five microservices' API docs get rechecked automatically every week. The moment any of their specs bumps its version, the whole team gets an email and an in-app notification — nobody has to check by hand."
+      },
+      "paymentProviders": {
+        "title": "Comparing payment providers",
+        "text": "You add three payment gateways' documentation into one \"Payments\" collection. Anyone on the team can then find them in one place, instead of digging up links from chat or old notes."
+      },
+      "integrationScoped": {
+        "title": "A new feature, precisely scoped",
+        "text": "For a new feature, you create an integration from exactly the APIs it depends on — one collection plus one extra standalone doc. You add the team's notes on rate limits and auth quirks straight to the integration's knowledge base."
+      }
+    }
   },
   "login": {
     "pageTitle": "Sign in",

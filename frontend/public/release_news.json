@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Redesign the home page with a real introduction to API Hub, a hover-reveal grid of feature cards, and a few concrete usage examples, replacing the old placeholder template copy.",
         "Knowledge Base pages now have their own browse and edit screens instead of an inline form on the Collection/Integration page, with a rich-text (WYSIWYG) editor alongside the existing Markdown editor and automatic conversion when switching between them.",
         "Add a documentation link field to API documentation, shown as a clickable link on its page and editable alongside the other fields, and add a Delete button for API documentation and collections you can edit.",
         "Add Knowledge Base sections to Collection and Integration pages: write Markdown notes, rendered safely (sanitized) for every viewer, with an integration always showing the latest pages from its collections plus its own.",
