@@ -11,7 +11,9 @@
     "register": "Register",
     "account": "Account",
     "home": "Home",
-    "toggleDarkMode": "Toggle dark mode"
+    "toggleDarkMode": "Toggle dark mode",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "home": {
     "title": "Project template",

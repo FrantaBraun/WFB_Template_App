@@ -11,7 +11,9 @@
     "register": "Registrace",
     "account": "Účet",
     "home": "Domů",
-    "toggleDarkMode": "Přepnout tmavý režim"
+    "toggleDarkMode": "Přepnout tmavý režim",
+    "openMenu": "Otevřít nabídku",
+    "closeMenu": "Zavřít nabídku"
   },
   "home": {
     "title": "Šablona projektu",

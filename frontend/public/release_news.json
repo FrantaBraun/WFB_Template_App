@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Fix the header nav overlapping the logo on narrow screens: below the tablet breakpoint it now collapses into a hamburger-triggered dropdown menu",
         "Add a contact-form module (src/modules/kontaktni_formular) with a /kontakt page and nav link: subject + message, plus a required reply-to email when signed out",
         "Add sun/moon icons to the light/dark toggle switch's thumb, matching whichever mode is active",
         "Add a sitewide footer (linking to withfbraun.com before the copyright line) pinned to the bottom of the viewport even on short pages",
