@@ -15,7 +15,9 @@
     "teams": "Teams",
     "apiDocs": "API Docs",
     "collections": "Collections",
-    "integrations": "Integrations"
+    "integrations": "Integrations",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "home": {
     "pageTitle": "API Hub",

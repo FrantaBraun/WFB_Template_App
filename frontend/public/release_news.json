@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Fix the header nav overlapping the logo on narrow screens: below the tablet breakpoint it now collapses into a hamburger-triggered dropdown menu",
         "Redesign the home page with a real introduction to API Hub, a hover-reveal grid of feature cards, and a few concrete usage examples, replacing the old placeholder template copy.",
         "Knowledge Base pages now have their own browse and edit screens instead of an inline form on the Collection/Integration page, with a rich-text (WYSIWYG) editor alongside the existing Markdown editor and automatic conversion when switching between them.",
         "Add a documentation link field to API documentation, shown as a clickable link on its page and editable alongside the other fields, and add a Delete button for API documentation and collections you can edit.",
@@ -8,7 +9,13 @@
         "Add Collections pages: browse public collections, create and manage the collections your teams own, add or remove documents, and subscribe to be notified of new versions.",
         "Add notifications: a header bell with unread badge and dropdown, a new-version banner on documentation pages, and a subscribe/unsubscribe button for any visible API document.",
         "Add API Docs pages: browse public documentation, register new docs by URL or file upload, and view/edit/recheck the documentation your teams own, including its version history.",
-        "Add Teams pages: view/create teams, manage members and roles, invite members by email, and accept team invitations."
+        "Add Teams pages: view/create teams, manage members and roles, invite members by email, and accept team invitations.",
+        "Add a contact-form module (src/modules/kontaktni_formular) with a /kontakt page and nav link: subject + message, plus a required reply-to email when signed out",
+        "Add sun/moon icons to the light/dark toggle switch's thumb, matching whichever mode is active",
+        "Add a sitewide footer (linking to withfbraun.com before the copyright line) pinned to the bottom of the viewport even on short pages",
+        "Add a pluggable feature-module system: self-contained modules under src/modules/ are auto-discovered and toggled on/off per application via public/modules.json, contributing their own routes, nav links, and translations",
+        "Add light/dark theme toggle in the header, with the preference synced to the signed-in user's profile (user_data.darkMode) and a dedicated Appearance section on the Account page",
+        "Add /release-news page showing backend and frontend release history side by side, grouped by compatible major.minor version"
     ],
     "releases": []
 }

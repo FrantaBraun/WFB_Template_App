@@ -15,7 +15,9 @@
     "teams": "Týmy",
     "apiDocs": "API dokumentace",
     "collections": "Kolekce",
-    "integrations": "Integrace"
+    "integrations": "Integrace",
+    "openMenu": "Otevřít nabídku",
+    "closeMenu": "Zavřít nabídku"
   },
   "home": {
     "pageTitle": "API Hub",
