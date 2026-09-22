@@ -31,6 +31,8 @@ export interface ModuleDefinition {
   key: string
   routes: ModuleRoute[]
   nav?: ModuleNavItem[]
+  /** One element always rendered in the shared header (e.g. a notification bell), independent of routes/nav. */
+  headerWidget?: ReactElement
   /** Registered as an i18next resource bundle under the `key` namespace, per shipped language. */
   locales?: Partial<Record<SupportedLanguage, Record<string, unknown>>>
 }

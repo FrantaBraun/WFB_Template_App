@@ -1,5 +1,7 @@
 {
     "unreleased": [
+        "Add a notifications module (src/modules/notifications): a header bell with unread badge and dropdown, available to any application that enables it",
+        "Redesign the header so account controls, the language switcher (now a dropdown), the theme toggle, and any module-provided header icon (like the new notifications bell) stay visible everywhere, including in the collapsed mobile view - only page navigation links collapse into the hamburger menu",
         "Add a contact-form module (src/modules/kontaktni_formular) with a /kontakt page and nav link: subject + message, plus a required reply-to email when signed out",
         "Add sun/moon icons to the light/dark toggle switch's thumb, matching whichever mode is active",
         "Add a sitewide footer (linking to withfbraun.com before the copyright line) pinned to the bottom of the viewport even on short pages",
