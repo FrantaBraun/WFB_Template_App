@@ -28,7 +28,10 @@ class Notification(Base):
     understand what that thing is.
     """
 
-    __tablename__ = "notifications"
+    # Prefixed so it can't collide with an application's own "notifications"
+    # table (api-hub has one) - this module's models are always imported,
+    # even where the module is disabled.
+    __tablename__ = "module_notifications"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
