@@ -223,12 +223,18 @@ async def test_checkout_resolve_rejection_passes_status(client, make_access_toke
 @respx.mock
 async def test_checkout_stripe_error_502_and_no_row(client, db_session, make_access_token, paid_calls):
     respx.post(f"{STRIPE_URL}/v1/checkout/sessions").mock(return_value=Response(400, json={"error": {}}))
-    token = make_access_token(sub=str(uuid.uuid4()))
+    sub = str(uuid.uuid4())
+    user = await get_current_user(claims={"sub": sub}, db=db_session)
 
-    resp = await client.post(f"{BASE}/checkout", json={"purpose": "test_order"}, headers=_auth(token))
+    resp = await client.post(f"{BASE}/checkout", json={"purpose": "test_order"}, headers=_auth(make_access_token(sub=sub)))
 
     assert resp.status_code == 502
-    assert await db_session.scalar(select(func.count()).select_from(StripePayment)) == 0
+    # Scoped to this test's own user - the table may hold rows from outside
+    # this rolled-back test transaction (e.g. a local dev run).
+    count = await db_session.scalar(
+        select(func.count()).select_from(StripePayment).where(StripePayment.user_id == user.id)
+    )
+    assert count == 0
 
 
 async def test_checkout_not_configured_503(client, make_access_token, paid_calls):
