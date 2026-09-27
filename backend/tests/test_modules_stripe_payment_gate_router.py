@@ -224,7 +224,9 @@ async def test_checkout_resolve_rejection_passes_status(client, make_access_toke
 async def test_checkout_stripe_error_502_and_no_row(client, db_session, make_access_token, paid_calls):
     respx.post(f"{STRIPE_URL}/v1/checkout/sessions").mock(return_value=Response(400, json={"error": {}}))
     sub = str(uuid.uuid4())
-    user = await get_current_user(claims={"sub": sub}, db=db_session)
+    # Read the id up front: create_payment's rollback expires every object
+    # in this shared session, and a lazy reload afterwards can't run here.
+    user_id = (await get_current_user(claims={"sub": sub}, db=db_session)).id
 
     resp = await client.post(f"{BASE}/checkout", json={"purpose": "test_order"}, headers=_auth(make_access_token(sub=sub)))
 
@@ -232,7 +234,7 @@ async def test_checkout_stripe_error_502_and_no_row(client, db_session, make_acc
     # Scoped to this test's own user - the table may hold rows from outside
     # this rolled-back test transaction (e.g. a local dev run).
     count = await db_session.scalar(
-        select(func.count()).select_from(StripePayment).where(StripePayment.user_id == user.id)
+        select(func.count()).select_from(StripePayment).where(StripePayment.user_id == user_id)
     )
     assert count == 0
 
