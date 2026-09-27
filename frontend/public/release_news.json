@@ -1,5 +1,9 @@
 {
     "unreleased": [
+        "Add a Stripe payment gate module (src/modules/stripe_payment_gate): a reusable Pay button / startCheckout() helper that redirects to Stripe Checkout, and a /platba/vysledek result page showing whether the payment succeeded, is still being confirmed, was canceled, failed, or expired",
+        "Add a notifications module (src/modules/notifications): a header bell with unread badge and dropdown, available to any application that enables it",
+        "Redesign the header so account controls, the language switcher (now a dropdown), the theme toggle, and any module-provided header icon (like the new notifications bell) stay visible everywhere, including in the collapsed mobile view - only page navigation links collapse into the hamburger menu",
+        "Fix the header nav overlapping the logo on narrow screens: below the tablet breakpoint it now collapses into a hamburger-triggered dropdown menu",
         "Add a contact-form module (src/modules/kontaktni_formular) with a /kontakt page and nav link: subject + message, plus a required reply-to email when signed out",
         "Add sun/moon icons to the light/dark toggle switch's thumb, matching whichever mode is active",
         "Give the site its own playful \"geometric confetti\" visual identity: a warm paper background with scattered accent shapes, hard-outlined cards, Poppins headings, and a teal/mustard/coral palette across the nav, footer, home page, and article/page views",

@@ -11,7 +11,10 @@
     "register": "Registrace",
     "account": "Účet",
     "home": "Domů",
-    "toggleDarkMode": "Přepnout tmavý režim"
+    "toggleDarkMode": "Přepnout tmavý režim",
+    "changeLanguage": "Změnit jazyk",
+    "openMenu": "Otevřít nabídku",
+    "closeMenu": "Zavřít nabídku"
   },
   "home": {
     "title": "Slavíčkovy knihohrátky",

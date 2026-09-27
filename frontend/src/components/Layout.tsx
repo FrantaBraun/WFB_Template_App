@@ -4,14 +4,14 @@
  * Freely available as a template for building custom applications.
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import { SUPPORTED_LANGUAGES } from '../i18n'
 import type { ModuleDefinition } from '../modules/types'
 import Footer from './Footer'
+import LanguageDropdown from './LanguageDropdown'
 import ThemeToggle from './ThemeToggle'
 
 interface NavPage {
@@ -49,34 +49,56 @@ function ConfettiBackground() {
   )
 }
 
-/** Small control to switch the active i18next language between the supported locales. */
-function LanguageSwitcher() {
-  const { i18n } = useTranslation()
-
+function MenuIcon({ className }: { className?: string }) {
   return (
-    <div className="flex items-center gap-1 text-xs uppercase tracking-wide text-ink-muted dark:text-ink-muted-dark">
-      {SUPPORTED_LANGUAGES.map((lng) => (
-        <button
-          key={lng}
-          onClick={() => i18n.changeLanguage(lng)}
-          className={`rounded px-1.5 py-0.5 ${
-            i18n.resolvedLanguage === lng
-              ? 'bg-ink/10 text-ink dark:bg-ink-dark/15 dark:text-ink-dark'
-              : 'hover:text-ink dark:hover:text-ink-dark'
-          }`}
-        >
-          {lng}
-        </button>
-      ))}
-    </div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
+      <path d="M3 6h18M3 12h18M3 18h18" />
+    </svg>
   )
 }
 
-/** Top navigation bar: brand link, any enabled module's own nav links, plus auth-aware links (account/logout when signed in, login/register otherwise). */
+function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  )
+}
+
+function UserIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  )
+}
+
+function LoginIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" />
+    </svg>
+  )
+}
+
+function LogoutIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+    </svg>
+  )
+}
+
+const iconButtonClass =
+  'rounded-full p-1.5 text-ink-soft hover:bg-ink/10 hover:text-ink dark:text-ink-soft-dark dark:hover:bg-ink-dark/15 dark:hover:text-ink-dark'
+
 function Nav({ modules }: { modules: ModuleDefinition[] }) {
   const { t } = useTranslation()
   const { user, logout } = useAuth()
   const [navPages, setNavPages] = useState<NavPage[]>([])
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     apiFetch('/api/pages/')
@@ -84,6 +106,59 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
       .then(setNavPages)
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) setMobileMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [mobileMenuOpen])
+
+  function closeMobileMenu() { setMobileMenuOpen(false) }
+
+  const navLinks = (
+    <>
+      {navPages.map((page) => (
+        <Link key={page.slug} to={`/${page.slug}`} onClick={closeMobileMenu} className="hover:text-ink dark:hover:text-ink-dark">
+          {page.heading}
+        </Link>
+      ))}
+      {modules.flatMap((module) => module.nav ?? []).map((item) => (
+        <Link key={item.to} to={item.to} onClick={closeMobileMenu} className="hover:text-ink dark:hover:text-ink-dark">{t(item.labelKey)}</Link>
+      ))}
+      {user?.is_admin && (
+        <Link to="/admin" onClick={closeMobileMenu} className="hover:text-ink dark:hover:text-ink-dark">
+          {t('nav.admin')}
+        </Link>
+      )}
+    </>
+  )
+
+  const utilityControls = (
+    <>
+      {modules.filter((module) => module.headerWidget).map((module) => (
+        <span key={module.key}>{module.headerWidget}</span>
+      ))}
+      {user ? (
+        <>
+          <Link to="/account" aria-label={t('common.account')} className={iconButtonClass}>
+            <UserIcon className="h-5 w-5" />
+          </Link>
+          <button onClick={() => logout()} aria-label={t('common.logout')} className={iconButtonClass}>
+            <LogoutIcon className="h-5 w-5" />
+          </button>
+        </>
+      ) : (
+        <Link to="/login" aria-label={t('common.login')} className={iconButtonClass}>
+          <LoginIcon className="h-5 w-5" />
+        </Link>
+      )}
+      <LanguageDropdown />
+      <ThemeToggle />
+    </>
+  )
 
   return (
     <header className="border-b border-ink/10 dark:border-ink-dark/10">
@@ -95,45 +170,26 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
           <span className="font-display font-bold leading-tight">{t('nav.brand')}</span>
         </Link>
 
-        <nav className="flex items-center gap-4">
-          {navPages.map((page) => (
-            <Link key={page.slug} to={`/${page.slug}`} className="hover:text-ink dark:hover:text-ink-dark">
-              {page.heading}
-            </Link>
-          ))}
-          {modules.flatMap((module) => module.nav ?? []).map((item) => (
-            <Link key={item.to} to={item.to} className="hover:text-ink dark:hover:text-ink-dark">
-              {t(item.labelKey)}
-            </Link>
-          ))}
-          {user ? (
-            <>
-              {user.is_admin && (
-                <Link to="/admin" className="hover:text-ink dark:hover:text-ink-dark">
-                  {t('nav.admin')}
-                </Link>
-              )}
-              <Link to="/account" className="hover:text-ink dark:hover:text-ink-dark">
-                {t('common.account')}
-              </Link>
-              <button onClick={() => logout()} className="hover:text-ink dark:hover:text-ink-dark">
-                {t('common.logout')}
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="hover:text-ink dark:hover:text-ink-dark">
-                {t('common.login')}
-              </Link>
-              <Link to="/register" className="hover:text-ink dark:hover:text-ink-dark">
-                {t('common.register')}
-              </Link>
-            </>
-          )}
-          <LanguageSwitcher />
-          <ThemeToggle />
+        <nav className="hidden items-center gap-4 md:flex">
+          {navLinks}
         </nav>
+
+        <div className="flex items-center gap-2">
+          {utilityControls}
+          <button type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={t(mobileMenuOpen ? 'common.closeMenu' : 'common.openMenu')} aria-expanded={mobileMenuOpen}
+            className="inline-flex items-center justify-center rounded-lg p-2 text-ink-soft hover:bg-ink/10 dark:text-ink-soft-dark dark:hover:bg-ink-dark/15 md:hidden">
+            {mobileMenuOpen ? <CloseIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
+
+      {mobileMenuOpen && (
+        <div ref={mobileMenuRef} className="border-t border-ink/10 px-6 py-3 dark:border-ink-dark/10 md:hidden">
+          <nav className="flex flex-col items-start gap-3 text-sm text-ink-soft dark:text-ink-soft-dark">
+            {navLinks}
+          </nav>
+        </div>
+      )}
     </header>
   )
 }
