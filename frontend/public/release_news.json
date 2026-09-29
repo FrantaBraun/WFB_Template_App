@@ -1,6 +1,9 @@
 {
     "unreleased": [
+        "Add a Stripe payment gate module (src/modules/stripe_payment_gate): a reusable Pay button / startCheckout() helper that redirects to Stripe Checkout, and a /platba/vysledek result page showing whether the payment succeeded, is still being confirmed, was canceled, failed, or expired",
         "Fix the notification bell's dropdown running off the left edge of the screen when opened from the new mobile menu",
+        "Add a notifications module (src/modules/notifications): a header bell with unread badge and dropdown, available to any application that enables it",
+        "Redesign the header so account controls, the language switcher (now a dropdown), the theme toggle, and any module-provided header icon (like the new notifications bell) stay visible everywhere, including in the collapsed mobile view - only page navigation links collapse into the hamburger menu",
         "Fix the header nav overlapping the logo on narrow screens: below the tablet breakpoint it now collapses into a hamburger-triggered dropdown menu",
         "Redesign the home page with a real introduction to API Hub, a hover-reveal grid of feature cards, and a few concrete usage examples, replacing the old placeholder template copy.",
         "Knowledge Base pages now have their own browse and edit screens instead of an inline form on the Collection/Integration page, with a rich-text (WYSIWYG) editor alongside the existing Markdown editor and automatic conversion when switching between them.",

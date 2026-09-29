@@ -1,5 +1,7 @@
 {
     "unreleased": [
+        "Store the notifications module's data in a module_notifications table (instead of notifications), so the module can coexist with an application's own notifications table",
+        "Add a Stripe payment gate module (app/modules/stripe_payment_gate): starts payments through Stripe Checkout for server-side-priced \"payment purposes\" that each application registers, and confirms them via a signature-verified webhook (with a direct Stripe re-check as fallback), running the purpose's own post-payment hook exactly once",
         "Knowledge base pages can now be fetched individually, and each page records whether its content is Markdown or raw HTML (for an upcoming WYSIWYG editor).",
         "Add the ability to delete an API document or a collection, cleaning up every version, membership, subscription and notification that referenced it.",
         "Add a docs_url field to API documents for linking to the third-party API's own official documentation site, separate from the machine-readable spec URL used for fetching/parsing.",
@@ -9,7 +11,11 @@
         "Add automatic recheck scheduler: API documents with a daily/weekly/monthly recheck period are now checked periodically in the background, not just on demand.",
         "Add subscriptions and notifications: subscribe to any visible API document to get notified of new versions, view your notifications with unread counts, and mark them as read.",
         "Add API document registry: register third-party API docs by URL or file upload, browse version history, trigger manual rechecks/re-uploads, and share publicly or within your team.",
-        "Add teams: create/rename teams, manage membership, and invite members by email with an accept link."
+        "Add teams: create/rename teams, manage membership, and invite members by email with an accept link.",
+        "Add a notifications module (app/modules/notifications): a generic, per-user in-app notification list (GET /api/modules/notifications, mark one or all as read) that any application can create notifications into via a plain create_notification() call, without this module needing to know anything about that application's own data",
+        "Add a contact-form module (app/modules/kontaktni_formular): sends the message to CONTACT_MAIL plus a confirmation copy to the sender, signed with the sender's real name when they're signed in",
+        "Add a pluggable feature-module system: self-contained modules under app/modules/ are auto-discovered and toggled on/off per application via ENABLED_MODULES, with no code changes to shared routing or migrations",
+        "Add GET /api/public/release-news endpoint, exposing release_news.json for the frontend's release news page"
     ],
     "releases": []
 }

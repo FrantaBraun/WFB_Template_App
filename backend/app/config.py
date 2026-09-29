@@ -52,6 +52,14 @@ class Settings(BaseSettings):
     # rather than silently mailing nobody.
     contact_mail: str = ""
 
+    # Stripe payment gate module (app/modules/stripe_payment_gate) - empty
+    # by default; the module's endpoints fail loudly (503) until both keys
+    # are set, rather than half-working. stripe_api_url is only overridden
+    # by tests (respx) or a local fake - never point it anywhere else.
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_api_url: str = "https://api.stripe.com"
+
     # Email (SMTP)
     mail_username: str = ""
     mail_password: str = ""
