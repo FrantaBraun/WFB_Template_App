@@ -48,6 +48,7 @@ async def create_payment(
     payload: dict,
     user: User | None,
     customer_email: str | None = None,
+    consents: list[str] | None = None,
 ) -> tuple[StripePayment, str]:
     """Price the request via the purpose's resolve(), persist a pending
     payment and open a Stripe Checkout Session for it. Returns the payment
@@ -67,6 +68,14 @@ async def create_payment(
     if quote.amount <= 0 or not _CURRENCY_RE.match(currency):
         raise ValueError(f"Purpose {purpose_key!r} produced an invalid quote: {quote!r}")
 
+    extra = dict(quote.extra)
+    if consents:
+        # Evidence of what the payer agreed to, and when - the burden of
+        # proving that the terms (or a withdrawal waiver) were accepted lies
+        # with the provider.
+        extra["consents"] = sorted(set(consents))
+        extra["consented_at"] = datetime.now(timezone.utc).isoformat()
+
     payment = StripePayment(
         id=uuid.uuid4(),
         user_id=user.id if user is not None else None,
@@ -76,7 +85,7 @@ async def create_payment(
         currency=currency,
         description=quote.description,
         return_path=quote.return_path,
-        extra=quote.extra,
+        extra=extra,
         status=STATUS_PENDING,
     )
     db.add(payment)

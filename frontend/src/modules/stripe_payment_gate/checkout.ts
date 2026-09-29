@@ -39,11 +39,21 @@ export class CheckoutError extends Error {
  * resolve() expects (e.g. `{ order_id }`) - never a price; the backend
  * computes the amount itself. After paying (or canceling), Stripe returns
  * the payer to this module's /platba/vysledek page.
+ *
+ * `consents` is stored with the payment as evidence of what the payer
+ * agreed to - only send "terms" when the terms were actually presented
+ * next to the control that starts the payment (PayButton does this).
  */
-export async function startCheckout(purpose: string, payload: Record<string, unknown> = {}): Promise<never> {
+export type Consent = 'terms' | 'digital_content_waiver'
+
+export async function startCheckout(
+  purpose: string,
+  payload: Record<string, unknown> = {},
+  consents: Consent[] = [],
+): Promise<never> {
   const resp = await apiFetch(`${API_BASE}/checkout`, {
     method: 'POST',
-    body: JSON.stringify({ purpose, payload }),
+    body: JSON.stringify({ purpose, payload, consents }),
   })
   if (!resp.ok) {
     const body = await resp.json().catch(() => ({}))

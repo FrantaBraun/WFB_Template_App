@@ -1,0 +1,18 @@
+{
+  "provider": {
+    "name": "",
+    "ico": "",
+    "dic": "",
+    "vatPayer": false,
+    "address": "",
+    "registration": { "cs": "", "en": "" },
+    "email": "",
+    "phone": "",
+    "web": ""
+  },
+  "service": { "cs": "", "en": "" },
+  "dpoEmail": "",
+  "effectiveFrom": "",
+  "gdpr": true,
+  "extraStorage": []
+}

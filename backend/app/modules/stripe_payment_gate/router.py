@@ -71,6 +71,7 @@ async def start_checkout(
             payload=body.payload,
             user=user,
             customer_email=(claims or {}).get("email"),
+            consents=body.consents,
         )
     except PaymentRejected as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
