@@ -31,6 +31,8 @@ export interface ModuleDefinition {
   key: string
   routes: ModuleRoute[]
   nav?: ModuleNavItem[]
+  /** Links rendered in the shared footer (e.g. legal pages) - same labelKey namespacing rule as `nav`. */
+  footerLinks?: ModuleNavItem[]
   /** One element always rendered in the shared header (e.g. a notification bell), independent of routes/nav. */
   headerWidget?: ReactElement
   /** Registered as an i18next resource bundle under the `key` namespace, per shipped language. */

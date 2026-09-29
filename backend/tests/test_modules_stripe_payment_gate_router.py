@@ -184,6 +184,42 @@ async def test_checkout_creates_session_with_server_side_price(client, db_sessio
     assert payment.user_id is not None
 
 
+@respx.mock
+async def test_checkout_records_consents(client, db_session, make_access_token, paid_calls):
+    respx.post(f"{STRIPE_URL}/v1/checkout/sessions").mock(return_value=Response(200, json=_session(uuid.uuid4())))
+    token = make_access_token(sub=str(uuid.uuid4()))
+
+    resp = await client.post(
+        f"{BASE}/checkout",
+        json={"purpose": "test_order", "consents": ["terms", "digital_content_waiver"]},
+        headers=_auth(token),
+    )
+
+    assert resp.status_code == 200
+    payment = await db_session.get(StripePayment, uuid.UUID(resp.json()["payment_id"]))
+    assert payment.extra["consents"] == ["digital_content_waiver", "terms"]
+    assert payment.extra["consented_at"]
+
+
+@respx.mock
+async def test_checkout_without_consents_stores_none(client, db_session, make_access_token, paid_calls):
+    respx.post(f"{STRIPE_URL}/v1/checkout/sessions").mock(return_value=Response(200, json=_session(uuid.uuid4())))
+    token = make_access_token(sub=str(uuid.uuid4()))
+
+    resp = await client.post(f"{BASE}/checkout", json={"purpose": "test_order"}, headers=_auth(token))
+
+    payment = await db_session.get(StripePayment, uuid.UUID(resp.json()["payment_id"]))
+    assert "consents" not in payment.extra
+
+
+async def test_checkout_rejects_unknown_consent(client, make_access_token, paid_calls):
+    token = make_access_token(sub=str(uuid.uuid4()))
+    resp = await client.post(
+        f"{BASE}/checkout", json={"purpose": "test_order", "consents": ["marketing"]}, headers=_auth(token)
+    )
+    assert resp.status_code == 422
+
+
 async def test_checkout_unknown_purpose_404(client, make_access_token, paid_calls):
     token = make_access_token(sub=str(uuid.uuid4()))
     resp = await client.post(f"{BASE}/checkout", json={"purpose": "nope"}, headers=_auth(token))
