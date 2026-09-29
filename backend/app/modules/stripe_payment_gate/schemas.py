@@ -4,17 +4,27 @@
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+Consent = Literal["terms", "digital_content_waiver"]
 
 
 class CheckoutRequest(BaseModel):
     """payload is passed verbatim to the purpose's resolve() - its shape is
     whatever that purpose defines (e.g. {"order_id": "..."}). It must never
-    carry a price the backend trusts; resolve() computes the amount."""
+    carry a price the backend trusts; resolve() computes the amount.
+
+    consents records what the payer agreed to before paying - "terms" (the
+    terms and conditions shown next to the pay button) and, for digital
+    content delivered immediately, "digital_content_waiver" (express
+    consent to losing the 14-day withdrawal right). Stored with the payment
+    as evidence; see the module's README."""
 
     purpose: str = Field(min_length=1, max_length=100)
     payload: dict = Field(default_factory=dict)
+    consents: list[Consent] = Field(default_factory=list, max_length=2)
 
 
 class CheckoutResponse(BaseModel):

@@ -4,20 +4,40 @@
  * Freely available as a template for building custom applications.
  */
 
-// No nav entry: payments are always started from application code (via
-// PayButton or startCheckout() from ./checkout), never from a standalone
-// page - the only route is the return page Stripe redirects back to.
+// No header nav entry: payments are always started from application code
+// (via PayButton or startCheckout() from ./checkout), never from a
+// standalone page. Routes are the return page Stripe redirects back to plus
+// the legal pages a site taking payments must publish, linked from the
+// footer. Full manual: backend/app/modules/stripe_payment_gate/README.md.
 import type { ModuleDefinition } from '../types'
+import { AboutPage, CookiesPage, LEGAL_PATHS, PrivacyPage, TermsPage } from './LegalPages'
+import { legalLocales } from './legalLocales'
 import PaymentResultPage from './PaymentResultPage'
 
 const stripePaymentGateModule: ModuleDefinition = {
   key: 'stripe_payment_gate',
-  routes: [{ path: '/platba/vysledek', element: <PaymentResultPage /> }],
+  routes: [
+    { path: '/platba/vysledek', element: <PaymentResultPage /> },
+    { path: LEGAL_PATHS.about, element: <AboutPage /> },
+    { path: LEGAL_PATHS.terms, element: <TermsPage /> },
+    { path: LEGAL_PATHS.privacy, element: <PrivacyPage /> },
+    { path: LEGAL_PATHS.cookies, element: <CookiesPage /> },
+  ],
+  footerLinks: [
+    { to: LEGAL_PATHS.about, labelKey: 'stripe_payment_gate:legal.nav.about' },
+    { to: LEGAL_PATHS.terms, labelKey: 'stripe_payment_gate:legal.nav.terms' },
+    { to: LEGAL_PATHS.privacy, labelKey: 'stripe_payment_gate:legal.nav.privacy' },
+    { to: LEGAL_PATHS.cookies, labelKey: 'stripe_payment_gate:legal.nav.cookies' },
+  ],
   locales: {
     cs: {
       button: {
-        pay: 'Zaplatit',
+        pay: 'Objednat a zaplatit',
         redirecting: 'Přesměrování na platební bránu…',
+        termsNotice:
+          'Kliknutím na tlačítko souhlasíte s <terms>obchodními podmínkami</terms> a berete na vědomí <privacy>zásady ochrany osobních údajů</privacy>. Platbu zpracovává Stripe.',
+        digitalContentWaiver:
+          'Žádám o dodání digitálního obsahu ihned po zaplacení a beru na vědomí, že tím ztrácím právo odstoupit od smlouvy do 14 dnů.',
         error: 'Platbu se nepodařilo zahájit. Zkuste to prosím znovu.',
         signInRequired: 'Pro zaplacení se nejprve přihlaste.',
       },
@@ -46,11 +66,16 @@ const stripePaymentGateModule: ModuleDefinition = {
         continue: 'Pokračovat',
         backHome: 'Zpět na hlavní stránku',
       },
+      legal: legalLocales.cs,
     },
     en: {
       button: {
-        pay: 'Pay',
+        pay: 'Order and pay',
         redirecting: 'Redirecting to the payment gateway…',
+        termsNotice:
+          'By clicking the button you agree to the <terms>terms and conditions</terms> and acknowledge the <privacy>privacy policy</privacy>. Payments are processed by Stripe.',
+        digitalContentWaiver:
+          'I request delivery of the digital content immediately after payment and acknowledge that I thereby lose my 14-day right of withdrawal.',
         error: 'Could not start the payment. Please try again.',
         signInRequired: 'Please sign in to pay.',
       },
@@ -79,6 +104,7 @@ const stripePaymentGateModule: ModuleDefinition = {
         continue: 'Continue',
         backHome: 'Back to homepage',
       },
+      legal: legalLocales.en,
     },
   },
 }

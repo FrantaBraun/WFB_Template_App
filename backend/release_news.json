@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "The Stripe payment gate module now records what the payer agreed to before paying (terms and conditions, and for digital content the waiver of the 14-day withdrawal right), with a timestamp, as evidence stored with the payment",
         "Store the notifications module's data in a module_notifications table (instead of notifications), so the module can coexist with an application's own notifications table",
         "Add a Stripe payment gate module (app/modules/stripe_payment_gate): starts payments through Stripe Checkout for server-side-priced \"payment purposes\" that each application registers, and confirms them via a signature-verified webhook (with a direct Stripe re-check as fallback), running the purpose's own post-payment hook exactly once",
         "Add a notifications module (app/modules/notifications): a generic, per-user in-app notification list (GET /api/modules/notifications, mark one or all as read) that any application can create notifications into via a plain create_notification() call, without this module needing to know anything about that application's own data",
