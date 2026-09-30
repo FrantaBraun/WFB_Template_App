@@ -14,27 +14,13 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", extra="ignore")
 
     # Database
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/api_hub_db"
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/template_db"
 
     # Application
     app_base_url: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:3000"
     cors_enabled: bool = True
     cors_origins: list[str] = ["http://localhost:5173"]
-
-    # API documents (app/services/spec_storage.py, openapi_spec.py) - where
-    # uploaded/fetched spec files are stored, and limits on ingesting them.
-    # uploads_dir matches scripts/upgrade.sh's UPLOADS_DIR env var, which
-    # already backs up/restores this directory across redeploys.
-    uploads_dir: str = "./uploads"
-    max_spec_file_size_bytes: int = 10_000_000
-    spec_fetch_timeout_seconds: float = 10.0
-
-    # Automatic recheck scheduler (app/services/scheduler.py) - periodically
-    # scans ApiDocuments for a due recheck_period and reuses the same
-    # fetch_and_process logic as a manual recheck.
-    scheduler_enabled: bool = True
-    recheck_scan_interval_minutes: int = 60
 
     # Feature modules (see app/modules/) are deliberately NOT configured
     # here: which ones are mounted is set in the git-tracked
