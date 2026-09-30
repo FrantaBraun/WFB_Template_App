@@ -13,3 +13,7 @@ class ContactFormRequest(BaseModel):
     subject: str = Field(min_length=1, max_length=200)
     message: str = Field(min_length=1, max_length=5000)
     reply_to: EmailStr | None = None
+    # The frontend's active i18n language; picks the confirmation email's
+    # template (see config.ContactFormConfig.reply_template_for), falling
+    # back to the configured default_language when absent or unconfigured.
+    language: str | None = Field(default=None, max_length=35)

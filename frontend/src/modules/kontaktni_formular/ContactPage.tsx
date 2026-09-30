@@ -19,7 +19,7 @@ import usePageMeta from '../../hooks/usePageMeta'
  * than resetting it, matching the spec's "instead of the form".
  */
 export default function ContactPage() {
-  const { t } = useTranslation('kontaktni_formular')
+  const { t, i18n } = useTranslation('kontaktni_formular')
   const { user } = useAuth()
   usePageMeta({ title: t('page.title') })
 
@@ -37,7 +37,14 @@ export default function ContactPage() {
     try {
       const resp = await apiFetch('/api/modules/kontaktni_formular/submit', {
         method: 'POST',
-        body: JSON.stringify({ subject, message, reply_to: user ? undefined : replyTo }),
+        // language picks the confirmation email's template on the backend
+        // (falling back to its configured default_language)
+        body: JSON.stringify({
+          subject,
+          message,
+          reply_to: user ? undefined : replyTo,
+          language: i18n.resolvedLanguage ?? i18n.language,
+        }),
       })
       if (!resp.ok) throw new Error()
       setSent(true)
