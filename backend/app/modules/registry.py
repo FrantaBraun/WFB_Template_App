@@ -10,19 +10,46 @@ discover_modules() finds every module regardless of enabled state - Alembic
 must see every module's tables so migrations stay identical across
 deployments no matter which modules a given application turns on.
 get_enabled_modules() is what actually gates which modules' routers get
-mounted; toggling Settings.enabled_modules is a pure config change, it never
-touches the DB schema.
+mounted; toggling a key in backend/modules.json is a pure config change, it
+never touches the DB schema.
 """
 
 import importlib
+import json
 import logging
 import pkgutil
+from collections.abc import Iterable
+from pathlib import Path
 
 import app.modules as modules_pkg
-from app.config import Settings
+from app.config import BASE_DIR
 from app.modules.base import ModuleManifest
 
 logger = logging.getLogger(__name__)
+
+MODULES_CONFIG_FILE = BASE_DIR / "modules.json"
+
+
+def load_enabled_module_keys(path: Path = MODULES_CONFIG_FILE) -> list[str]:
+    """Read the `enabled` array of keys from backend/modules.json.
+
+    Tracked in git on purpose, unlike .env: .env is untracked and shared by
+    every branch checked out in the same working tree, so it silently carried
+    one application's module selection into another. modules.json travels
+    with its branch, same `{"enabled": [...]}` shape as the frontend's
+    public/modules.json. A missing file means no modules (the frontend's
+    fallback too); anything other than a list of strings raises, so a typo
+    fails loudly at startup instead of quietly unmounting every module.
+    """
+    try:
+        config = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        logger.warning("%s not found - no feature modules enabled", path)
+        return []
+    enabled = config.get("enabled", [])
+    if not isinstance(enabled, list) or not all(isinstance(key, str) for key in enabled):
+        raise ValueError(f"{path}: `enabled` must be a list of module keys, got {enabled!r}")
+    return enabled
 
 
 def discover_modules() -> list[ModuleManifest]:
@@ -54,9 +81,10 @@ def discover_modules() -> list[ModuleManifest]:
     return manifests
 
 
-def get_enabled_modules(settings: Settings) -> list[ModuleManifest]:
-    """Discovered modules whose key is listed in settings.enabled_modules."""
-    enabled_keys = set(settings.enabled_modules)
+def get_enabled_modules(enabled_keys: Iterable[str]) -> list[ModuleManifest]:
+    """Discovered modules whose key is listed in enabled_keys (normally
+    load_enabled_module_keys()'s result)."""
+    enabled_keys = set(enabled_keys)
     return [manifest for manifest in discover_modules() if manifest.key in enabled_keys]
 
 

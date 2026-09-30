@@ -7,10 +7,10 @@
 
 Deliberately does NOT use conftest.py's `client` fixture (TestClient over
 the real app.main app): whether this module's routes exist at all depends
-on ENABLED_MODULES at the moment app.api.router was first imported, which
-is ambient environment state this test file shouldn't have to assume one
-way or the other - a fresh clone's real .env ships ENABLED_MODULES=[] by
-design. Mounting just this module's router on a throwaway FastAPI app tests
+on backend/modules.json's `enabled` array at the moment app.api.router was
+first imported, which is per-branch config this test file shouldn't have
+to assume one way or the other - core ships it as `[]` by design, while an
+application branch may switch this module on. Mounting just this module's router on a throwaway FastAPI app tests
 the same route handler and the same URL shape without depending on that -
 same approach as test_modules_kontaktni_formular_router.py.
 

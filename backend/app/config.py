@@ -22,11 +22,9 @@ class Settings(BaseSettings):
     cors_enabled: bool = True
     cors_origins: list[str] = ["http://localhost:5173"]
 
-    # Feature modules (see app/modules/) - keys of the pluggable modules to
-    # mount for this deployment. Empty by default: this template ships no
-    # modules of its own. Toggling this never changes the DB schema - every
-    # discovered module's tables are always migrated regardless of this list.
-    enabled_modules: list[str] = []
+    # Feature modules (see app/modules/) are deliberately NOT configured
+    # here: which ones are mounted is set in the git-tracked
+    # backend/modules.json, so it follows the branch rather than .env.
 
     # Authorization (auth.withfbraun.com)
     auth_url: str = "https://auth.withfbraun.com"
