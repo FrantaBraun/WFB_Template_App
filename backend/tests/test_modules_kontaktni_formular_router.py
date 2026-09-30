@@ -11,10 +11,15 @@ backend/modules.json's `enabled` array at the moment app.api.router was
 first imported, which is per-branch config this test file shouldn't have
 to assume one way or the other - core ships it as `[]` by design (see
 CLAUDE.md's Feature modules section), so asserting through the real app
-would 404 on core and on every branch that leaves this module off. Mounting just this module's router on a throwaway FastAPI app tests the
+would 404 on core and on every branch that leaves this module off.
+Mounting just this module's router on a throwaway FastAPI app tests the
 same route handler and the same URL shape, without depending on that.
 No DB access here either (the module has no models), so no ASGITransport/
-db_session is needed."""
+db_session is needed. The reply-template config is overridden too, so these
+tests never depend on the texts a branch commits in
+backend/modules/kontaktni_formular.json."""
+
+from email.header import decode_header, make_header
 
 import pytest
 import respx
@@ -25,6 +30,7 @@ from httpx import Response
 
 import app.security.jwt as jwt_module
 from app.config import Settings, get_settings
+from app.modules.kontaktni_formular.config import ContactFormConfig, get_contact_form_config
 from app.modules.kontaktni_formular.router import router as contact_router
 from app.services.email import _connection_config
 
@@ -37,6 +43,53 @@ _contact_app.include_router(contact_router, prefix="/api/modules/kontaktni_formu
 @pytest.fixture()
 def client() -> TestClient:
     return TestClient(_contact_app)
+
+
+CS_SUBJECT = "Děkujeme za zprávu: {subject}"
+EN_SUBJECT = "Thanks for your message: {subject}"
+
+
+def _contact_config(**overrides) -> ContactFormConfig:
+    data = {
+        "send_reply": True,
+        "default_language": "cs",
+        "reply_templates": {
+            "cs": {"subject": CS_SUBJECT, "body": "Dobrý den, {sender_name}.\n\nVaše zpráva:\n{message}"},
+            "en": {"subject": EN_SUBJECT, "body": "Hello {sender_name} <{reply_to}>.\n\nYour message:\n{message}"},
+        },
+    }
+    return ContactFormConfig.model_validate({**data, **overrides})
+
+
+@pytest.fixture(autouse=True)
+def override_contact_config():
+    _contact_app.dependency_overrides[get_contact_form_config] = lambda: _contact_config()
+    yield
+    _contact_app.dependency_overrides.pop(get_contact_form_config, None)
+
+
+def _subject(message) -> str:
+    return str(make_header(decode_header(message["Subject"])))
+
+
+def _text(message) -> str:
+    part = next(p for p in message.walk() if p.get_content_type() == "text/plain")
+    return part.get_payload(decode=True).decode(part.get_content_charset() or "utf-8")
+
+
+def _split_outbox(outbox, owner_address="prijem@example.com"):
+    """-> (owner notification, confirmation reply) from a recorded outbox."""
+    owner = [m for m in outbox if owner_address in str(m["To"])]
+    replies = [m for m in outbox if owner_address not in str(m["To"])]
+    assert len(owner) == 1
+    return owner[0], replies
+
+
+def _submit_anonymous(client, **extra):
+    return client.post(
+        "/api/modules/kontaktni_formular/submit",
+        json={"subject": "Dotaz", "message": "Ahoj, mam otazku.", "reply_to": "host@example.com", **extra},
+    )
 
 
 @pytest.fixture()
@@ -87,17 +140,76 @@ def test_anonymous_without_reply_to_is_rejected(client, override_settings):
 def test_anonymous_with_reply_to_sends_both_emails(client, override_settings):
     mail = FastMail(_connection_config(override_settings))
     with mail.record_messages() as outbox:
-        resp = client.post(
-            "/api/modules/kontaktni_formular/submit",
-            json={"subject": "Dotaz", "message": "Ahoj, mam otazku.", "reply_to": "host@example.com"},
-        )
+        resp = _submit_anonymous(client)
 
     assert resp.status_code == 204
     assert len(outbox) == 2
-    assert all(m["Subject"] == "Dotaz" for m in outbox)
-    recipients = {str(m["To"]) for m in outbox}
-    assert any("prijem@example.com" in r for r in recipients)
-    assert any("host@example.com" in r for r in recipients)
+    owner, [reply] = _split_outbox(outbox)
+    assert _subject(owner) == "Dotaz"
+    assert "Ahoj, mam otazku." in _text(owner)
+    assert "host@example.com" in str(reply["To"])
+
+
+def test_reply_without_language_uses_default_language(client, override_settings):
+    mail = FastMail(_connection_config(override_settings))
+    with mail.record_messages() as outbox:
+        _submit_anonymous(client)
+
+    owner, [reply] = _split_outbox(outbox)
+    assert _subject(reply) == "Děkujeme za zprávu: Dotaz"
+    assert _text(reply) == "Dobrý den, host@example.com.\n\nVaše zpráva:\nAhoj, mam otazku."
+    assert "Language: -" in _text(owner)
+
+
+def test_reply_uses_request_language(client, override_settings):
+    mail = FastMail(_connection_config(override_settings))
+    with mail.record_messages() as outbox:
+        _submit_anonymous(client, language="en")
+
+    owner, [reply] = _split_outbox(outbox)
+    assert _subject(reply) == "Thanks for your message: Dotaz"
+    assert _text(reply) == "Hello host@example.com <host@example.com>.\n\nYour message:\nAhoj, mam otazku."
+    assert "Language: en" in _text(owner)
+
+
+def test_reply_matches_language_by_primary_subtag(client, override_settings):
+    mail = FastMail(_connection_config(override_settings))
+    with mail.record_messages() as outbox:
+        _submit_anonymous(client, language="en-US")
+
+    _, [reply] = _split_outbox(outbox)
+    assert _subject(reply) == "Thanks for your message: Dotaz"
+
+
+def test_reply_falls_back_to_default_for_unconfigured_language(client, override_settings):
+    mail = FastMail(_connection_config(override_settings))
+    with mail.record_messages() as outbox:
+        _submit_anonymous(client, language="de")
+
+    owner, [reply] = _split_outbox(outbox)
+    assert _subject(reply) == "Děkujeme za zprávu: Dotaz"
+    assert "Language: de" in _text(owner)
+
+
+def test_reply_default_language_is_configurable(client, override_settings):
+    _contact_app.dependency_overrides[get_contact_form_config] = lambda: _contact_config(default_language="en")
+    mail = FastMail(_connection_config(override_settings))
+    with mail.record_messages() as outbox:
+        _submit_anonymous(client, language="de")
+
+    _, [reply] = _split_outbox(outbox)
+    assert _subject(reply) == "Thanks for your message: Dotaz"
+
+
+def test_send_reply_disabled_sends_only_owner_email(client, override_settings):
+    _contact_app.dependency_overrides[get_contact_form_config] = lambda: _contact_config(send_reply=False)
+    mail = FastMail(_connection_config(override_settings))
+    with mail.record_messages() as outbox:
+        resp = _submit_anonymous(client, language="en")
+
+    assert resp.status_code == 204
+    _, replies = _split_outbox(outbox)
+    assert replies == []
 
 
 @respx.mock
@@ -124,9 +236,10 @@ def test_signed_in_sender_uses_profile_name(client, override_settings, signed_in
 
     assert resp.status_code == 204
     assert len(outbox) == 2
-    recipients = {str(m["To"]) for m in outbox}
-    assert any("jana@example.com" in r for r in recipients)
-    assert any("prijem@example.com" in r for r in recipients)
+    owner, [reply] = _split_outbox(outbox)
+    assert "Jana Novakova <jana@example.com>" in _text(owner)
+    assert "jana@example.com" in str(reply["To"])
+    assert _text(reply).startswith("Dobrý den, Jana Novakova.")
 
 
 @respx.mock

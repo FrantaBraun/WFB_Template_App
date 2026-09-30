@@ -50,10 +50,6 @@ class Settings(BaseSettings):
     # rather than silently mailing nobody.
     contact_mail: str = ""
 
-    reply_message_to_contact_form: bool = True
-    reply_message_subject_contact_form: str = "Thank you for your message from the contact form"
-    reply_message_body_contact_form: str = "Thank you for your message, {sender_name}!\n\nWe have received your message and will get back to you as soon as possible.\n\nYour message:\n{body.message}"
-
     # Stripe payment gate module (app/modules/stripe_payment_gate) - empty
     # by default; the module's endpoints fail loudly (503) until both keys
     # are set, rather than half-working. stripe_api_url is only overridden

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import Settings, get_settings
+from app.modules.kontaktni_formular.config import ContactFormConfig, get_contact_form_config
 from app.modules.kontaktni_formular.schemas import ContactFormRequest
 from app.security.jwt import get_current_user_claims
 from app.services.auth_client import auth_client
@@ -48,11 +49,14 @@ async def submit_contact_form(
     body: ContactFormRequest,
     credentials: HTTPAuthorizationCredentials | None = Depends(_optional_bearer),
     settings: Settings = Depends(get_settings),
+    config: ContactFormConfig = Depends(get_contact_form_config),
 ) -> None:
-    """Sends the message to Settings.contact_mail, plus a copy to the
-    sender's own address as their confirmation of submission - signed with
-    the sender's real name when they're signed in, or their supplied
-    reply_to address (required in that case) when they're not."""
+    """Sends the message to Settings.contact_mail and, when the module
+    config's send_reply is on, a confirmation email to the sender in the
+    language the form was submitted in (body.language, else the config's
+    default_language). The sender is identified by their real name when
+    signed in, or by their supplied reply_to address (required in that
+    case) when they're not."""
     if not settings.contact_mail:
         raise RuntimeError(
             "CONTACT_MAIL is not configured - set it in backend/.env before enabling this module."
@@ -75,11 +79,16 @@ async def submit_contact_form(
         sender_name = body.reply_to
 
     try:
-        email_body = f"Contact form message:\nFrom: {sender_name} <{reply_to}>\n\n{body.message}"
+        email_body = (
+            f"Contact form message:\nFrom: {sender_name} <{reply_to}>\n"
+            f"Language: {body.language or '-'}\n\n{body.message}"
+        )
         await send_email(body.subject, [settings.contact_mail], email_body, settings=settings)
-        if settings.reply_message_to_contact_form:
-            email_body = settings.reply_message_body_contact_form.format(sender_name=sender_name, body=body)
-            await send_email(settings.reply_message_subject_contact_form, [reply_to], email_body, settings=settings)
+        if config.send_reply:
+            reply_subject, reply_body = config.reply_template_for(body.language).render(
+                sender_name=sender_name, reply_to=reply_to, subject=body.subject, message=body.message
+            )
+            await send_email(reply_subject, [reply_to], reply_body, settings=settings)
     except Exception as exc:
         logger.exception("Failed to send contact form email")
         raise HTTPException(status_code=502, detail="Failed to send message") from exc
