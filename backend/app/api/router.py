@@ -11,8 +11,7 @@ from app.api.auth import router as auth_router
 from app.api.pages import router as pages_router
 from app.api.public import release_news as public_release_news
 from app.api.public import version as public_version
-from app.config import get_settings
-from app.modules.registry import get_enabled_modules
+from app.modules.registry import get_enabled_modules, load_enabled_module_keys
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(public_version.router, prefix="/public", tags=["public"])
@@ -24,8 +23,9 @@ api_router.include_router(articles_router.router, prefix="/articles", tags=["art
 api_router.include_router(admin_router.router, prefix="/admin", tags=["admin"])
 
 # Feature modules (see app/modules/) mount themselves here, gated by
-# Settings.enabled_modules - core routes above are never conditional.
-for module in get_enabled_modules(get_settings()):
+# backend/modules.json's `enabled` array - core routes above are never
+# conditional.
+for module in get_enabled_modules(load_enabled_module_keys()):
     if module.router is not None:
         api_router.include_router(
             module.router,
