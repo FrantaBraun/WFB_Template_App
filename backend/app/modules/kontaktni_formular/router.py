@@ -74,11 +74,12 @@ async def submit_contact_form(
         reply_to = body.reply_to
         sender_name = body.reply_to
 
-    email_body = f"Od: {sender_name} <{reply_to}>\n\n{body.message}"
-
     try:
+        email_body = f"Contact form message:\nFrom: {sender_name} <{reply_to}>\n\n{body.message}"
         await send_email(body.subject, [settings.contact_mail], email_body, settings=settings)
-        await send_email(body.subject, [reply_to], email_body, settings=settings)
+        if settings.reply_message_to_contact_form:
+            email_body = settings.reply_message_body_contact_form.format(sender_name=sender_name, body=body)
+            await send_email(settings.reply_message_subject_contact_form, [reply_to], email_body, settings=settings)
     except Exception as exc:
         logger.exception("Failed to send contact form email")
         raise HTTPException(status_code=502, detail="Failed to send message") from exc
