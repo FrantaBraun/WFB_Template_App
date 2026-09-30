@@ -7,12 +7,11 @@
 
 Deliberately does NOT use conftest.py's `client` fixture (TestClient over
 the real app.main app): whether that route exists at all depends on
-ENABLED_MODULES at the moment app.api.router was first imported, which is
-ambient environment state this test file shouldn't have to assume one way
-or the other - a fresh clone's real .env ships ENABLED_MODULES=[] by
-design (see CLAUDE.md's Feature modules section), so asserting through the
-real app would 404 in the exact environment these tests are meant to run
-in. Mounting just this module's router on a throwaway FastAPI app tests the
+backend/modules.json's `enabled` array at the moment app.api.router was
+first imported, which is per-branch config this test file shouldn't have
+to assume one way or the other - core ships it as `[]` by design (see
+CLAUDE.md's Feature modules section), so asserting through the real app
+would 404 on core and on every branch that leaves this module off. Mounting just this module's router on a throwaway FastAPI app tests the
 same route handler and the same URL shape, without depending on that.
 No DB access here either (the module has no models), so no ASGITransport/
 db_session is needed."""

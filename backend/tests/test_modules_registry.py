@@ -12,8 +12,13 @@ import sys
 import pytest
 
 import app.modules as modules_pkg
-from app.config import Settings
-from app.modules.registry import discover_modules, get_enabled_modules, import_all_module_models
+from app.modules.registry import (
+    MODULES_CONFIG_FILE,
+    discover_modules,
+    get_enabled_modules,
+    import_all_module_models,
+    load_enabled_module_keys,
+)
 
 
 def _write_fixture_module(tmp_path, name, *, manifest_key=None, with_models=False):
@@ -70,14 +75,51 @@ def test_discover_modules_skips_mismatched_key(fixture_modules_path):
     assert "fixture_original" not in found
 
 
-def test_get_enabled_modules_filters_by_settings(fixture_modules_path):
+def test_get_enabled_modules_filters_by_keys(fixture_modules_path):
     _write_fixture_module(fixture_modules_path, "fixture_on")
     _write_fixture_module(fixture_modules_path, "fixture_off")
-    settings = Settings(enabled_modules=["fixture_on"])
 
-    enabled = {manifest.key for manifest in get_enabled_modules(settings)}
+    enabled = {manifest.key for manifest in get_enabled_modules(["fixture_on"])}
 
     assert enabled == {"fixture_on"}
+
+
+def test_load_enabled_module_keys_reads_enabled_array(tmp_path):
+    config = tmp_path / "modules.json"
+    config.write_text('{"enabled": ["alpha", "beta"]}', encoding="utf-8")
+
+    assert load_enabled_module_keys(config) == ["alpha", "beta"]
+
+
+def test_load_enabled_module_keys_missing_file_enables_nothing(tmp_path):
+    assert load_enabled_module_keys(tmp_path / "missing.json") == []
+
+
+def test_load_enabled_module_keys_missing_enabled_key_enables_nothing(tmp_path):
+    config = tmp_path / "modules.json"
+    config.write_text("{}", encoding="utf-8")
+
+    assert load_enabled_module_keys(config) == []
+
+
+@pytest.mark.parametrize("enabled", ['"notifications"', '[1, 2]', "null"])
+def test_load_enabled_module_keys_rejects_non_list_of_strings(tmp_path, enabled):
+    config = tmp_path / "modules.json"
+    config.write_text(f'{{"enabled": {enabled}}}', encoding="utf-8")
+
+    with pytest.raises(ValueError, match="list of module keys"):
+        load_enabled_module_keys(config)
+
+
+def test_committed_modules_json_only_enables_existing_modules():
+    """Guards this branch's own backend/modules.json: every enabled key must
+    name a real module under app/modules/, so a typo fails the suite instead
+    of silently leaving that module unmounted."""
+    discovered = {manifest.key for manifest in discover_modules()}
+
+    unknown = set(load_enabled_module_keys(MODULES_CONFIG_FILE)) - discovered
+
+    assert not unknown, f"backend/modules.json enables unknown module(s): {sorted(unknown)}"
 
 
 def test_import_all_module_models_imports_only_modules_with_models(fixture_modules_path):

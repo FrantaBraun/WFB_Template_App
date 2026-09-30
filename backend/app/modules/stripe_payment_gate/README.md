@@ -22,10 +22,12 @@ Modul **neřeší** (záměrně, závisí na konkrétní aplikaci): co se platí
 
 ## 2. Zapnutí a konfigurace
 
-### Backend (`backend/.env`)
+### Backend
+
+- `backend/modules.json` (verzovaný v gitu): přidat `"stripe_payment_gate"` do `enabled`.
+- `backend/.env`:
 
 ```
-ENABLED_MODULES=["stripe_payment_gate"]
 STRIPE_SECRET_KEY=sk_test_...        # sk_live_... v produkci
 STRIPE_WEBHOOK_SECRET=whsec_...
 FRONTEND_URL=https://moje-aplikace.cz   # z něj se skládají návratové URL z platby

@@ -13,9 +13,10 @@ class ModuleManifest:
     app/modules/<key>/__init__.py.
 
     `key` must match the module's folder name - app.modules.registry uses it
-    both to resolve Settings.enabled_modules and (unless `prefix` overrides
-    it) to derive the module's API prefix, so a mismatch would silently
-    split one module's identity in two and it's rejected at discovery time.
+    both to resolve backend/modules.json's `enabled` keys and (unless
+    `prefix` overrides it) to derive the module's API prefix, so a mismatch
+    would silently split one module's identity in two and it's rejected at
+    discovery time.
     """
 
     key: str

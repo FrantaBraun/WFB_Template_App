@@ -106,7 +106,7 @@ Every backend route talks to a mocked version of the auth service in tests (via 
 - Extend `backend/app/api/account/` for anything that's purely local to your app; keep it separate from the auth-service-proxying endpoints in `backend/app/api/auth/`.
 - Add extra profile fields the shared identity service should store per-application via `frontend/public/config.json` — no backend changes required.
 - Swap the branding, favicon, and translations under `frontend/src/i18n/locales/`.
-- Build a pre-packaged, toggleable feature (administration, reservations, orders, ...) as a module under `backend/app/modules/<key>/` + `frontend/src/modules/<key>/` — both sides auto-discover modules, so turning one on/off is a config change (`ENABLED_MODULES` / `public/modules.json`), not a code change. See "Feature modules" in `CLAUDE.md`.
+- Build a pre-packaged, toggleable feature (administration, reservations, orders, ...) as a module under `backend/app/modules/<key>/` + `frontend/src/modules/<key>/` — both sides auto-discover modules, so turning one on/off is a config change (`backend/modules.json` / `frontend/public/modules.json`, both tracked per branch), not a code change. See "Feature modules" in `CLAUDE.md`.
 
 Changes that should benefit every application (auth flow, theming, i18n, deployment tooling, etc.) belong on the `core` branch — merge them out into `template_app` and each application branch rather than duplicating them there.
 

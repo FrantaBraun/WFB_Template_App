@@ -7,7 +7,7 @@ GET /payments/{id} and POST /webhook.
 
 Deliberately does NOT use conftest.py's `client` fixture (TestClient over
 the real app.main app): whether this module's routes exist at all depends
-on ENABLED_MODULES at the moment app.api.router was first imported - see
+on backend/modules.json at the moment app.api.router was first imported - see
 test_modules_notifications_router.py for the full rationale. Mounts just
 this module's router on a throwaway FastAPI app instead, and uses
 ASGITransport since these routes need both a real JWT dependency chain and
