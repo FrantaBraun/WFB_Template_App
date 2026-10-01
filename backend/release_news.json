@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Articles are now events of the shared event_calendar module: existing articles (and links to them inside pages and articles) move over automatically, the old /api/articles and /api/admin/articles endpoints are gone, and administrators (is_admin) manage events",
         "Add an event calendar module (app/modules/event_calendar): events with their own pages, display windows, pinning and thumbnails; public endpoints for the upcoming list (paged by 10), a month view, a year/month archive, a home-page dashboard and search; editor endpoints with sanitized WYSIWYG content and image upload, with editors chosen by auth-service role or an application's own check",
         "Add a shared HTML sanitizer (app/services/sanitize.py) for content written in the WYSIWYG editor - keeps headings 1-5, text color, font and size, and strips anything executable",
         "The contact form's confirmation email is now sent in the language the form was submitted in: subject and body templates per language, an on/off switch and a default language (used when the requested one has no template) live in the git-tracked backend/modules/kontaktni_formular.json instead of .env",

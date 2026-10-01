@@ -4,7 +4,6 @@
 
 from fastapi import APIRouter, Depends
 
-from app.api.admin import articles as admin_articles
 from app.api.admin import mentionable as admin_mentionable
 from app.api.admin import pages as admin_pages
 from app.api.admin import uploads as admin_uploads
@@ -14,6 +13,5 @@ from app.api.deps import require_admin
 # aggregated under this router is admin-only by construction.
 router = APIRouter(dependencies=[Depends(require_admin)])
 router.include_router(admin_pages.router, prefix="/pages", tags=["admin:pages"])
-router.include_router(admin_articles.router, prefix="/articles", tags=["admin:articles"])
 router.include_router(admin_mentionable.router, prefix="/mentionable", tags=["admin:mentionable"])
 router.include_router(admin_uploads.router, prefix="/uploads", tags=["admin:uploads"])

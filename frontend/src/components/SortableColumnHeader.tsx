@@ -12,8 +12,8 @@ interface SortableColumnHeaderProps<T extends string> {
   onSort: (column: T) => void
 }
 
-/** A clickable <th> for the admin Pages/Articles list tables - shared since
- * both need the same click-to-sort-toggle-direction column header. */
+/** A clickable <th> for the admin Pages list table - kept generic since
+ * any admin list needs the same click-to-sort-toggle-direction header. */
 export default function SortableColumnHeader<T extends string>({
   label,
   column,

@@ -166,20 +166,15 @@
     "linkRemove": "Odebrat odkaz",
     "mentionNoResults": "Žádné výsledky",
     "mentionPageType": "Str",
-    "mentionArticleType": "Čl"
+    "mentionEventType": "Ak"
   },
   "calendar": {
     "title": "Kalendář akcí",
     "showButton": "Zobrazit kalendář",
-    "close": "Zavřít",
-    "noEvents": "V tomto měsíci nejsou žádné akce.",
-    "today": "Dnes"
+    "close": "Zavřít"
   },
   "pageDetail": {
     "notFound": "Stránka nebyla nalezena."
-  },
-  "articleDetail": {
-    "notFound": "Článek nebyl nalezen."
   },
   "nav": {
     "brand": "Slavíčkovy knihohrátky",
@@ -190,7 +185,7 @@
     "pageDescription": "Správa stránek a článků.",
     "dashboardTitle": "Administrace",
     "pagesLink": "Stránky",
-    "articlesLink": "Články",
+    "eventsLink": "Akce",
     "backToList": "Zpět na seznam",
     "backToDashboard": "Zpět do administrace",
     "filterPlaceholder": "Filtrovat…",
@@ -214,28 +209,6 @@
       "contentLabel": "Obsah",
       "statusLabel": "Stav",
       "showInNavLabel": "Zobrazovat v navigaci",
-      "saveSuccess": "Uloženo.",
-      "saveError": "Uložení se nezdařilo.",
-      "loadError": "Načtení se nezdařilo."
-    },
-    "articles": {
-      "title": "Články",
-      "new": "Nový článek",
-      "titleColumn": "Název",
-      "statusColumn": "Stav",
-      "updatedColumn": "Upraveno",
-      "editLink": "Upravit",
-      "empty": "Zatím žádné články.",
-      "titleLabel": "Název",
-      "slugLabel": "Slug",
-      "slugHint": "Malá písmena, číslice a pomlčky (např. podzimni-cteni).",
-      "shortDescriptionLabel": "Krátký popis",
-      "fullTextLabel": "Plný text",
-      "eventDateLabel": "Termín akce",
-      "displayFromLabel": "Zobrazovat od",
-      "displayToLabel": "Zobrazovat do",
-      "pinnedLabel": "Ukotvit",
-      "statusLabel": "Stav",
       "saveSuccess": "Uloženo.",
       "saveError": "Uložení se nezdařilo.",
       "loadError": "Načtení se nezdařilo."

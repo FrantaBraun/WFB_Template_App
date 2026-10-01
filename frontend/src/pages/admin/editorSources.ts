@@ -10,16 +10,17 @@
 import { apiFetch } from '../../api/client'
 import type { MentionableItem } from '../../components/RichTextEditor'
 import i18n from '../../i18n'
+import { eventPath } from '../../modules/event_calendar/api'
 
 interface AdminMentionable {
-  type: 'page' | 'article'
+  type: 'page' | 'event'
   id: string
   label: string
   slug: string
 }
 
 function mentionUrl(item: AdminMentionable): string {
-  return item.type === 'page' ? `/${item.slug}` : `/clanek/${item.slug}`
+  return item.type === 'page' ? `/${item.slug}` : eventPath(item.slug)
 }
 
 export async function loadAdminMentionables(): Promise<MentionableItem[]> {
@@ -30,7 +31,7 @@ export async function loadAdminMentionables(): Promise<MentionableItem[]> {
     id: `${item.type}-${item.id}`,
     label: item.label,
     url: mentionUrl(item),
-    typeLabel: i18n.t(item.type === 'page' ? 'editor.mentionPageType' : 'editor.mentionArticleType'),
+    typeLabel: i18n.t(item.type === 'page' ? 'editor.mentionPageType' : 'editor.mentionEventType'),
   }))
 }
 

@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from app.config import get_settings
-from app.models.article import Article  # noqa: F401  (registers the table on Base.metadata)
 from app.models.base import Base
 from app.models.page import Page  # noqa: F401  (registers the table on Base.metadata)
 from app.models.user import User  # noqa: F401  (registers the table on Base.metadata)

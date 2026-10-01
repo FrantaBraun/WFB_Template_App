@@ -6,7 +6,7 @@
 
 // Top-level route table: wraps every page in the shared Layout (nav + chrome)
 // and declares the app's client-side routes.
-import { Route, Routes } from "react-router-dom"
+import { Navigate, Route, Routes, useParams } from "react-router-dom"
 import HomePage from "./pages/HomePage"
 import Layout from "./components/Layout"
 import Account from "./pages/Account"
@@ -20,12 +20,15 @@ import ReleaseNews from "./pages/ReleaseNews"
 import AdminHome from "./pages/admin/AdminHome"
 import AdminPagesList from "./pages/admin/AdminPagesList"
 import AdminPageForm from "./pages/admin/AdminPageForm"
-import AdminArticlesList from "./pages/admin/AdminArticlesList"
-import AdminArticleForm from "./pages/admin/AdminArticleForm"
 import PageDetail from "./pages/PageDetail"
-import ArticleDetail from "./pages/ArticleDetail"
 import { useEnabledModules } from "./modules/registry"
 
+
+/** /clanek/:slug -> /events/:slug - articles moved into the event_calendar module with their slugs unchanged. */
+function ArticleRedirect() {
+  const { slug } = useParams<{ slug: string }>()
+  return <Navigate to={`/events/${slug ?? ''}`} replace />
+}
 
 function App() {
   const modules = useEnabledModules()
@@ -47,11 +50,11 @@ function App() {
       <Route path="/admin/pages" element={<AdminPagesList />} />
       <Route path="/admin/pages/new" element={<AdminPageForm />} />
       <Route path="/admin/pages/:id/edit" element={<AdminPageForm />} />
-      <Route path="/admin/articles" element={<AdminArticlesList />} />
-      <Route path="/admin/articles/new" element={<AdminArticleForm />} />
-      <Route path="/admin/articles/:id/edit" element={<AdminArticleForm />} />
+      {/* Articles became the event_calendar module's events - old admin bookmarks land in its editor area. */}
+      <Route path="/admin/articles/*" element={<Navigate to="/events/manage" replace />} />
       {/* Public content - admin-authored, sanitized on write */}
-      <Route path="/clanek/:slug" element={<ArticleDetail />} />
+      {/* Old article links (shared, bookmarked, or inside editor HTML) keep working. */}
+      <Route path="/clanek/:slug" element={<ArticleRedirect />} />
       {/* Enabled feature modules (see src/modules/) contribute their own routes here */}
       {modules.flatMap((module) =>
         module.routes.map((route) => (

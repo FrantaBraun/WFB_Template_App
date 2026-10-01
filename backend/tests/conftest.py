@@ -113,7 +113,7 @@ async def api_client(db_session):
     TestClient runs the app in a separate thread with its own event loop,
     which conflicts with db_session's connection - ASGITransport keeps
     everything on one loop. Shared here since every DB-touching router test
-    (pages, articles, admin/*) needs this exact wiring."""
+    (pages, admin/*) needs this exact wiring."""
     app.dependency_overrides[get_db] = lambda: db_session
     try:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:

@@ -2,13 +2,13 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
-"""Tests for GET /api/admin/mentionable: admin-only, combined Page+Article
+"""Tests for GET /api/admin/mentionable: admin-only, combined Page+Event
 list including drafts, backing the WYSIWYG editor's @-mention suggestions."""
 
 import uuid
 from datetime import date
 
-from app.models.article import Article
+from app.modules.event_calendar.models import Event
 from app.models.page import Page
 from app.models.user import User
 
@@ -23,11 +23,11 @@ async def _admin_headers(db_session, make_access_token, rsa_keypair, monkeypatch
     return {"Authorization": f"Bearer {token}"}
 
 
-async def test_includes_pages_and_articles_of_any_status(db_session, api_client, make_access_token, rsa_keypair, monkeypatch):
+async def test_includes_pages_and_events_of_any_status(db_session, api_client, make_access_token, rsa_keypair, monkeypatch):
     headers = await _admin_headers(db_session, make_access_token, rsa_keypair, monkeypatch, is_admin=True)
     db_session.add_all([
         Page(heading="Draft Page", slug="draft-page-m", content="", status="draft"),
-        Article(title="Draft Article", slug="draft-article-m", event_date=date.today(), status="draft"),
+        Event(title="Draft Event", slug="draft-event-m", event_date=date.today(), status="draft"),
     ])
     await db_session.flush()
 
@@ -36,7 +36,7 @@ async def test_includes_pages_and_articles_of_any_status(db_session, api_client,
     assert resp.status_code == 200
     types_and_slugs = {(item["type"], item["slug"]) for item in resp.json()}
     assert ("page", "draft-page-m") in types_and_slugs
-    assert ("article", "draft-article-m") in types_and_slugs
+    assert ("event", "draft-event-m") in types_and_slugs
 
 
 async def test_non_admin_forbidden(db_session, api_client, make_access_token, rsa_keypair, monkeypatch):

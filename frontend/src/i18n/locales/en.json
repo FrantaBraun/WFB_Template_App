@@ -166,20 +166,15 @@
     "linkRemove": "Remove link",
     "mentionNoResults": "No results",
     "mentionPageType": "Pg",
-    "mentionArticleType": "Ar"
+    "mentionEventType": "Ev"
   },
   "calendar": {
     "title": "Event calendar",
     "showButton": "Show calendar",
-    "close": "Close",
-    "noEvents": "No events this month.",
-    "today": "Today"
+    "close": "Close"
   },
   "pageDetail": {
     "notFound": "Page not found."
-  },
-  "articleDetail": {
-    "notFound": "Article not found."
   },
   "nav": {
     "brand": "Slavíčkovy knihohrátky",
@@ -190,7 +185,7 @@
     "pageDescription": "Manage pages and articles.",
     "dashboardTitle": "Administration",
     "pagesLink": "Pages",
-    "articlesLink": "Articles",
+    "eventsLink": "Events",
     "backToList": "Back to list",
     "backToDashboard": "Back to administration",
     "filterPlaceholder": "Filter…",
@@ -214,28 +209,6 @@
       "contentLabel": "Content",
       "statusLabel": "Status",
       "showInNavLabel": "Show in navigation",
-      "saveSuccess": "Saved.",
-      "saveError": "Save failed.",
-      "loadError": "Failed to load."
-    },
-    "articles": {
-      "title": "Articles",
-      "new": "New article",
-      "titleColumn": "Title",
-      "statusColumn": "Status",
-      "updatedColumn": "Updated",
-      "editLink": "Edit",
-      "empty": "No articles yet.",
-      "titleLabel": "Title",
-      "slugLabel": "Slug",
-      "slugHint": "Lowercase letters, digits and hyphens (e.g. autumn-reading).",
-      "shortDescriptionLabel": "Short description",
-      "fullTextLabel": "Full text",
-      "eventDateLabel": "Event date",
-      "displayFromLabel": "Show from",
-      "displayToLabel": "Show until",
-      "pinnedLabel": "Pinned",
-      "statusLabel": "Status",
       "saveSuccess": "Saved.",
       "saveError": "Save failed.",
       "loadError": "Failed to load."

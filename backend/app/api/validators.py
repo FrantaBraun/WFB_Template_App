@@ -10,17 +10,19 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 # render at root level (/{slug}), so one matching a real route would make
 # React Router's own static-route-wins ranking silently swallow it - the
 # admin who saved it would see no error, just a page that never renders
-# anywhere. Article slugs live under /clanek/ and aren't at risk of this.
-# Keep this in sync with frontend/src/App.tsx's route table.
+# anywhere. Event slugs live under /events/ (event_calendar module) and
+# aren't at risk of this. "clanek" stays reserved - /clanek/<slug> still
+# redirects old article links to /events/<slug>. Keep this in sync with
+# frontend/src/App.tsx's route table and enabled modules' routes.
 PAGE_RESERVED_SLUGS = frozenset({
     "login", "register", "account", "oauth", "consent", "consent-rejected",
-    "version", "release-news", "admin", "clanek", "api", "uploads",
+    "version", "release-news", "admin", "clanek", "api", "uploads", "events",
 })
 
 
 def validate_slug(value: str) -> str:
-    """Shared by Page and Article write schemas - both are plain
-    admin-entered text fields with no server-side auto-generation."""
+    """Used by the Page write schemas - a plain admin-entered text field
+    with no server-side auto-generation."""
     if not SLUG_PATTERN.match(value):
         raise ValueError("slug must be lowercase letters, digits and single hyphens only")
     return value

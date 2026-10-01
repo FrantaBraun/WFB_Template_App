@@ -8,15 +8,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
-import EventCalendar from '../components/EventCalendar'
-
-interface ArticleTeaser {
-  id: string
-  title: string
-  slug: string
-  short_description: string
-  event_date: string
-}
+import { EventCalendar } from '../modules/event_calendar'
+import { API_BASE as EVENTS_API, eventPath, parseEventDate, type EventTeaser as ArticleTeaser } from '../modules/event_calendar/api'
 
 interface Dashboard {
   upcoming: ArticleTeaser | null
@@ -36,10 +29,10 @@ function BookIcon({ className }: { className?: string }) {
 
 /** The single nearest-upcoming article - a bigger, date-badge led card, distinct from the grid teasers below it. */
 function UpcomingCard({ article }: { article: ArticleTeaser }) {
-  const date = new Date(article.event_date)
+  const date = parseEventDate(article.event_date)
   return (
     <Link
-      to={`/clanek/${article.slug}`}
+      to={eventPath(article.slug)}
       className="flex items-start gap-4 rounded-2xl border-2 border-ink bg-white p-5 transition-transform hover:-translate-y-0.5 dark:border-ink-dark/30 dark:bg-card-dark"
     >
       <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-mustard/25 font-display text-ink dark:bg-mustard-dark/20 dark:text-ink-dark">
@@ -73,10 +66,10 @@ function TeaserCard({
   if (variant === 'past') {
     return (
       <Link
-        to={`/clanek/${article.slug}`}
+        to={eventPath(article.slug)}
         className="block rounded-2xl border border-dashed border-ink/25 p-4 hover:border-ink/45 dark:border-ink-dark/25 dark:hover:border-ink-dark/45"
       >
-        <p className="text-xs text-ink-muted dark:text-ink-muted-dark">{new Date(article.event_date).toLocaleDateString()}</p>
+        <p className="text-xs text-ink-muted dark:text-ink-muted-dark">{parseEventDate(article.event_date).toLocaleDateString()}</p>
         <h4 className="mt-1 font-display text-sm font-semibold text-ink-soft dark:text-ink-soft-dark">{article.title}</h4>
       </Link>
     )
@@ -84,7 +77,7 @@ function TeaserCard({
 
   return (
     <Link
-      to={`/clanek/${article.slug}`}
+      to={eventPath(article.slug)}
       className="relative block rounded-2xl border-2 border-ink bg-white p-5 transition-transform hover:-translate-y-0.5 dark:border-ink-dark/30 dark:bg-card-dark"
     >
       {variant === 'pinned' && (
@@ -93,16 +86,16 @@ function TeaserCard({
           className={`absolute -top-2 right-5 h-4 w-4 rotate-45 ${accentIndex % 2 === 0 ? 'bg-teal' : 'bg-coral dark:bg-coral-dark'}`}
         />
       )}
-      <p className="text-sm text-ink-muted dark:text-ink-muted-dark">{new Date(article.event_date).toLocaleDateString()}</p>
+      <p className="text-sm text-ink-muted dark:text-ink-muted-dark">{parseEventDate(article.event_date).toLocaleDateString()}</p>
       <h3 className="mt-1 font-display font-semibold text-ink dark:text-ink-dark">{article.title}</h3>
       <p className="mt-1 text-sm text-ink-soft dark:text-ink-soft-dark">{article.short_description}</p>
     </Link>
   )
 }
 
-/** Public landing page - fetches GET /api/articles/dashboard once and
+/** Public landing page - fetches the event_calendar module's dashboard once and
  * renders its three groups (nearest upcoming, pinned, last 5 non-pinned
- * past), each teaser linking through to /clanek/:slug. */
+ * past), each teaser linking through to /events/:slug. */
 export default function HomePage() {
   const { t } = useTranslation()
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)
@@ -112,7 +105,7 @@ export default function HomePage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    apiFetch('/api/articles/dashboard')
+    apiFetch(`${EVENTS_API}/dashboard`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then(setDashboard)
       .catch(() => setDashboard({ upcoming: null, pinned: [], recent_past: [] }))
@@ -128,7 +121,7 @@ export default function HomePage() {
       return
     }
     debounceRef.current = setTimeout(() => {
-      apiFetch(`/api/articles/search?q=${encodeURIComponent(trimmed)}`)
+      apiFetch(`${EVENTS_API}/search?q=${encodeURIComponent(trimmed)}`)
         .then((r) => (r.ok ? r.json() : []))
         .then(setSearchResults)
         .catch(() => setSearchResults([]))

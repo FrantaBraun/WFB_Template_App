@@ -33,10 +33,10 @@ export default function AdminHome() {
           {t('admin.pagesLink')}
         </Link>
         <Link
-          to="/admin/articles"
+          to="/events/manage"
           className="rounded-2xl border border-slate-200 bg-white p-6 font-medium hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
         >
-          {t('admin.articlesLink')}
+          {t('admin.eventsLink')}
         </Link>
       </div>
     </div>

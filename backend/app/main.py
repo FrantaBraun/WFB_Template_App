@@ -15,6 +15,8 @@ from app.api.router import api_router
 from app.config import get_settings
 from app.database import engine
 from app.logging_config import configure_logging
+from app.models.user import User
+from app.modules.event_calendar.permissions import set_editor_check
 from app.services.auth_client import auth_client
 
 settings = get_settings()
@@ -48,6 +50,16 @@ if settings.cors_enabled:
     )
 
 app.include_router(api_router)
+
+
+async def _admins_edit_events(user: User, claims: dict) -> bool:
+    """This app's administrators (User.is_admin, the same flag the /admin
+    area checks) manage events - not the auth-service role the
+    event_calendar module would otherwise look at."""
+    return user.is_admin
+
+
+set_editor_check(_admins_edit_events)
 
 Path(settings.uploads_dir).mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.uploads_dir), name="uploads")
