@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add an event calendar module (src/modules/event_calendar): an \"Events\" nav link to a list of the next 10 events (thumbnail, title, short description) with \"Load more\", a sidebar calendar marking event and pinned-event days, a year/month archive opening a month's full listing, event pages at /events/<slug>, and an editors' area with the full WYSIWYG editor",
         "Fix the WYSIWYG editor's toolbar not following the cursor - the heading, bold, font, size and color controls now always show the formatting where the cursor is",
         "Add a shared WYSIWYG HTML editor component (headings, fonts, colors, font sizes, lists, links, images and optional @-mention links) for any page or module that edits rich content",
         "The contact form now sends the language it was filled in, so the confirmation email arrives in that language",
