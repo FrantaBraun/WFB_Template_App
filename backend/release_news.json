@@ -1,5 +1,7 @@
 {
     "unreleased": [
+        "Events in the event calendar module can now only be managed by this application's administrators (the is_admin flag on the local user account) - the auth service's user role no longer grants it, since that role applies to every application",
+        "Add is_admin flag to the local user account, with a require_admin dependency for gating admin-only routes",
         "Add an event calendar module (app/modules/event_calendar): events with their own pages, display windows, pinning and thumbnails; public endpoints for the upcoming list (paged by 10), a month view, a year/month archive, a home-page dashboard and search; editor endpoints with sanitized WYSIWYG content and image upload, with editors chosen by auth-service role or an application's own check",
         "Add a shared HTML sanitizer (app/services/sanitize.py) for content written in the WYSIWYG editor - keeps headings 1-5, text color, font and size, and strips anything executable",
         "The contact form's confirmation email is now sent in the language the form was submitted in: subject and body templates per language, an on/off switch and a default language (used when the requested one has no template) live in the git-tracked backend/modules/kontaktni_formular.json instead of .env",

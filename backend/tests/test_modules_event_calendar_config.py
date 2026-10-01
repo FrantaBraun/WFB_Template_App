@@ -17,14 +17,12 @@ def test_committed_config_is_valid():
 
 
 def test_missing_file_means_defaults(tmp_path):
-    config = load_config(tmp_path / "missing.json")
-    assert config.editor_roles == ["admin"]
-    assert config.page_size == 10
+    assert load_config(tmp_path / "missing.json").page_size == 10
 
 
 @pytest.mark.parametrize(
     "content",
-    ['{"editor_roles": "admin"}', '{"page_size": 0}', '{"unknown": true}', "not json"],
+    ['{"page_size": "ten"}', '{"page_size": 0}', '{"unknown": true}', '{"editor_roles": ["admin"]}', "not json"],
 )
 def test_malformed_file_raises(tmp_path, content):
     path = tmp_path / "event_calendar.json"

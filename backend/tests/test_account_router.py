@@ -58,3 +58,20 @@ async def test_patch_account_updates_nickname(db_session, make_access_token, rsa
 async def test_account_me_requires_bearer_token(client):
     resp = client.get("/api/account/me")
     assert resp.status_code in (401, 403)
+
+
+async def test_patch_account_cannot_self_promote_to_admin(db_session, make_access_token, rsa_keypair, monkeypatch):
+    """AccountUpdate has no is_admin field, so an extra key in the request body
+    is silently dropped by Pydantic rather than applied - a user must not be
+    able to grant themselves admin through their own account PATCH."""
+    _, public_pem = rsa_keypair
+    monkeypatch.setattr("app.security.jwt._public_key", public_pem)
+    sub = str(uuid.uuid4())
+
+    resp = await _account_request(
+        db_session, make_access_token, "PATCH", sub=sub, json={"is_admin": True, "nickname": "Frantisek"}
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["is_admin"] is False
+    assert resp.json()["nickname"] == "Frantisek"
