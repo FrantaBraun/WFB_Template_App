@@ -267,6 +267,10 @@ export default function RichTextEditor({ value, onChange, loadMentionables, uplo
   }, [])
 
   const editor = useEditor({
+    // TipTap 3 no longer re-renders on every transaction by default, which
+    // left the toolbar's active states (heading select, bold, font, color)
+    // stuck on whatever was true when it last rendered.
+    shouldRerenderOnTransaction: true,
     extensions: [
       StarterKit.configure({
         link: { openOnClick: false, autolink: false },
