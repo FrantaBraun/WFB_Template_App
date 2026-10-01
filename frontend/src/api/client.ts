@@ -62,7 +62,11 @@ async function doRefresh() {
  */
 export async function apiFetch(path: string, options: { method?: string; headers?: {Authorization?: string}, [key: string]: any } = { headers: {}, method: 'GET' }) {
   const url = `${BASE_URL}${path}`
-  const headers = { 'Content-Type': 'application/json', ...options.headers }
+  // A FormData body (file uploads) must let the browser set its own
+  // multipart Content-Type with the correct boundary - forcing
+  // application/json here would corrupt the request.
+  const isFormData = options.body instanceof FormData
+  const headers: Record<string, string> = { ...(isFormData ? {} : { 'Content-Type': 'application/json' }), ...options.headers }
   if (_access) headers.Authorization = `Bearer ${_access}`
 
   let resp = await fetch(url, { ...options, headers })
