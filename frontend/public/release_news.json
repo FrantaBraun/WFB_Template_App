@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add a shared WYSIWYG HTML editor component (headings, fonts, colors, font sizes, lists, links, images and optional @-mention links) for any page or module that edits rich content",
         "The contact form now sends the language it was filled in, so the confirmation email arrives in that language",
         "Feature modules can now add links to the sitewide footer (footerLinks)",
         "The Stripe payment gate module now publishes the pages a site taking payments must have - About us (provider identification), Terms and conditions, Privacy policy (GDPR) and Cookies - in Czech and English, linked from the footer and filled in from public/legal.json; its pay button now reads \"Order and pay\", links the terms and privacy policy, and can ask for the digital-content withdrawal waiver",

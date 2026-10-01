@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add a shared HTML sanitizer (app/services/sanitize.py) for content written in the WYSIWYG editor - keeps headings 1-5, text color, font and size, and strips anything executable",
         "The contact form's confirmation email is now sent in the language the form was submitted in: subject and body templates per language, an on/off switch and a default language (used when the requested one has no template) live in the git-tracked backend/modules/kontaktni_formular.json instead of .env",
         "Feature modules are now switched on in backend/modules.json (tracked in git, same shape as the frontend's public/modules.json) instead of ENABLED_MODULES in .env, so each application branch carries its own module selection and switching branches no longer keeps the previous branch's modules",
         "The Stripe payment gate module now records what the payer agreed to before paying (terms and conditions, and for digital content the waiver of the 14-day withdrawal right), with a timestamp, as evidence stored with the payment",
