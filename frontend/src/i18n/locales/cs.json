@@ -146,5 +146,25 @@
   "footer": {
     "ecosystem": "WithFBraun",
     "copyright": "© {{year}} František Braun"
+  },
+  "editor": {
+    "paragraph": "Odstavec",
+    "heading": "Nadpis {{level}}",
+    "bold": "Tučně",
+    "italic": "Kurzíva",
+    "underline": "Podtržení",
+    "strike": "Přeškrtnutí",
+    "list": "Seznam",
+    "quote": "Citace",
+    "link": "Odkaz",
+    "image": "Obrázek",
+    "fontFamilyDefault": "Výchozí písmo",
+    "fontSizeDefault": "Výchozí velikost",
+    "textColor": "Barva textu",
+    "linkDialogTitle": "Odkaz",
+    "linkTextLabel": "Zobrazený text",
+    "linkUrlLabel": "URL adresa",
+    "linkRemove": "Odebrat odkaz",
+    "mentionNoResults": "Žádné výsledky"
   }
 }
