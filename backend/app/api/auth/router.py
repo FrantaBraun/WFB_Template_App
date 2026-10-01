@@ -117,7 +117,12 @@ async def me(
             },
         )
     user = result.get("user") or result
-    return {**user, "application_group_id": result.get("application_group_id")}
+    return {
+        **user,
+        "application_group_id": result.get("application_group_id"),
+        # Locally-sourced, not part of the auth service's own identity data.
+        "is_admin": current_user.is_admin,
+    }
 
 
 @router.patch("/me")

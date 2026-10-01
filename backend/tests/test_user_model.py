@@ -22,6 +22,7 @@ async def test_create_user_sets_defaults(db_session):
     assert user.created_at is not None
     assert user.updated_at is not None
     assert user.nickname is None
+    assert user.is_admin is False
 
 
 async def test_nickname_persists(db_session):

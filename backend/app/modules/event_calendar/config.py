@@ -6,10 +6,10 @@
 backend/modules/event_calendar.json - per-application content that follows
 the branch, like backend/modules.json (see app/modules/registry.py).
 
-- editor_roles: auth-service roles (the JWT's role_name claim) allowed to
-  create and edit events, unless the application replaced that check with
-  its own (see permissions.set_editor_check).
 - page_size: how many upcoming events one page of the public list loads.
+
+Who may edit events isn't configured here: it's the application's own
+administrators (User.is_admin), see router.py.
 """
 
 from functools import lru_cache
@@ -25,13 +25,12 @@ CONFIG_FILE = BASE_DIR / "modules" / "event_calendar.json"
 class EventCalendarConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    editor_roles: list[str] = Field(default_factory=lambda: ["admin"])
     page_size: int = Field(default=10, ge=1, le=50)
 
 
 def load_config(path: Path = CONFIG_FILE) -> EventCalendarConfig:
     """A missing file means the defaults; a malformed one raises (fail at
-    startup/first use, not silently with surprising permissions)."""
+    startup/first use, not silently with surprising settings)."""
     if not path.exists():
         return EventCalendarConfig()
     return EventCalendarConfig.model_validate_json(path.read_text(encoding="utf-8"))
