@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Events in the event calendar module can now only be managed by this application's administrators (the is_admin flag on the local user account) - the auth service's user role no longer grants it, since that role applies to every application",
         "Articles are now events of the shared event_calendar module: existing articles (and links to them inside pages and articles) move over automatically, the old /api/articles and /api/admin/articles endpoints are gone, and administrators (is_admin) manage events",
         "Add an event calendar module (app/modules/event_calendar): events with their own pages, display windows, pinning and thumbnails; public endpoints for the upcoming list (paged by 10), a month view, a year/month archive, a home-page dashboard and search; editor endpoints with sanitized WYSIWYG content and image upload, with editors chosen by auth-service role or an application's own check",
         "Add a shared HTML sanitizer (app/services/sanitize.py) for content written in the WYSIWYG editor - keeps headings 1-5, text color, font and size, and strips anything executable",
