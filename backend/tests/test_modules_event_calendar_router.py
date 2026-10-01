@@ -24,6 +24,7 @@ from app.config import Settings, get_settings
 from app.database import get_db
 from app.modules.event_calendar.config import EventCalendarConfig, get_config
 from app.modules.event_calendar.models import Event
+from app.modules.event_calendar import permissions
 from app.modules.event_calendar.permissions import set_editor_check
 from app.modules.event_calendar.router import router as event_router
 
@@ -45,9 +46,14 @@ async def _overrides(db_session, tmp_path, rsa_keypair, monkeypatch):
     _event_app.dependency_overrides[get_settings] = lambda: settings
     _event_app.dependency_overrides[get_config] = lambda: EventCalendarConfig(editor_roles=["admin"], page_size=10)
     monkeypatch.setattr("app.modules.event_calendar.permissions.get_config", lambda: EventCalendarConfig(editor_roles=["admin"]))
+    # Test the module's own default role check, even when the application
+    # replaced it at import time (e.g. via app.main, which conftest imports),
+    # and put the application's check back afterwards.
+    previous_check = permissions._editor_check
+    set_editor_check(None)
     yield
     _event_app.dependency_overrides.clear()
-    set_editor_check(None)
+    permissions._editor_check = previous_check
 
 
 @pytest.fixture()
