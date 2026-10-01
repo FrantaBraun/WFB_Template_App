@@ -16,12 +16,18 @@ class AccountOut(BaseModel):
 
     id: uuid.UUID
     nickname: str | None
+    is_admin: bool
     created_at: datetime
     updated_at: datetime
 
 
 class AccountUpdate(BaseModel):
     """PATCH /api/account/me body - all fields optional, applied via
-    exclude_unset so omitted fields are left untouched rather than cleared."""
+    exclude_unset so omitted fields are left untouched rather than cleared.
+
+    Deliberately has no is_admin field: update_account applies every field
+    here via a blind setattr loop, so anything added would be self-service
+    writable by any authenticated user. Promoting an admin is done directly
+    against the database, never through this endpoint."""
 
     nickname: str | None = None

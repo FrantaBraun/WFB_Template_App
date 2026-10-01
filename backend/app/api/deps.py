@@ -119,3 +119,11 @@ async def is_team_member(db: AsyncSession, team_id: UUID, user_id: UUID) -> bool
         select(TeamMembership.id).where(TeamMembership.team_id == team_id, TeamMembership.user_id == user_id)
     )
     return result.scalar_one_or_none() is not None
+
+
+async def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """Gate for admin-only routes - builds on get_current_user so it drops in
+    anywhere that dependency is used, just with an extra is_admin check."""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
