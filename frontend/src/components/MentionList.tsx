@@ -62,16 +62,14 @@ const MentionList = forwardRef<MentionListHandle, MentionListProps>(({ items, co
     <div className="max-h-64 w-64 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
       {items.map((item, index) => (
         <button
-          key={`${item.type}-${item.id}`}
+          key={item.id}
           type="button"
           onClick={() => selectItem(index)}
           className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm ${
             index === selectedIndex ? 'bg-slate-100 dark:bg-slate-700' : ''
           }`}
         >
-          <span className="w-6 shrink-0 text-xs uppercase text-slate-400">
-            {item.type === 'page' ? t('editor.mentionPageType') : t('editor.mentionArticleType')}
-          </span>
+          {item.typeLabel && <span className="w-6 shrink-0 text-xs uppercase text-slate-400">{item.typeLabel}</span>}
           <span className="truncate text-slate-900 dark:text-slate-100">{item.label}</span>
         </button>
       ))}

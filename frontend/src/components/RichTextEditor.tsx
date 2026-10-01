@@ -15,19 +15,16 @@ import Suggestion, { type SuggestionOptions } from '@tiptap/suggestion'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import tippy, { type Instance as TippyInstance } from 'tippy.js'
-import { apiFetch } from '../api/client'
 import LinkDialog from './LinkDialog'
 import MentionList from './MentionList'
 
+/** One @-mention target: inserted as a plain link to `url` labelled `label`. */
 export interface MentionableItem {
-  type: 'page' | 'article'
   id: string
   label: string
-  slug: string
-}
-
-function mentionUrl(item: MentionableItem): string {
-  return item.type === 'page' ? `/${item.slug}` : `/clanek/${item.slug}`
+  url: string
+  /** Short type tag shown in the suggestion list (e.g. "Pg", "Ev"). */
+  typeLabel?: string
 }
 
 /**
@@ -84,7 +81,7 @@ function createMentionSuggestion(getItems: () => MentionableItem[]): Partial<Sug
         .chain()
         .focus()
         .insertContentAt(range, [
-          { type: 'text', text: item.label, marks: [{ type: 'link', attrs: { href: mentionUrl(item) } }] },
+          { type: 'text', text: item.label, marks: [{ type: 'link', attrs: { href: item.url } }] },
           { type: 'text', text: ' ' },
         ])
         .run()
@@ -138,7 +135,7 @@ function ToolbarButton({
   )
 }
 
-function Toolbar({ editor, onInsertImage, onOpenLinkDialog }: { editor: Editor; onInsertImage: () => void; onOpenLinkDialog: () => void }) {
+function Toolbar({ editor, onInsertImage, onOpenLinkDialog }: { editor: Editor; onInsertImage?: () => void; onOpenLinkDialog: () => void }) {
   const { t } = useTranslation()
   const activeHeadingLevel = HEADING_LEVELS.find((level) => editor.isActive('heading', { level })) ?? 'p'
 
@@ -226,7 +223,7 @@ function Toolbar({ editor, onInsertImage, onOpenLinkDialog }: { editor: Editor; 
       />
 
       <ToolbarButton onClick={onOpenLinkDialog}>{t('editor.link')}</ToolbarButton>
-      <ToolbarButton onClick={onInsertImage}>{t('editor.image')}</ToolbarButton>
+      {onInsertImage && <ToolbarButton onClick={onInsertImage}>{t('editor.image')}</ToolbarButton>}
     </div>
   )
 }
@@ -234,6 +231,10 @@ function Toolbar({ editor, onInsertImage, onOpenLinkDialog }: { editor: Editor; 
 interface RichTextEditorProps {
   value: string
   onChange: (html: string) => void
+  /** Loads the @-mention targets once on mount; without it, typing @ does nothing special. */
+  loadMentionables?: () => Promise<MentionableItem[]>
+  /** Uploads an image and resolves to its public URL; without it, the toolbar has no Image button. */
+  uploadImage?: (file: File) => Promise<string>
 }
 
 interface LinkDialogState {
@@ -242,28 +243,34 @@ interface LinkDialogState {
   initialUrl: string
 }
 
-/** WYSIWYG editor for Page.content / Article.full_text: headings 1-5, bold/
- * italic/underline/strike, font size/family/color, lists/quote, a link
- * dialog (text + URL, for both inserting and editing - including a link
- * inserted via @-mention), image upload, and @-triggered mention
- * suggestions (from /api/admin/mentionable) that insert a plain link -
- * matching the spec's literal "typing @ triggers a menu to insert a link",
- * not a separate re-resolving mention-chip concept. */
-export default function RichTextEditor({ value, onChange }: RichTextEditorProps) {
+/** Shared WYSIWYG HTML editor: headings 1-5, bold/italic/underline/strike,
+ * font size/family/color, lists/quote, a link dialog (text + URL, for both
+ * inserting and editing - including a link inserted via @-mention), image
+ * upload (when `uploadImage` is given) and @-triggered suggestions (when
+ * `loadMentionables` is given) that insert a plain link. Its output must
+ * stay within what the backend's app/services/sanitize.py allows - keep
+ * the two in sync when adding an extension. */
+export default function RichTextEditor({ value, onChange, loadMentionables, uploadImage }: RichTextEditorProps) {
   const mentionableRef = useRef<MentionableItem[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null)
 
   useEffect(() => {
-    apiFetch('/api/admin/mentionable')
-      .then((r) => (r.ok ? r.json() : []))
-      .then((items: MentionableItem[]) => {
+    if (!loadMentionables) return
+    loadMentionables()
+      .then((items) => {
         mentionableRef.current = items
       })
       .catch(() => {})
+    // Mount-only on purpose: callers usually pass an inline function.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const editor = useEditor({
+    // TipTap 3 no longer re-renders on every transaction by default, which
+    // left the toolbar's active states (heading select, bold, font, color)
+    // stuck on whatever was true when it last rendered.
+    shouldRerenderOnTransaction: true,
     extensions: [
       StarterKit.configure({
         link: { openOnClick: false, autolink: false },
@@ -283,14 +290,13 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (!file || !editor) return
-
-    const formData = new FormData()
-    formData.append('file', file)
-    const resp = await apiFetch('/api/admin/uploads/image', { method: 'POST', body: formData })
-    if (!resp.ok) return
-    const { url } = await resp.json()
-    editor.chain().focus().setImage({ src: url }).run()
+    if (!file || !editor || !uploadImage) return
+    try {
+      const url = await uploadImage(file)
+      editor.chain().focus().setImage({ src: url }).run()
+    } catch {
+      // The upload helper owns error reporting; the editor just doesn't insert.
+    }
   }
 
   function openLinkDialog() {
@@ -339,7 +345,7 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-      <Toolbar editor={editor} onInsertImage={() => fileInputRef.current?.click()} onOpenLinkDialog={openLinkDialog} />
+      <Toolbar editor={editor} onInsertImage={uploadImage ? () => fileInputRef.current?.click() : undefined} onOpenLinkDialog={openLinkDialog} />
       <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={handleFileChange} />
       <div className="rich-text-content px-3 py-2 text-slate-900 dark:text-slate-100">
         <EditorContent editor={editor} />

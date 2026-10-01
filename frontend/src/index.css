@@ -139,3 +139,64 @@ h1, h2, h3, h4, h5, h6 {
   min-height: 12rem;
   outline: none;
 }
+
+/* Shared by RichTextEditor's live view (nested one level deeper under
+   .ProseMirror) AND publicly-rendered editor HTML (dangerouslySetInnerHTML
+   straight into .rich-text-content, no .ProseMirror wrapper there) - rules
+   target .rich-text-content itself so both pick them up. No typography
+   plugin is installed, so list/heading/image/link styling needs explicit
+   rules rather than Tailwind preflight's reset browser defaults. */
+.rich-text-content ul,
+.rich-text-content ol {
+  padding-left: 1.5rem;
+}
+
+.rich-text-content ul {
+  list-style: disc;
+}
+
+.rich-text-content ol {
+  list-style: decimal;
+}
+
+.rich-text-content h1,
+.rich-text-content h2,
+.rich-text-content h3,
+.rich-text-content h4,
+.rich-text-content h5 {
+  font-weight: 600;
+  margin-top: 0.75em;
+  margin-bottom: 0.25em;
+}
+
+.rich-text-content h1 { font-size: 2em; }
+.rich-text-content h2 { font-size: 1.5em; }
+.rich-text-content h3 { font-size: 1.25em; }
+.rich-text-content h4 { font-size: 1.1em; }
+.rich-text-content h5 { font-size: 1em; }
+
+.rich-text-content p {
+  margin: 0.5em 0;
+}
+
+.rich-text-content blockquote {
+  border-left: 3px solid currentColor;
+  opacity: 0.8;
+  padding-left: 1rem;
+}
+
+.rich-text-content img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+}
+
+/* Tailwind's preflight strips the browser's default link underline. */
+.rich-text-content a {
+  text-decoration: underline;
+}
+
+/* Only meaningful for the editable view itself, not static public content. */
+.rich-text-content .ProseMirror {
+  min-height: 12rem;
+  outline: none;
+}

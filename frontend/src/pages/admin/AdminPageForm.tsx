@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../../api/client'
 import RichTextEditor from '../../components/RichTextEditor'
+import { loadAdminMentionables, uploadAdminImage } from './editorSources'
 import usePageMeta from '../../hooks/usePageMeta'
 import useRequireAdmin from '../../hooks/useRequireAdmin'
 
@@ -130,7 +131,7 @@ export default function AdminPageForm() {
           <label className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
             {t('admin.pages.contentLabel')}
           </label>
-          <RichTextEditor value={content} onChange={setContent} />
+          <RichTextEditor value={content} onChange={setContent} loadMentionables={loadAdminMentionables} uploadImage={uploadAdminImage} />
         </div>
 
         <div className="flex items-center gap-6">

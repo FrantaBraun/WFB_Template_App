@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../../api/client'
 import RichTextEditor from '../../components/RichTextEditor'
+import { loadAdminMentionables, uploadAdminImage } from './editorSources'
 import usePageMeta from '../../hooks/usePageMeta'
 import useRequireAdmin from '../../hooks/useRequireAdmin'
 
@@ -165,7 +166,7 @@ export default function AdminArticleForm() {
           <label className="mb-1 block text-sm text-slate-600 dark:text-slate-400">
             {t('admin.articles.fullTextLabel')}
           </label>
-          <RichTextEditor value={fullText} onChange={setFullText} />
+          <RichTextEditor value={fullText} onChange={setFullText} loadMentionables={loadAdminMentionables} uploadImage={uploadAdminImage} />
         </div>
 
         <div className="grid grid-cols-3 gap-4">
