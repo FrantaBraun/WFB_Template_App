@@ -4,6 +4,11 @@
 
 """Public event endpoints plus the editors' /manage endpoints.
 
+Editors are this application's administrators - the local User.is_admin
+flag (app.api.deps.require_admin), never the JWT's role_name: that role
+belongs to the user across every application on the shared auth service,
+so it can't say who administers this one.
+
 Every fixed path is declared before GET /{slug}: FastAPI matches routes in
 declaration order, so /{slug} first would swallow e.g. /archive as an
 event slug (schemas.RESERVED_SLUGS keeps editors from creating events that
@@ -27,12 +32,12 @@ from sqlalchemy import and_, extract, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_current_user, require_admin
 from app.config import BASE_DIR, Settings, get_settings
 from app.database import get_db
 from app.models.user import User
 from app.modules.event_calendar.config import EventCalendarConfig, get_config
 from app.modules.event_calendar.models import STATUS_PUBLISHED, Event
-from app.modules.event_calendar.permissions import current_user_and_claims, is_editor, require_editor
 from app.modules.event_calendar.schemas import (
     ArchiveMonth,
     ArchiveYear,
@@ -222,20 +227,19 @@ async def get_upload(filename: str, settings: Settings = Depends(get_settings)) 
 
 
 @router.get("/manage/me")
-async def get_editor_status(auth: tuple[User, dict] = Depends(current_user_and_claims)) -> EditorStatus:
+async def get_editor_status(user: User = Depends(get_current_user)) -> EditorStatus:
     """Lets the frontend decide whether to show the management links."""
-    user, claims = auth
-    return EditorStatus(is_editor=await is_editor(user, claims))
+    return EditorStatus(is_editor=user.is_admin)
 
 
-@router.get("/manage", dependencies=[Depends(require_editor)])
+@router.get("/manage", dependencies=[Depends(require_admin)])
 async def manage_list(db: AsyncSession = Depends(get_db)) -> list[EventAdminOut]:
     """Every event in every status, including drafts and soft-deleted ones."""
     rows = (await db.scalars(select(Event).order_by(Event.event_date.desc(), Event.title.asc()))).all()
     return [EventAdminOut.model_validate(e) for e in rows]
 
 
-@router.post("/manage", status_code=201, dependencies=[Depends(require_editor)])
+@router.post("/manage", status_code=201, dependencies=[Depends(require_admin)])
 async def manage_create(body: EventCreate, db: AsyncSession = Depends(get_db)) -> EventAdminOut:
     event = Event(**{**body.model_dump(), "full_text": sanitize_html(body.full_text)})
     db.add(event)
@@ -244,7 +248,7 @@ async def manage_create(body: EventCreate, db: AsyncSession = Depends(get_db)) -
     return EventAdminOut.model_validate(event)
 
 
-@router.post("/manage/uploads", dependencies=[Depends(require_editor)])
+@router.post("/manage/uploads", dependencies=[Depends(require_admin)])
 async def manage_upload(file: UploadFile, settings: Settings = Depends(get_settings)) -> dict:
     """Thumbnail and in-text images. Never uses the client's filename (no
     path traversal, no collisions) and checks the bytes match the type."""
@@ -265,7 +269,7 @@ async def manage_upload(file: UploadFile, settings: Settings = Depends(get_setti
     return {"url": f"{settings.app_base_url.rstrip('/')}/api/modules/event_calendar/uploads/{filename}"}
 
 
-@router.get("/manage/{event_id}", dependencies=[Depends(require_editor)])
+@router.get("/manage/{event_id}", dependencies=[Depends(require_admin)])
 async def manage_get(event_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> EventAdminOut:
     event = await db.get(Event, event_id)
     if event is None:
@@ -273,7 +277,7 @@ async def manage_get(event_id: uuid.UUID, db: AsyncSession = Depends(get_db)) ->
     return EventAdminOut.model_validate(event)
 
 
-@router.patch("/manage/{event_id}", dependencies=[Depends(require_editor)])
+@router.patch("/manage/{event_id}", dependencies=[Depends(require_admin)])
 async def manage_update(event_id: uuid.UUID, body: EventUpdate, db: AsyncSession = Depends(get_db)) -> EventAdminOut:
     """status="deleted" is the soft delete; there is no DELETE route."""
     event = await db.get(Event, event_id)

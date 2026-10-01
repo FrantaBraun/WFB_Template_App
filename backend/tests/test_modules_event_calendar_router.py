@@ -23,9 +23,8 @@ from sqlalchemy import delete
 from app.config import Settings, get_settings
 from app.database import get_db
 from app.modules.event_calendar.config import EventCalendarConfig, get_config
+from app.models.user import User
 from app.modules.event_calendar.models import Event
-from app.modules.event_calendar import permissions
-from app.modules.event_calendar.permissions import set_editor_check
 from app.modules.event_calendar.router import router as event_router
 
 BASE = "/api/modules/event_calendar"
@@ -44,16 +43,9 @@ async def _overrides(db_session, tmp_path, rsa_keypair, monkeypatch):
     settings = Settings(uploads_dir=str(tmp_path), app_base_url="http://api.test")
     _event_app.dependency_overrides[get_db] = lambda: db_session
     _event_app.dependency_overrides[get_settings] = lambda: settings
-    _event_app.dependency_overrides[get_config] = lambda: EventCalendarConfig(editor_roles=["admin"], page_size=10)
-    monkeypatch.setattr("app.modules.event_calendar.permissions.get_config", lambda: EventCalendarConfig(editor_roles=["admin"]))
-    # Test the module's own default role check, even when the application
-    # replaced it at import time (e.g. via app.main, which conftest imports),
-    # and put the application's check back afterwards.
-    previous_check = permissions._editor_check
-    set_editor_check(None)
+    _event_app.dependency_overrides[get_config] = lambda: EventCalendarConfig(page_size=10)
     yield
     _event_app.dependency_overrides.clear()
-    permissions._editor_check = previous_check
 
 
 @pytest.fixture()
@@ -63,13 +55,20 @@ async def client():
 
 
 @pytest.fixture()
-def editor_headers(make_access_token):
-    return {"Authorization": f"Bearer {make_access_token(role_name='admin')}"}
+async def editor_headers(db_session, make_access_token):
+    """An administrator of this application (local User.is_admin) - with a
+    plain auth-service role, since that role must not matter."""
+    sub = uuid.uuid4()
+    db_session.add(User(auth_sub=sub, is_admin=True))
+    await db_session.commit()
+    return {"Authorization": f"Bearer {make_access_token(sub=str(sub), role_name='user')}"}
 
 
 @pytest.fixture()
 def user_headers(make_access_token):
-    return {"Authorization": f"Bearer {make_access_token(role_name='user')}"}
+    """Not an administrator here - even though the auth service calls them
+    "admin": role_name is global to the user, not per application."""
+    return {"Authorization": f"Bearer {make_access_token(role_name='admin')}"}
 
 
 async def _seed(db_session, slug: str, event_date: date, **fields) -> Event:
@@ -211,13 +210,18 @@ async def test_manage_requires_editor(client, user_headers):
     assert resp.status_code == 403
 
 
-async def test_custom_editor_check_replaces_role_check(client, editor_headers, user_headers):
-    async def nobody(user, claims):
-        return claims.get("login") == "special"
+async def test_admin_flag_not_role_decides(client, db_session, make_access_token):
+    sub = uuid.uuid4()
+    user = User(auth_sub=sub, is_admin=False)
+    db_session.add(user)
+    await db_session.commit()
+    headers = {"Authorization": f"Bearer {make_access_token(sub=str(sub), role_name='admin')}"}
 
-    set_editor_check(nobody)
+    assert (await client.get(f"{BASE}/manage", headers=headers)).status_code == 403
 
-    assert (await client.get(f"{BASE}/manage", headers=editor_headers)).status_code == 403
+    user.is_admin = True
+    await db_session.commit()
+    assert (await client.get(f"{BASE}/manage", headers=headers)).status_code == 200
 
 
 # --- Editor CRUD --------------------------------------------------------------
