@@ -12,7 +12,7 @@ This repository hosts a **family of applications built on one shared core**, rat
 - **Application branches** — one per real app, branched **directly from `core`** (the `new-app` skill automates this). They diverge with app-specific code (models, pages, config) while periodically merging in updates from `core`.
 - **`template_app`** — also branched from `core` and kept in sync with it, but *not* the fork point for the applications above. It carries forward the repository's original, standalone template role: a generically-branded starting point for cloning and renaming into a one-off app outside this family. Don't confuse the two workflows.
 
-**Branches synced from `core`:** `template_app`, `slavickovy-knihohratky`, `api-hub`. This list grows as applications are added — the `new-app` skill appends to it automatically when it forks one; the `new-module` skill reads it (not a hardcoded branch list) to know where to roll a new module out to. Keep it current if a branch is added or retired by hand.
+**Branches synced from `core`:** `template_app`, `slavickovy-knihohratky`, `api-hub`, `thoughtauction`. This list grows as applications are added — the `new-app` skill appends to it automatically when it forks one; the `new-module` skill reads it (not a hardcoded branch list) to know where to roll a new module out to. Keep it current if a branch is added or retired by hand.
 
 When working on a branch other than `core`, treat app-specific code you find as intentional local divergence — don't "fix" it back to match `core` unless that's the actual task.
 
