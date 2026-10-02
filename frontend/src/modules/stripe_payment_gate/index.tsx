@@ -35,7 +35,7 @@ const stripePaymentGateModule: ModuleDefinition = {
         pay: 'Objednat a zaplatit',
         redirecting: 'Přesměrování na platební bránu…',
         termsNotice:
-          'Kliknutím na tlačítko souhlasíte s <terms>obchodními podmínkami</terms> a berete na vědomí <privacy>zásady ochrany osobních údajů</privacy>. Platbu zpracovává Stripe.',
+          'Kliknutím na tlačítko souhlasíte s <terms>pravidly a podmínkami</terms> a berete na vědomí <privacy>zásady ochrany osobních údajů</privacy>. Platbu zpracovává Stripe.',
         digitalContentWaiver:
           'Žádám o dodání digitálního obsahu ihned po zaplacení a beru na vědomí, že tím ztrácím právo odstoupit od smlouvy do 14 dnů.',
         error: 'Platbu se nepodařilo zahájit. Zkuste to prosím znovu.',

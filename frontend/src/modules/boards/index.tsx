@@ -76,6 +76,7 @@ const boardsModule: ModuleDefinition = {
         invalid: 'Zkontrolujte nadpis a text – nesmí být prázdné ani příliš dlouhé.',
         error: 'Příspěvek se nepodařilo zveřejnit.',
         accountBlocked: 'Váš účet je zablokován, příspěvky nelze přidávat.',
+        rulesNotice: 'Zveřejněním souhlasíte s <rules>pravidly a podmínkami</rules>.',
       },
       newCategory: {
         title: 'Nová kategorie',
@@ -89,6 +90,7 @@ const boardsModule: ModuleDefinition = {
         invalid: 'Zkontrolujte název a popis – nesmí být prázdné ani příliš dlouhé.',
         error: 'Kategorii se nepodařilo založit.',
         accountBlocked: 'Váš účet je zablokován, kategorie nelze zakládat.',
+        rulesNotice: 'Zveřejněním souhlasíte s <rules>pravidly a podmínkami</rules>.',
       },
       blocked: {
         title: 'Váš účet je zablokován.',
@@ -97,6 +99,7 @@ const boardsModule: ModuleDefinition = {
             'Měli jste příliš mnoho příspěvků označených jako závadné. Příspěvky ani kategorie nelze přidávat a souznění vyjadřovat.',
           unknown: 'Příspěvky ani kategorie nelze přidávat a souznění vyjadřovat.',
         },
+        help: 'Pokud si myslíte, že jde o omyl, <contact>napište nám</contact>. Podrobnosti najdete v <rules>pravidlech a podmínkách</rules>.',
       },
       moderation: {
         warn: {
@@ -120,6 +123,7 @@ const boardsModule: ModuleDefinition = {
         publishAnyway: 'Přesto zveřejnit',
         createAnyway: 'Přesto založit',
         edit: 'Upravit',
+        seeRules: 'Co je dovoleno, určují <rules>pravidla a podmínky</rules>.',
         finding: {
           profanity: 'Obsahuje vulgární výrazy.',
           insult: 'Obsahuje urážky.',
@@ -253,6 +257,7 @@ const boardsModule: ModuleDefinition = {
         invalid: 'Check the title and the text – they cannot be empty or too long.',
         error: 'Could not publish the post.',
         accountBlocked: 'Your account is blocked, so you cannot add posts.',
+        rulesNotice: 'By publishing you agree to the <rules>terms and rules</rules>.',
       },
       newCategory: {
         title: 'New category',
@@ -266,6 +271,7 @@ const boardsModule: ModuleDefinition = {
         invalid: 'Check the name and the description – they cannot be empty or too long.',
         error: 'Could not create the category.',
         accountBlocked: 'Your account is blocked, so you cannot create categories.',
+        rulesNotice: 'By publishing you agree to the <rules>terms and rules</rules>.',
       },
       blocked: {
         title: 'Your account is blocked.',
@@ -274,6 +280,7 @@ const boardsModule: ModuleDefinition = {
             'Too many of your posts were marked as violating the rules. You cannot add posts or categories or resonate.',
           unknown: 'You cannot add posts or categories or resonate.',
         },
+        help: 'If you think this is a mistake, <contact>write to us</contact>. You can read the details in the <rules>terms and rules</rules>.',
       },
       moderation: {
         warn: {
@@ -297,6 +304,7 @@ const boardsModule: ModuleDefinition = {
         publishAnyway: 'Publish anyway',
         createAnyway: 'Create anyway',
         edit: 'Edit',
+        seeRules: 'What is allowed is set out in the <rules>terms and rules</rules>.',
         finding: {
           profanity: 'Contains vulgar expressions.',
           insult: 'Contains insults.',

@@ -5,7 +5,7 @@
  */
 
 import { useState, type FormEvent } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import usePageMeta from '../../hooks/usePageMeta'
@@ -15,6 +15,7 @@ import {
   CATEGORIES_PATH,
   CATEGORY_DESCRIPTION_MAX,
   CATEGORY_TITLE_MAX,
+  RULES_PATH,
   categoryPath,
   charCount,
   errorDetail,
@@ -171,6 +172,14 @@ export default function NewCategoryPage() {
               </button>
             </AssessmentPanel>
           )}
+
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            <Trans
+              t={t}
+              i18nKey="newCategory.rulesNotice"
+              components={{ rules: <Link to={RULES_PATH} className="underline underline-offset-4 hover:no-underline" /> }}
+            />
+          </p>
 
           <div className="flex flex-wrap items-center gap-3">
             <button

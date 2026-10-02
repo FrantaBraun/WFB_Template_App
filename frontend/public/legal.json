@@ -10,9 +10,26 @@
     "phone": "",
     "web": ""
   },
-  "service": { "cs": "", "en": "" },
+  "service": {
+    "cs": "Provozujeme web ThoughtAuction (Aukce myšlenek), na kterém přihlášení uživatelé anonymně zveřejňují krátké příspěvky na tematických nástěnkách (v kategoriích) a mohou si za úplatu zvýšit jejich hodnotu, a tím i pořadí na nástěnce.",
+    "en": "We operate the ThoughtAuction website, where signed-in users publish short posts anonymously on topic boards (categories) and can pay to raise a post's value, and with it its place on the board."
+  },
   "dpoEmail": "",
   "effectiveFrom": "",
   "gdpr": true,
-  "extraStorage": []
+  "extraStorage": [],
+  "params": {
+    "pointsPerUsd": 10,
+    "pointsPerResonance": 1,
+    "pointsPerDay": 1,
+    "postTitleMax": 120,
+    "postBodyMax": 2048,
+    "categoryTitleMax": 120,
+    "categoryDescriptionMax": 4096,
+    "warnPercent": 30,
+    "riskPercent": 50,
+    "blockPercent": 75,
+    "strikeLimit": 3,
+    "strikePeriodDays": 30
+  }
 }

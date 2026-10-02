@@ -39,6 +39,13 @@ export interface LegalConfig {
   gdpr: boolean
   /** App-specific technical cookies/storage entries, listed after the built-in ones on the Cookies page. */
   extraStorage: StorageItem[]
+  /**
+   * App-specific values for `{{placeholders}}` in the legal texts - e.g. the
+   * numbers an application's own rules quote (limits, thresholds, periods).
+   * They are exposed under their own names next to the built-in ones, which
+   * win on a clash, and are always plain strings in the texts.
+   */
+  params: Record<string, string | number>
 }
 
 const EMPTY: LegalConfig = {
@@ -48,6 +55,7 @@ const EMPTY: LegalConfig = {
   effectiveFrom: '',
   gdpr: true,
   extraStorage: [],
+  params: {},
 }
 
 let configPromise: Promise<LegalConfig> | null = null
@@ -57,7 +65,7 @@ async function loadLegalConfig(): Promise<LegalConfig> {
     const resp = await fetch('/legal.json')
     if (!resp.ok) return EMPTY
     const data = await resp.json()
-    return { ...EMPTY, ...data, provider: { ...EMPTY.provider, ...data.provider } }
+    return { ...EMPTY, ...data, provider: { ...EMPTY.provider, ...data.provider }, params: { ...data.params } }
   } catch {
     return EMPTY
   }
@@ -96,6 +104,7 @@ export function legalVars(config: LegalConfig, lang: string, t: (key: string) =>
   const dash = '—'
   const { provider } = config
   return {
+    ...Object.fromEntries(Object.entries(config.params).map(([key, value]) => [key, String(value)])),
     name: provider.name || dash,
     ico: provider.ico || dash,
     dic: provider.dic || dash,

@@ -5,9 +5,11 @@
  */
 
 import { useLayoutEffect, useRef, useState, type FormEvent } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import {
   API_BASE,
+  RULES_PATH,
   POST_BODY_MAX,
   POST_TITLE_MAX,
   ApiError,
@@ -201,6 +203,14 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
           </button>
         </AssessmentPanel>
       )}
+
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        <Trans
+          t={t}
+          i18nKey="form.rulesNotice"
+          components={{ rules: <Link to={RULES_PATH} className="underline underline-offset-4 hover:no-underline" /> }}
+        />
+      </p>
 
       <div className="flex flex-wrap items-center gap-3">
         <button

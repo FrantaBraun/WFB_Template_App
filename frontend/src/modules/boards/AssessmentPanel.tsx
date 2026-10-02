@@ -5,8 +5,9 @@
  */
 
 import type { ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
-import type { Assessment, Finding, Level, Score } from './api'
+import { Trans, useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
+import { RULES_PATH, type Assessment, type Finding, type Level, type Score } from './api'
 
 /**
  * The verdict of the content checks on a draft, shown before it is
@@ -53,6 +54,14 @@ export default function AssessmentPanel({
           </ul>
         </div>
       )}
+
+      <p className="mt-3 text-xs text-slate-600 dark:text-slate-400">
+        <Trans
+          t={t}
+          i18nKey="moderation.seeRules"
+          components={{ rules: <Link to={RULES_PATH} className="underline underline-offset-4 hover:no-underline" /> }}
+        />
+      </p>
 
       {children && <div className="mt-4 flex flex-wrap gap-3">{children}</div>}
     </section>
