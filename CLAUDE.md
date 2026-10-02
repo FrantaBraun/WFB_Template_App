@@ -31,6 +31,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - When a category or post is judged violating, the author is shown a message with the reason and the specific aspects behind it.
 - In scope for the first version: the local algorithms for posts and categories, and the AI-call preparation as a mock only.
 
+**Implemented so far - phase 1, the `boards` module (no payments, no moderation yet)**
+
+- Backend `app/modules/boards/` and frontend `src/modules/boards/`, enabled in both `modules.json` files; its settings (`page_size`, points per USD / resonance / day of age) live in `backend/modules/boards.json`. UI and routes call boards *categories* (`/categories`, `/categories/:slug`, `/categories/new`); the slug comes from the title (`slugify`/`unique_slug` in `service.py`, `-2`, `-3` ... on a collision, `new` is reserved).
+- **A post's value is computed on read** (`service.post_value`) and never stored. The listing orders by `service.rank_expression` instead - paid points + resonance points + `points_per_day` x created-time-in-days - which gives the same order as the value at any moment (the `now` term is the same for every post and cancels out), so page boundaries stay stable between loads. Posts with equal shown values come in arbitrary but stable order. Don't "simplify" it into a per-row age computation in SQL.
+- `Post.paid_cents` is in the schema and the formula, but **nothing writes it until payments are built** (it is 0 today); tests set it directly. Payments will need the `stripe_payment_gate` module's purposes and a ledger.
+- **Authors are never exposed**: `Post.author_id` / `Category.created_by_id` are stored for moderation only, `PostOut` / `CategoryOut` omit them, and who resonated is only ever a row in `module_boards_resonances` (composite primary key = once per user and post; `resonance_count` is denormalized and moved in the same transaction). A viewer sees only their own `resonated_by_me`. The public listing uses the module's `get_optional_user`, which treats an invalid or expired token as anonymous - the frontend sends its stored token on every request, so a 401 there would log a visitor out of a page that needs no login.
+- Text limits are fixed constants, not config (changing one needs a migration): post title 120 (our choice - the spec gave none), post text 2048, category title 120, description 4096. They count characters (code points), so an emoji is one; the frontend mirrors them in `boards/api.ts` (`charCount`) and its textareas deliberately have no `maxLength` (it counts UTF-16 units).
+- Not built yet: payments (and the cumulative top-up), the 3-level moderation (local scoring with the 30/50/75 % thresholds, the mock AI call, the admin's manual block with a reason sent as a notification, account blocking), machine rules per category, an admin area, the Terms / GDPR / Contact pages, "my posts".
+- Testing note: `app.modules.boards.router` as a dotted string resolves to the `APIRouter` (the package re-exports `router`), so monkeypatch module attributes through `sys.modules["app.modules.boards.router"]`. Local dev DB: `thoughtauction_db` (the shared `backend/.env` may still point at another app's - override `DATABASE_URL` per command).
+
 Forked from `core` by the `new-app` skill on 2026-10-02.
 
 ## Repository purpose
