@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Boards and posts**
 
 - The core of the app is a simple, clear, infinitely scrolling page of user posts, ordered by their current value (highest first). There are several boards (categories); each one is its own such page.
-- A post has only a **title and a text of at most 2024 characters including spaces**. **No author is shown**, only the title, the text and the post's current value.
+- A post has only a **title and a text of at most 2048 characters including spaces**. **No author is shown**, only the title, the text and the post's current value.
 - **Post value** = paid amount (1 USD = 10 points) + resonances (1 user's agreement = 1 point) - age (1 day = 1 point).
 - Posting, creating a new category and expressing resonance are **for signed-in users only**. Reading is public.
 - **Resonance**: a user can give one resonance to a given post only once. Nobody sees who resonated - not even the post's author - only the count.
