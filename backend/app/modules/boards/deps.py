@@ -30,3 +30,15 @@ async def get_optional_user(
     except HTTPException:
         return None
     return await get_current_user(claims=claims, db=db)
+
+
+async def get_active_user(user: User = Depends(get_current_user)) -> User:
+    """The signed-in user, unless this application has blocked their account
+    - then 403 with {"code": "account_blocked", "reason"}, so the frontend
+    can say why. For everything that writes: posting, creating a category,
+    resonating, checking a draft."""
+    if user.is_blocked:
+        raise HTTPException(
+            status_code=403, detail={"code": "account_blocked", "reason": user.blocked_reason}
+        )
+    return user

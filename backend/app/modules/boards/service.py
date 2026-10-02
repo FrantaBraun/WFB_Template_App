@@ -23,6 +23,7 @@ contradicts the shown values. Only posts with *equal* shown values are
 ordered by something else: that fractional part, stable but arbitrary.
 """
 
+import logging
 import re
 import unicodedata
 from datetime import datetime
@@ -30,8 +31,13 @@ from datetime import datetime
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.boards.config import BoardsConfig
+from app.modules.boards.config import BoardsConfig, ModerationConfig
 from app.modules.boards.models import Category, Post
+from app.modules.boards.moderation.ai import AiModerator
+from app.modules.boards.moderation.topic import build_rules
+from app.modules.boards.schemas import MachineRules
+
+logger = logging.getLogger(__name__)
 
 # Leaves room for a "-<number>" suffix inside models.SLUG_MAX.
 SLUG_BASE_MAX = 100
@@ -92,3 +98,22 @@ def rank_expression(config: BoardsConfig):
     resonance_points = Post.resonance_count * config.points_per_resonance
     created_days = func.extract("epoch", Post.created_at) / _SECONDS_PER_DAY
     return paid_points + resonance_points + config.points_per_day * created_days
+
+
+async def make_machine_rules(
+    title: str, description: str, config: ModerationConfig, ai: AiModerator | None
+) -> tuple[dict, str]:
+    """The machine rules for a category and where they came from: always the
+    algorithmic ones first, then - when AI review is enabled - the AI
+    moderator's, which replace them if it offers any that are valid. (With
+    only the mock connected it never does.) A failing or malformed AI answer
+    just leaves the algorithmic rules in place."""
+    rules, source = build_rules(title, description), "algorithm"
+    if config.ai_review_enabled and ai is not None:
+        try:
+            ai_rules = await ai.build_category_rules(title, description)
+            if ai_rules is not None:
+                rules, source = MachineRules.model_validate(ai_rules).model_dump(), "ai"
+        except Exception:
+            logger.warning("AI machine rules for a category were not usable - kept the algorithmic ones", exc_info=True)
+    return rules, source

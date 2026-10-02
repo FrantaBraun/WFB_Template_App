@@ -5,7 +5,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, func, text
+from sqlalchemy import JSON, CheckConstraint, DateTime, ForeignKey, Integer, SmallInteger, String, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -17,6 +17,15 @@ CATEGORY_DESCRIPTION_MAX = 4096
 POST_TITLE_MAX = 120
 POST_BODY_MAX = 2048
 SLUG_MAX = 140
+MODERATION_REASON_MAX = 1000
+
+# A post is "published" (listed, can be resonated with), "blocked" (an
+# administrator marked it as violating the rules - removed without refund,
+# and it counts as a strike against its author) or "removed" (taken down
+# because its author's account was blocked - no strike of its own).
+STATUS_PUBLISHED = "published"
+STATUS_BLOCKED = "blocked"
+STATUS_REMOVED = "removed"
 
 
 class Category(Base):
@@ -35,6 +44,15 @@ class Category(Base):
     description: Mapped[str] = mapped_column(String(CATEGORY_DESCRIPTION_MAX), nullable=False)
     created_by_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # The local violation score (percent) the category's title and description
+    # got when it was created.
+    violation_score: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0, server_default=text("0"))
+    # The machine rules posts are compared against (moderation/topic.py):
+    # {"keywords": [{"term", "weight"}], "notes"}; machine_rules_source is
+    # "algorithm", "ai" or "admin" (who wrote them last).
+    machine_rules: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    machine_rules_source: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    machine_rules_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Post(Base):
@@ -65,6 +83,20 @@ class Post(Base):
     paid_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
     resonance_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default=STATUS_PUBLISHED, server_default=STATUS_PUBLISHED, index=True
+    )
+    # What the local (and AI) checks scored it when it was published, and the
+    # findings behind the scores - for an administrator reviewing it.
+    violation_score: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0, server_default=text("0"))
+    topic_mismatch_score: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0, server_default=text("0"))
+    assessment: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Set when the post is blocked or removed: why, when, and by whom (None
+    # when the system did it, as for a removal after an account block).
+    moderation_reason: Mapped[str | None] = mapped_column(String(MODERATION_REASON_MAX), nullable=True)
+    moderated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    moderated_by_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
 
 class Resonance(Base):

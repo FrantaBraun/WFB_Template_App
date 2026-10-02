@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from app.modules.boards.config import ModerationConfig
-from app.modules.boards.moderation.ai import AiModerator, AiResponseError, AiReviewRequest
+from app.modules.boards.moderation.ai import AiModerator, AiReviewRequest
 from app.modules.boards.moderation.findings import Finding, shown_matches
 from app.modules.boards.moderation.scorer import score_violations
 from app.modules.boards.moderation.topic import topic_mismatch
@@ -75,10 +75,11 @@ class Assessment:
 async def _ask_ai(ai: AiModerator, request: AiReviewRequest):
     try:
         return await ai.review(request)
-    except AiResponseError:
-        # A model that answers badly must not stop anyone posting - the local
-        # checks have already passed.
-        logger.warning("AI moderation answer was not usable - ignored", exc_info=True)
+    except Exception:
+        # A model that is down, slow or answers badly (AiResponseError, a
+        # network error, ...) must not stop anyone posting - the local checks
+        # have already passed.
+        logger.warning("AI moderation review failed - ignored", exc_info=True)
         return None
 
 
