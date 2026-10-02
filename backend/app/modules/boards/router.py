@@ -16,8 +16,10 @@ the same assessment is available on its own (the /check endpoints) so the
 frontend can show the author the verdict before they commit. Once payments
 exist, this is the check that runs before a payment is confirmed.
 
-There are no payments yet (Post.paid_cents stays 0). The administrators'
-endpoints live in admin_router.py and are mounted under /manage.
+An author can pay to raise their own post's value (payments.py, through the
+stripe_payment_gate module); GET /payments tells the frontend whether that is
+switched on. The administrators' endpoints live in admin_router.py and are
+mounted under /manage.
 """
 
 import uuid
@@ -30,12 +32,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
+from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.user import User
 from app.modules.boards.admin_router import router as admin_router
 from app.modules.boards.config import BoardsConfig, get_config
 from app.modules.boards.deps import get_active_user, get_optional_user
 from app.modules.boards.models import STATUS_PUBLISHED, Category, Post, Resonance
+from app.modules.boards.payments import CURRENCY
 from app.modules.boards.moderation.ai import AiModerator, get_ai_moderator
 from app.modules.boards.moderation.assess import Assessment, assess_category, assess_post
 from app.modules.boards.schemas import (
@@ -44,12 +48,15 @@ from app.modules.boards.schemas import (
     CategoryOut,
     CategoryPage,
     MeOut,
+    MyPostPage,
+    PaymentsInfo,
     PostCreate,
     PostOut,
     PostPage,
 )
 from app.modules.boards.service import make_machine_rules, rank_expression, unique_slug
-from app.modules.boards.views import assessment_out, category_out, get_category, post_out
+from app.modules.boards.views import assessment_out, category_out, get_category, my_post_out, post_out
+from app.modules.registry import load_enabled_module_keys
 
 router = APIRouter()
 
@@ -91,6 +98,57 @@ async def get_me(user: User = Depends(get_current_user)) -> MeOut:
     """The signed-in user's standing here: whether they administer this
     application and whether it has blocked their account."""
     return MeOut(is_admin=user.is_admin, blocked=user.is_blocked, blocked_reason=user.blocked_reason)
+
+
+@router.get("/me/posts")
+async def my_posts(
+    offset: int = Query(default=0, ge=0),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    config: BoardsConfig = Depends(get_config),
+) -> MyPostPage:
+    """The signed-in user's own posts in every state, newest first - the one
+    place an author finds their anonymous posts again (to raise their value,
+    or to see that one was blocked). A blocked account may still look."""
+    rows = (
+        await db.execute(
+            select(Post, Category)
+            .join(Category, Category.id == Post.category_id)
+            .where(Post.author_id == user.id)
+            .order_by(Post.created_at.desc(), Post.id.desc())
+            .offset(offset)
+            .limit(config.page_size + 1)
+        )
+    ).all()
+    now = datetime.now(timezone.utc)
+    return MyPostPage(
+        items=[my_post_out(post, category, config, now=now) for post, category in rows[: config.page_size]],
+        has_more=len(rows) > config.page_size,
+    )
+
+
+def gateway_enabled(settings: Settings = Depends(get_settings)) -> bool:
+    """Payments work only where the gateway module is switched on in
+    modules.json and its Stripe keys are set - otherwise its endpoints answer
+    404 or 503."""
+    return "stripe_payment_gate" in load_enabled_module_keys() and bool(
+        settings.stripe_secret_key and settings.stripe_webhook_secret
+    )
+
+
+@router.get("/payments")
+async def payments_info(
+    enabled: bool = Depends(gateway_enabled), config: BoardsConfig = Depends(get_config)
+) -> PaymentsInfo:
+    """Public: whether authors can pay to raise a post's value here, and the
+    limits of one payment."""
+    return PaymentsInfo(
+        enabled=enabled,
+        currency=CURRENCY,
+        min_amount_usd=config.payments.min_amount_usd,
+        max_amount_usd=config.payments.max_amount_usd,
+        points_per_usd=config.points_per_usd,
+    )
 
 
 # --- Categories ---------------------------------------------------------------
@@ -194,11 +252,13 @@ async def list_posts(
     category = await get_category(db, slug)
     if user is None:
         resonated = literal(False)
+        mine = literal(False)
     else:
         resonated = exists().where(Resonance.post_id == Post.id, Resonance.user_id == user.id)
+        mine = Post.author_id == user.id
     rows = (
         await db.execute(
-            select(Post, resonated.label("resonated"))
+            select(Post, resonated.label("resonated"), mine.label("mine"))
             .where(Post.category_id == category.id, Post.status == STATUS_PUBLISHED)
             .order_by(rank_expression(config).desc(), Post.id.desc())
             .offset(offset)
@@ -207,7 +267,10 @@ async def list_posts(
     ).all()
     now = datetime.now(timezone.utc)
     return PostPage(
-        items=[post_out(post, config, resonated=bool(flag), now=now) for post, flag in rows[: config.page_size]],
+        items=[
+            post_out(post, config, resonated=bool(flag), mine=bool(is_mine), now=now)
+            for post, flag, is_mine in rows[: config.page_size]
+        ],
         has_more=len(rows) > config.page_size,
     )
 
@@ -252,7 +315,7 @@ async def create_post(
     db.add(post)
     await db.commit()
     await db.refresh(post)
-    return post_out(post, config, resonated=False)
+    return post_out(post, config, resonated=False, mine=True)
 
 
 @router.post("/posts/{post_id}/resonance")
@@ -283,7 +346,7 @@ async def add_resonance(
     await db.execute(update(Post).where(Post.id == post.id).values(resonance_count=Post.resonance_count + 1))
     await db.commit()
     await db.refresh(post)
-    return post_out(post, config, resonated=True)
+    return post_out(post, config, resonated=True, mine=post.author_id == user.id)
 
 
 # The administrators' endpoints, under /manage. Included last: this module's

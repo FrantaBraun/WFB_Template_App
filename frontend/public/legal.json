@@ -30,6 +30,8 @@
     "riskPercent": 50,
     "blockPercent": 75,
     "strikeLimit": 3,
-    "strikePeriodDays": 30
+    "strikePeriodDays": 30,
+    "minAmountUsd": 1,
+    "maxAmountUsd": 500
   }
 }

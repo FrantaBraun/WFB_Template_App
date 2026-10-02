@@ -9,8 +9,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import usePageMeta from '../../hooks/usePageMeta'
-import { API_BASE, ApiError, CATEGORIES_PATH, fetchJson, useBoardsMe, type Category } from './api'
+import { API_BASE, ApiError, CATEGORIES_PATH, fetchJson, useBoardsMe, type Category, type Post } from './api'
 import BlockedNotice from './BlockedNotice'
+import BoostPanel from './BoostPanel'
 import PostForm from './PostForm'
 import PostList from './PostList'
 
@@ -24,6 +25,8 @@ export default function CategoryPage() {
   const [state, setState] = useState<'loading' | 'ready' | 'notFound' | 'error'>('loading')
   // Bumped after a post is published, to start the list over from the top.
   const [listKey, setListKey] = useState(0)
+  // The post just published, while the offer to raise its value is open.
+  const [fresh, setFresh] = useState<Post | null>(null)
 
   usePageMeta({ title: category?.title, description: category?.description.slice(0, 200) })
 
@@ -31,6 +34,7 @@ export default function CategoryPage() {
     let cancelled = false
     setState('loading')
     setCategory(null)
+    setFresh(null)
     fetchJson<Category>(`${API_BASE}/categories/${encodeURIComponent(slug)}`)
       .then((found) => {
         if (cancelled) return
@@ -67,7 +71,13 @@ export default function CategoryPage() {
           {user && me?.blocked ? (
             <BlockedNotice reason={me.blocked_reason} />
           ) : user ? (
-            <PostForm slug={category.slug} onPosted={() => setListKey((key) => key + 1)} />
+            <PostForm
+              slug={category.slug}
+              onPosted={(post) => {
+                setFresh(post)
+                setListKey((key) => key + 1)
+              }}
+            />
           ) : (
             <p className="mb-8 rounded-lg border border-slate-200 p-4 text-sm dark:border-slate-800">
               <Link to="/login" className="font-medium underline underline-offset-4 hover:no-underline">
@@ -75,6 +85,8 @@ export default function CategoryPage() {
               </Link>
             </p>
           )}
+
+          {fresh && <BoostPanel post={fresh} intro={t('boost.published', { title: fresh.title })} onClose={() => setFresh(null)} />}
 
           <PostList key={`${category.slug}:${listKey}`} slug={category.slug} />
         </>

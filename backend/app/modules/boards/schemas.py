@@ -90,7 +90,12 @@ class PostOut(BaseModel):
     """What a visitor sees of a post: text, current value and how many
     resonated - never the author, never who resonated, nor how the value is
     made up. resonated_by_me is the viewer's own resonance only (always
-    false for an anonymous visitor)."""
+    false for an anonymous visitor).
+
+    mine is true only for the post's own author, looking at their own post -
+    nobody can learn from it who wrote anyone else's - and only then is
+    paid_cents (what they paid for it so far) filled in; for everyone else it
+    is null."""
 
     id: uuid.UUID
     title: str
@@ -98,12 +103,50 @@ class PostOut(BaseModel):
     value: int
     resonance_count: int
     resonated_by_me: bool
+    mine: bool
+    paid_cents: int | None
     created_at: datetime
 
 
 class PostPage(BaseModel):
     items: list[PostOut]
     has_more: bool
+
+
+class MyPostOut(BaseModel):
+    """One of the signed-in user's own posts, whatever its state - what the
+    "my posts" page shows. moderation_reason is set for a blocked or removed
+    post (a free text from an administrator, or the code "account_blocked")."""
+
+    id: uuid.UUID
+    category_slug: str
+    category_title: str
+    title: str
+    body: str
+    status: Literal["published", "blocked", "removed"]
+    value: int
+    resonance_count: int
+    paid_cents: int
+    moderation_reason: str | None
+    created_at: datetime
+
+
+class MyPostPage(BaseModel):
+    items: list[MyPostOut]
+    has_more: bool
+
+
+class PaymentsInfo(BaseModel):
+    """Whether authors can pay to raise a post's value on this deployment,
+    and within what limits. enabled is false until the payment gateway is
+    switched on and configured, so the frontend can leave the option out
+    rather than offer a button that fails."""
+
+    enabled: bool
+    currency: str
+    min_amount_usd: int
+    max_amount_usd: int
+    points_per_usd: int
 
 
 # --- Moderation: what the author is shown ---------------------------------------

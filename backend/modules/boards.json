@@ -13,5 +13,9 @@
     "topic_full_confidence_words": 25,
     "topic_full_confidence_keywords": 8,
     "topic_similarity_scale": 1.5
+  },
+  "payments": {
+    "min_amount_usd": 1,
+    "max_amount_usd": 500
   }
 }

@@ -11,6 +11,9 @@ import { useAuth } from '../../context/AuthContext'
 export const API_BASE = '/api/modules/boards'
 export const CATEGORIES_PATH = '/categories'
 export const MODERATION_PATH = '/moderation'
+export const MY_POSTS_PATH = '/my-posts'
+/** Key of the payment purpose this module registers on the backend (app/modules/boards/payments.py). */
+export const POST_BOOST = 'post_boost'
 // Pages other modules provide, linked from here: the terms and rules
 // (stripe_payment_gate's legal pages) and the contact form (kontaktni_formular).
 export const RULES_PATH = '/obchodni-podminky'
@@ -41,7 +44,38 @@ export interface Post {
   resonance_count: number
   /** The viewer's own resonance; always false when signed out. */
   resonated_by_me: boolean
+  /** True only for the post's own author, looking at their own post. */
+  mine: boolean
+  /** What the author has paid for it so far, in cents; null for everyone else. */
+  paid_cents: number | null
   created_at: string
+}
+
+export type PostStatus = 'published' | 'blocked' | 'removed'
+
+/** One of the signed-in user's own posts, in any state (GET /me/posts). */
+export interface MyPost {
+  id: string
+  category_slug: string
+  category_title: string
+  title: string
+  body: string
+  status: PostStatus
+  value: number
+  resonance_count: number
+  paid_cents: number
+  /** An administrator's free text for a blocked post, or the code "account_blocked". */
+  moderation_reason: string | null
+  created_at: string
+}
+
+/** Whether authors can pay to raise a post's value on this deployment, and within what limits. */
+export interface PaymentsInfo {
+  enabled: boolean
+  currency: string
+  min_amount_usd: number
+  max_amount_usd: number
+  points_per_usd: number
 }
 
 export interface Page<T> {
@@ -84,8 +118,6 @@ export interface Me {
 }
 
 // --- Moderation: administrators ------------------------------------------------
-
-export type PostStatus = 'published' | 'blocked' | 'removed'
 
 export interface AdminPost {
   id: string
@@ -172,6 +204,41 @@ export function sendJson<T>(method: 'POST' | 'PUT', path: string, body?: unknown
 
 export function postJson<T>(path: string, body?: unknown): Promise<T> {
   return sendJson<T>('POST', path, body)
+}
+
+let paymentsInfo: Promise<PaymentsInfo | null> | null = null
+
+/**
+ * Whether payments are on here and their limits; null until known. Fetched
+ * once per page load and shared - every post card asks, only one request is
+ * made. A failed request is not remembered, so the next ask tries again.
+ */
+export function usePaymentsInfo(): PaymentsInfo | null {
+  const [info, setInfo] = useState<PaymentsInfo | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    paymentsInfo ??= fetchJson<PaymentsInfo>(`${API_BASE}/payments`).catch(() => {
+      paymentsInfo = null
+      return null
+    })
+    paymentsInfo.then((found) => !cancelled && setInfo(found))
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return info
+}
+
+/** "$5" or "$5.50" - cents shown only when there are some. */
+export function formatUsd(cents: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: cents % 100 === 0 ? 0 : 2,
+  }).format(cents / 100)
 }
 
 /** The signed-in user's standing here (administrator, blocked); null while unknown and when signed out. */

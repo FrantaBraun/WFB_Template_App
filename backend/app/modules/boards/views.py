@@ -19,6 +19,7 @@ from app.modules.boards.schemas import (
     AssessmentOut,
     CategoryOut,
     FindingOut,
+    MyPostOut,
     PostOut,
     ScoreOut,
 )
@@ -40,7 +41,9 @@ def _value(post: Post, config: BoardsConfig, now: datetime | None) -> int:
     return post_value(post.paid_cents, post.resonance_count, post.created_at, now or datetime.now(timezone.utc), config)
 
 
-def post_out(post: Post, config: BoardsConfig, *, resonated: bool, now: datetime | None = None) -> PostOut:
+def post_out(
+    post: Post, config: BoardsConfig, *, resonated: bool, mine: bool = False, now: datetime | None = None
+) -> PostOut:
     return PostOut(
         id=post.id,
         title=post.title,
@@ -48,6 +51,24 @@ def post_out(post: Post, config: BoardsConfig, *, resonated: bool, now: datetime
         value=_value(post, config, now),
         resonance_count=post.resonance_count,
         resonated_by_me=resonated,
+        mine=mine,
+        paid_cents=post.paid_cents if mine else None,
+        created_at=post.created_at,
+    )
+
+
+def my_post_out(post: Post, category: Category, config: BoardsConfig, *, now: datetime | None = None) -> MyPostOut:
+    return MyPostOut(
+        id=post.id,
+        category_slug=category.slug,
+        category_title=category.title,
+        title=post.title,
+        body=post.body,
+        status=post.status,
+        value=_value(post, config, now),
+        resonance_count=post.resonance_count,
+        paid_cents=post.paid_cents,
+        moderation_reason=post.moderation_reason,
         created_at=post.created_at,
     )
 

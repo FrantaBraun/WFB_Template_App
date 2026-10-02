@@ -1,3 +1,3 @@
 {
-  "enabled": ["boards", "notifications", "kontaktni_formular"]
+  "enabled": ["boards", "notifications", "kontaktni_formular", "stripe_payment_gate"]
 }

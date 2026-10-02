@@ -12,6 +12,7 @@ per-application values that follow the branch, like backend/modules.json
   points_per_resonance - whole days of age * points_per_day (see service.py).
 - moderation: the thresholds and parameters of the content checks (see
   ModerationConfig and moderation/).
+- payments: what an author may pay to raise a post's value (PaymentsConfig).
 
 The text limits (post title / text, category title / description) are
 fixed in schemas.py and the column sizes in models.py, not configured here:
@@ -70,6 +71,24 @@ class ModerationConfig(BaseModel):
         return self
 
 
+class PaymentsConfig(BaseModel):
+    """What one payment for a post may be: a whole number of US dollars from
+    min_amount_usd to max_amount_usd (1 USD buys points_per_usd points of
+    value). Whole dollars keep every payment an exact number of points. The
+    range is quoted in the public terms - keep legal.json's params in step."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    min_amount_usd: int = Field(default=1, ge=1)
+    max_amount_usd: int = Field(default=500, ge=1)
+
+    @model_validator(mode="after")
+    def _range_is_not_empty(self) -> "PaymentsConfig":
+        if self.min_amount_usd > self.max_amount_usd:
+            raise ValueError("min_amount_usd must not be above max_amount_usd")
+        return self
+
+
 class BoardsConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -78,6 +97,7 @@ class BoardsConfig(BaseModel):
     points_per_resonance: int = Field(default=1, ge=0)
     points_per_day: int = Field(default=1, ge=0)
     moderation: ModerationConfig = Field(default_factory=ModerationConfig)
+    payments: PaymentsConfig = Field(default_factory=PaymentsConfig)
 
 
 def load_config(path: Path = CONFIG_FILE) -> BoardsConfig:

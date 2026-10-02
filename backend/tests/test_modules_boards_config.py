@@ -58,6 +58,11 @@ def test_partial_file_keeps_defaults_for_the_rest(tmp_path):
         '{"moderation": {"strike_period_days": 0}}',
         '{"moderation": {"topic_similarity_scale": 0}}',
         '{"moderation": {"unknown": 1}}',
+        '{"payments": {"min_amount_usd": 0}}',
+        '{"payments": {"max_amount_usd": 0}}',
+        '{"payments": {"min_amount_usd": 10, "max_amount_usd": 5}}',
+        '{"payments": {"min_amount_usd": 1.5}}',
+        '{"payments": {"unknown": 1}}',
         "not json",
     ],
 )
@@ -76,3 +81,17 @@ def test_moderation_defaults_and_partial_overrides(tmp_path):
     path.write_text('{"moderation": {"strike_limit": 5, "ai_review_enabled": true}}', encoding="utf-8")
     moderation = load_config(path).moderation
     assert (moderation.strike_limit, moderation.ai_review_enabled, moderation.block_percent) == (5, True, 75)
+
+
+def test_the_committed_payment_range_is_the_documented_one():
+    """One to 500 US dollars per payment, as the public terms say."""
+    payments = load_config().payments
+    assert (payments.min_amount_usd, payments.max_amount_usd) == (1, 500)
+
+
+def test_payments_have_defaults_and_can_be_narrowed(tmp_path):
+    assert BoardsConfig().payments.min_amount_usd == 1 and BoardsConfig().payments.max_amount_usd == 500
+    path = tmp_path / "boards.json"
+    path.write_text('{"payments": {"min_amount_usd": 5, "max_amount_usd": 5}}', encoding="utf-8")
+    payments = load_config(path).payments
+    assert (payments.min_amount_usd, payments.max_amount_usd) == (5, 5)  # a fixed price is a valid range

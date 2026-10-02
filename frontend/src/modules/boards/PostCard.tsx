@@ -7,7 +7,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
-import { API_BASE, ApiError, postJson, type Post } from './api'
+import { API_BASE, ApiError, formatUsd, postJson, usePaymentsInfo, type Post } from './api'
+import BoostPanel from './BoostPanel'
 
 /**
  * One post, deliberately plain: a bold title, the text, then its current
@@ -17,8 +18,10 @@ import { API_BASE, ApiError, postJson, type Post } from './api'
 export default function PostCard({ post, onChange }: { post: Post; onChange: (post: Post) => void }) {
   const { t, i18n } = useTranslation('boards')
   const { user } = useAuth()
+  const payments = usePaymentsInfo()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(false)
+  const [boosting, setBoosting] = useState(false)
 
   async function resonate() {
     setBusy(true)
@@ -56,7 +59,27 @@ export default function PostCard({ post, onChange }: { post: Post; onChange: (po
           {post.resonated_by_me ? t('post.resonated') : t('post.resonate')}
         </button>
         {error && <span className="text-red-600 dark:text-red-400">{t('post.resonateError')}</span>}
+        {post.mine && (
+          <span>
+            {t('post.yours')}
+            {post.paid_cents ? ` · ${t('post.paidByYou', { amount: formatUsd(post.paid_cents, i18n.language) })}` : ''}
+          </span>
+        )}
+        {post.mine && payments?.enabled && !boosting && (
+          <button
+            type="button"
+            onClick={() => setBoosting(true)}
+            className="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+          >
+            {t('boost.open')}
+          </button>
+        )}
       </div>
+      {boosting && (
+        <div className="mt-4">
+          <BoostPanel post={post} onClose={() => setBoosting(false)} />
+        </div>
+      )}
     </article>
   )
 }

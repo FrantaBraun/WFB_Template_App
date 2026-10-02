@@ -161,7 +161,7 @@ const cs = {
       {
         title: '9. Cena a platební podmínky',
         paragraphs: [
-          'Cenou je částka, kterou uživatel zvolí; zobrazí se mu před potvrzením platby včetně měny a je konečná. Poskytovatel je: {{vatStatement}}.',
+          'Cenou je částka, kterou uživatel zvolí, v celých amerických dolarech (USD) od {{minAmountUsd}} do {{maxAmountUsd}} USD za jednu platbu; zobrazí se mu před potvrzením platby včetně měny a je konečná. Poskytovatel je: {{vatStatement}}.',
           'Platí se bezhotovostně předem prostřednictvím platební brány Stripe (Stripe Payments Europe, Ltd., Irsko), a to platební kartou nebo jiným způsobem nabídnutým v platební bráně. Údaje o platební kartě zpracovává výhradně Stripe; poskytovatel k nim nemá přístup.',
           'Případné poplatky za převod měny účtuje banka uživatele. Daňový doklad vystaví poskytovatel v elektronické podobě a zašle jej uživateli e-mailem.',
         ],
@@ -493,7 +493,7 @@ const en: typeof cs = {
       {
         title: '9. Price and payment terms',
         paragraphs: [
-          'The price is the amount the user chooses; it is shown, with its currency, before the payment is confirmed and is final. The provider is: {{vatStatement}}.',
+          'The price is the amount the user chooses, in whole US dollars (USD), from {{minAmountUsd}} to {{maxAmountUsd}} USD per payment; it is shown, with its currency, before the payment is confirmed and is final. The provider is: {{vatStatement}}.',
           'Payment is made in advance, cashless, through the Stripe payment gateway (Stripe Payments Europe, Ltd., Ireland), by payment card or another method offered by the gateway. Card details are processed exclusively by Stripe; the provider has no access to them.',
           'Any currency conversion fees are charged by the user’s bank. The provider issues the tax document electronically and sends it to the user by email.',
         ],

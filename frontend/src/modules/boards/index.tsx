@@ -6,13 +6,15 @@
 
 // Boards: /categories (every category), /categories/:slug (one category's
 // posts, endlessly scrolling, with the form to add one), /categories/new,
-// and /moderation (this application's administrators). CategoriesList is
+// /my-posts (your own posts - find them again, raise their value) and
+// /moderation (this application's administrators). CategoriesList is
 // exported for applications that want it on other pages too (the home page
 // does).
 import type { ModuleDefinition } from '../types'
 import CategoriesPage from './CategoriesPage'
 import CategoryPage from './CategoryPage'
 import ModerationPage from './ModerationPage'
+import MyPostsPage from './MyPostsPage'
 import NewCategoryPage from './NewCategoryPage'
 
 export { default as CategoriesList } from './CategoriesList'
@@ -25,6 +27,7 @@ const boardsModule: ModuleDefinition = {
     // segment higher either way (and the backend never issues "new" as a slug).
     { path: '/categories/new', element: <NewCategoryPage /> },
     { path: '/categories/:slug', element: <CategoryPage /> },
+    { path: '/my-posts', element: <MyPostsPage /> },
     { path: '/moderation', element: <ModerationPage /> },
   ],
   nav: [{ to: '/categories', labelKey: 'boards:nav.categories' }],
@@ -37,6 +40,7 @@ const boardsModule: ModuleDefinition = {
         create: 'Nová kategorie',
         loginToCreate: 'Přihlaste se a založte kategorii',
         moderation: 'Moderace',
+        myPosts: 'Moje příspěvky',
         empty: 'Zatím tu není žádná kategorie.',
         error: 'Kategorie se nepodařilo načíst.',
         posts_one: '{{count}} příspěvek',
@@ -62,7 +66,33 @@ const boardsModule: ModuleDefinition = {
         resonated: 'Souznění vyjádřeno',
         loginToResonate: 'Přihlaste se, abyste mohli vyjádřit souznění',
         resonateError: 'Souznění se nepodařilo uložit.',
+        yours: 'Váš příspěvek',
+        paidByYou: 'zaplatili jste {{amount}}',
       },
+      boost: {
+        open: 'Zvýšit hodnotu',
+        close: 'Zavřít',
+        heading: 'Zvýšit hodnotu příspěvku',
+        published: 'Příspěvek „{{title}}“ byl zveřejněn. Chcete hned zvýšit jeho hodnotu?',
+        explain: 'Zaplacená částka se přičte k hodnotě příspěvku: 1 USD = {{points}} bodů. Platby se sčítají a hodnotu příspěvku postupně snižuje stáří.',
+        amount: 'Částka v USD ({{min}}–{{max}})',
+        points: '+{{points}} bodů',
+        invalid: 'Zadejte celé číslo od {{min}} do {{max}} USD.',
+        noRefund: 'Zaplacená částka se nevrací, pokud je příspěvek později zablokován pro porušení pravidel. Viz <rules>pravidla a podmínky</rules>.',
+        pay: 'Objednat a zaplatit {{amount}}',
+        payDisabled: 'Objednat a zaplatit',
+      },
+      myPosts: {
+        title: 'Moje příspěvky',
+        explain: 'Příspěvky jsou na nástěnkách anonymní. Tady najdete své, vidíte jejich hodnotu a můžete ji zvýšit.',
+        loginRequired: 'Pro zobrazení svých příspěvků se přihlaste.',
+        empty: 'Zatím jste nic nezveřejnili.',
+        error: 'Příspěvky se nepodařilo načíst.',
+        paid: 'zaplaceno {{amount}}',
+        reason: 'Důvod odstranění',
+        status: { published: 'Zveřejněný', blocked: 'Zablokovaný', removed: 'Odstraněný' },
+      },
+
       form: {
         heading: 'Přidat příspěvek',
         title: 'Nadpis',
@@ -222,6 +252,7 @@ const boardsModule: ModuleDefinition = {
         create: 'New category',
         loginToCreate: 'Sign in to create a category',
         moderation: 'Moderation',
+        myPosts: 'My posts',
         empty: 'There are no categories yet.',
         error: 'Could not load the categories.',
         posts_one: '{{count}} post',
@@ -243,7 +274,33 @@ const boardsModule: ModuleDefinition = {
         resonated: 'You resonated',
         loginToResonate: 'Sign in to resonate',
         resonateError: 'Could not save your resonance.',
+        yours: 'Your post',
+        paidByYou: 'you paid {{amount}}',
       },
+      boost: {
+        open: 'Raise value',
+        close: 'Close',
+        heading: 'Raise the value of this post',
+        published: 'Your post “{{title}}” was published. Want to raise its value now?',
+        explain: 'The amount you pay is added to the post’s value: 1 USD = {{points}} points. Payments add up, and the post’s value is gradually reduced by its age.',
+        amount: 'Amount in USD ({{min}}–{{max}})',
+        points: '+{{points}} points',
+        invalid: 'Enter a whole number from {{min}} to {{max}} USD.',
+        noRefund: 'The amount paid is not refunded if the post is later blocked for breaking the rules. See the <rules>terms and rules</rules>.',
+        pay: 'Order and pay {{amount}}',
+        payDisabled: 'Order and pay',
+      },
+      myPosts: {
+        title: 'My posts',
+        explain: 'Posts are anonymous on the boards. Here you find your own, see what they are worth and can raise their value.',
+        loginRequired: 'Sign in to see your posts.',
+        empty: 'You have not published anything yet.',
+        error: 'Could not load the posts.',
+        paid: 'paid {{amount}}',
+        reason: 'Reason for removal',
+        status: { published: 'Published', blocked: 'Blocked', removed: 'Removed' },
+      },
+
       form: {
         heading: 'Add a post',
         title: 'Title',

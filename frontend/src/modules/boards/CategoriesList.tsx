@@ -8,7 +8,17 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { API_BASE, CATEGORIES_PATH, MODERATION_PATH, categoryPath, fetchJson, useBoardsMe, type Category, type Page } from './api'
+import {
+  API_BASE,
+  CATEGORIES_PATH,
+  MODERATION_PATH,
+  MY_POSTS_PATH,
+  categoryPath,
+  fetchJson,
+  useBoardsMe,
+  type Category,
+  type Page,
+} from './api'
 
 /**
  * The list of categories (boards), busiest first, with a "Load more"
@@ -83,6 +93,11 @@ export default function CategoriesList({ headingTag: Heading = 'h2' }: { heading
           {me?.is_admin && (
             <Link to={MODERATION_PATH} className="underline underline-offset-4 hover:no-underline">
               {t('list.moderation')}
+            </Link>
+          )}
+          {user && (
+            <Link to={MY_POSTS_PATH} className="underline underline-offset-4 hover:no-underline">
+              {t('list.myPosts')}
             </Link>
           )}
           <Link to={user ? `${CATEGORIES_PATH}/new` : '/login'} className="underline underline-offset-4 hover:no-underline">

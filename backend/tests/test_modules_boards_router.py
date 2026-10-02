@@ -38,7 +38,7 @@ _boards_app = FastAPI()
 _boards_app.include_router(boards_router, prefix=BASE)
 
 CATEGORY_KEYS = {"id", "title", "slug", "description", "post_count", "created_at"}
-POST_KEYS = {"id", "title", "body", "value", "resonance_count", "resonated_by_me", "created_at"}
+POST_KEYS = {"id", "title", "body", "value", "resonance_count", "resonated_by_me", "mine", "paid_cents", "created_at"}
 
 
 @pytest.fixture(autouse=True)

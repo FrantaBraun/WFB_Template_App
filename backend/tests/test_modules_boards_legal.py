@@ -61,6 +61,12 @@ def test_the_text_limits_quoted_in_the_terms_are_the_ones_enforced(params):
     assert params["categoryDescriptionMax"] == CATEGORY_DESCRIPTION_MAX
 
 
+def test_the_payment_range_quoted_in_the_terms_is_the_one_enforced(params):
+    payments = load_config().payments
+    assert params["minAmountUsd"] == payments.min_amount_usd
+    assert params["maxAmountUsd"] == payments.max_amount_usd
+
+
 def test_every_param_is_checked_above(params):
     """A new param added to legal.json without a guard here would be exactly
     the drift this file exists to prevent."""
@@ -69,5 +75,6 @@ def test_every_param_is_checked_above(params):
         "warnPercent", "riskPercent", "blockPercent",
         "strikeLimit", "strikePeriodDays",
         "postTitleMax", "postBodyMax", "categoryTitleMax", "categoryDescriptionMax",
+        "minAmountUsd", "maxAmountUsd",
     }  # fmt: skip
     assert set(params) == guarded
