@@ -1,31 +1,4 @@
 {
-    "unreleased": [
-        "Events in the event calendar module can now only be managed by this application's administrators (the is_admin flag on the local user account) - the auth service's user role no longer grants it, since that role applies to every application",
-        "Add is_admin flag to the local user account, with a require_admin dependency for gating admin-only routes",
-        "Add an event calendar module (app/modules/event_calendar): events with their own pages, display windows, pinning and thumbnails; public endpoints for the upcoming list (paged by 10), a month view, a year/month archive, a home-page dashboard and search; editor endpoints with sanitized WYSIWYG content and image upload, with editors chosen by auth-service role or an application's own check",
-        "Add a shared HTML sanitizer (app/services/sanitize.py) for content written in the WYSIWYG editor - keeps headings 1-5, text color, font and size, and strips anything executable",
-        "The contact form's confirmation email is now sent in the language the form was submitted in: subject and body templates per language, an on/off switch and a default language (used when the requested one has no template) live in the git-tracked backend/modules/kontaktni_formular.json instead of .env",
-        "Feature modules are now switched on in backend/modules.json (tracked in git, same shape as the frontend's public/modules.json) instead of ENABLED_MODULES in .env, so each application branch carries its own module selection and switching branches no longer keeps the previous branch's modules",
-        "The Stripe payment gate module now records what the payer agreed to before paying (terms and conditions, and for digital content the waiver of the 14-day withdrawal right), with a timestamp, as evidence stored with the payment",
-        "Store the notifications module's data in a module_notifications table (instead of notifications), so the module can coexist with an application's own notifications table",
-        "Add a Stripe payment gate module (app/modules/stripe_payment_gate): starts payments through Stripe Checkout for server-side-priced \"payment purposes\" that each application registers, and confirms them via a signature-verified webhook (with a direct Stripe re-check as fallback), running the purpose's own post-payment hook exactly once",
-        "Add a notifications module (app/modules/notifications): a generic, per-user in-app notification list (GET /api/modules/notifications, mark one or all as read) that any application can create notifications into via a plain create_notification() call, without this module needing to know anything about that application's own data",
-        "Add a contact-form module (app/modules/kontaktni_formular): sends the message to CONTACT_MAIL plus a confirmation copy to the sender, signed with the sender's real name when they're signed in",
-        "Add a pluggable feature-module system: self-contained modules under app/modules/ are auto-discovered and toggled on/off per application via ENABLED_MODULES, with no code changes to shared routing or migrations",
-        "Add GET /api/public/release-news endpoint, exposing release_news.json for the frontend's release news page"
-    ],
-    "releases": [
-        {
-            "version": "1.0.0",
-            "release_date": "2026-07-14",
-            "changes": [
-                "FastAPI backend with an async Postgres stack (SQLAlchemy + asyncpg), Alembic migrations, time-rotating logging, and a parametrizable email service",
-                "Backend-for-frontend proxy to the shared auth.withfbraun.com identity service: register, login, refresh, logout, local RS256 JWT verification, Google OAuth support",
-                "Custom in-app consent flow (group-info, grant/reject) instead of the auth service's hosted consent page",
-                "Local account resource (GET/PATCH /api/account/me) kept strictly separate from the auth-service-proxied profile endpoints",
-                "Profile updates and configurable per-application user attributes via the group-attributes endpoints",
-                "Public /api/public/version endpoint for build and deployment health checks"
-            ]
-        }
-    ]
+    "unreleased": [],
+    "releases": []
 }

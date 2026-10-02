@@ -2,6 +2,37 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Application: ThoughtAuction (Aukce myšlenek)
+
+**Purpose:** A website with several publication boards (categories) where anyone can post their own contribution and pay to push it higher up the board.
+
+**Boards and posts**
+
+- The core of the app is a simple, clear, infinitely scrolling page of user posts, ordered by their current value (highest first). There are several boards (categories); each one is its own such page.
+- A post has only a **title and a text of at most 2024 characters including spaces**. **No author is shown**, only the title, the text and the post's current value.
+- **Post value** = paid amount (1 USD = 10 points) + resonances (1 user's agreement = 1 point) - age (1 day = 1 point).
+- Posting, creating a new category and expressing resonance are **for signed-in users only**. Reading is public.
+- **Resonance**: a user can give one resonance to a given post only once. Nobody sees who resonated - not even the post's author - only the count.
+- A post's author can **pay for it repeatedly**; payments accumulate, so each new payment raises the value by the amount paid.
+- Appearance is deliberately plain: no colors, just a bold title and the message. The post form is text only, with emoji support.
+- A **category** has a title (the slug is generated from the title; on a collision a sequence number is appended) and a short description of at most 4096 characters including spaces.
+- When a category is created, a **machine evaluation (machine rules) of the category** is produced - algorithmically first and later also by an AI model - used afterwards to compare whether a post matches the category's intent. An administrator can view and edit these machine rules.
+- System pages: **Terms** (rules and conditions), **GDPR** and **Contact**.
+
+**Moderation**
+
+- An administrator can mark a post as violating the public rules and delete it with **no refund** of the payment. If a user has more violating posts within a given period (stated in the rules and controlled by a parameter), the **account is blocked and all of the user's posts are removed without compensation**.
+- Violation checking has three levels:
+  1. **Algorithmic** (local) - evaluates a post, and a category's title and description, *before publication and before the payment is confirmed*. If it does not meet the rules, the user gets a message that publication is not allowed.
+  2. **AI model via API** - the content is sent to an AI model to be judged against the rules. **Not in the first development version**: only the preparation for the call is built, as a **mock**, with no real model connected yet.
+  3. **Manual, by an administrator** - can find any post and block it with a stated reason, which is sent to the author and shown as an in-app notification.
+- The local algorithm returns a **violation score in %**: above 30 % the user is shown a notice that they should edit the post; above 50 % the content is shown as potentially violating and may be blocked without refund on closer review; above 75 % it is violating and publication is not allowed.
+- It also checks **whether the post matches the topic of its category** (against the category's machine rules). The same thresholds apply to the mismatch score: above 30 % an edit is recommended, above 50 % potential risk, above 75 % not allowed.
+- When a category or post is judged violating, the author is shown a message with the reason and the specific aspects behind it.
+- In scope for the first version: the local algorithms for posts and categories, and the AI-call preparation as a mock only.
+
+Forked from `core` by the `new-app` skill on 2026-10-02.
+
 ## Repository purpose
 
 This repository hosts a **family of applications built on one shared core**, rather than a single deployable app. The reusable foundation — `backend/` (FastAPI), `frontend/` (Vite/React), and `scripts/` (build + deployment tooling), wired to a separate, shared authorization service at `auth.withfbraun.com` (see "Authorization" below, which is the largest and most actively-evolving part of it) — is developed on the `core` branch. Each application lives in its own branch and pulls in `core`'s changes, so a fix or feature that belongs to every app is made once, on `core`, instead of being duplicated per application. Components remain independently versioned and deployed within any given branch — see "Independent versioning" below.
