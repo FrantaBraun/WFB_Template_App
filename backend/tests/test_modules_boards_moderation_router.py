@@ -921,3 +921,51 @@ async def test_rebuilding_uses_the_ai_rules_when_enabled_and_valid(client, alice
     resp = await client.post(f"{MANAGE}/categories/general/rules/rebuild", headers=admin.headers)
 
     assert (resp.json()["source"], resp.json()["rules"]["keywords"]) == ("ai", [{"term": "wisdom", "weight": 2.0}])
+
+
+# --- Only what is over the threshold is explained to the author ---------------
+
+
+def _distinct_words(count: int, offset: int = 0) -> str:
+    """Made-up words whose five-letter stems all differ - each counts as its own word to the topic check."""
+    return " ".join("".join(chr(97 + ((offset + i) // 26**k) % 26) for k in range(5)) + "z" for i in range(count))
+
+
+def _eight_keywords(first_weight: float = 1.0) -> dict:
+    others = _distinct_words(7, offset=5000).split()
+    return {"keywords": [{"term": "alpha", "weight": first_weight}, *({"term": w, "weight": 1} for w in others)], "notes": ""}
+
+
+async def test_a_faint_topic_finding_is_not_listed_under_a_verdict_about_violations(client, alice, db_session):
+    """Three of the keywords are covered (a low, "ok" mismatch) while the
+    text swears: the author is told about the swearing, not about a 1 %
+    topic mismatch."""
+    rules = {"keywords": [{"term": w, "weight": 1} for w in ("alpha", "bravo", "charlie")]
+             + [{"term": w, "weight": 1} for w in _distinct_words(6, offset=5000).split()], "notes": ""}
+    await _category(db_session, alice, rules=rules)
+    body = f"alpha bravo charlie {_distinct_words(30)} this is bullshit"
+
+    resp = await client.post(f"{BASE}/categories/general/posts/check", json=_payload(body), headers=alice.headers)
+
+    assessment = resp.json()
+    assert assessment["violation"]["level"] == "warn"
+    assert 0 < assessment["topic"]["percent"] <= 30 and assessment["topic"]["level"] == "ok"
+    assert [f["code"] for f in assessment["findings"]] == ["profanity"]
+
+
+async def test_a_faint_violation_finding_is_not_listed_under_a_verdict_about_the_topic(client, alice, db_session):
+    """"You idiot" alone is 20 % ("ok"), but the post is also somewhat off
+    topic ("warn"): the author sees the topic reason only. An administrator
+    still gets every finding with the stored post."""
+    await _category(db_session, alice, rules=_eight_keywords(first_weight=1.5))
+    body = f"alpha {_distinct_words(30)} you idiot"
+
+    check = await client.post(f"{BASE}/categories/general/posts/check", json=_payload(body), headers=alice.headers)
+
+    assessment = check.json()
+    assert (assessment["violation"]["level"], assessment["topic"]["level"]) == ("ok", "warn")
+    assert [(f["code"], f["aspect"]) for f in assessment["findings"]] == [("off_topic", "topic")]
+
+    assert (await _publish(client, alice, body=body)).status_code == 201
+    stored = (await db_session.scalars(select(Post))).one().assessment
+    assert {f["code"] for f in stored["findings"]} == {"off_topic", "insult"}

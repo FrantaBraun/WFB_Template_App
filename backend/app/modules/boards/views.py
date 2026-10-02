@@ -82,11 +82,20 @@ def admin_post_out(
 
 
 def assessment_out(assessment: Assessment) -> AssessmentOut:
+    """What the author is shown. Only the aspects behind a score that is
+    actually over the warning threshold are listed - a faint "does not fit
+    the category" (1 %) under a verdict about vulgar language would just be
+    noise. (The stored assessment keeps every finding, for administrators.)"""
+    levels = {"violation": assessment.violation.level, "topic": assessment.topic.level if assessment.topic else "ok"}
     return AssessmentOut(
         level=assessment.level,
         violation=ScoreOut(percent=assessment.violation.percent, level=assessment.violation.level),
         topic=ScoreOut(percent=assessment.topic.percent, level=assessment.topic.level) if assessment.topic else None,
-        findings=[FindingOut(code=f.code, aspect=f.aspect, matches=list(f.matches)) for f in assessment.findings],
+        findings=[
+            FindingOut(code=f.code, aspect=f.aspect, matches=list(f.matches))
+            for f in assessment.findings
+            if levels.get(f.aspect, "ok") != "ok"
+        ],
     )
 
 
