@@ -1,4 +1,6 @@
 {
-    "unreleased": [],
+    "unreleased": [
+        "Add a boards module (app/modules/boards): publication boards (categories) with a generated slug and a short description, and posts ordered by value - paid USD x 10 + resonances - days of age, computed on read and never exposing the author or who resonated; reading is public, while creating a board, posting (title + text up to 2048 characters) and resonating (once per user and post) need a signed-in user"
+    ],
     "releases": []
 }
