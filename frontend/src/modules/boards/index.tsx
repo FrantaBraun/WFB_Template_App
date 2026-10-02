@@ -16,6 +16,7 @@ import CategoryPage from './CategoryPage'
 import ModerationPage from './ModerationPage'
 import MyPostsPage from './MyPostsPage'
 import NewCategoryPage from './NewCategoryPage'
+import ReceiptsPage from './ReceiptsPage'
 
 export { default as CategoriesList } from './CategoriesList'
 
@@ -28,6 +29,7 @@ const boardsModule: ModuleDefinition = {
     { path: '/categories/new', element: <NewCategoryPage /> },
     { path: '/categories/:slug', element: <CategoryPage /> },
     { path: '/my-posts', element: <MyPostsPage /> },
+    { path: '/receipts', element: <ReceiptsPage /> },
     { path: '/moderation', element: <ModerationPage /> },
   ],
   nav: [{ to: '/categories', labelKey: 'boards:nav.categories' }],
@@ -86,11 +88,24 @@ const boardsModule: ModuleDefinition = {
         title: 'Moje příspěvky',
         explain: 'Příspěvky jsou na nástěnkách anonymní. Tady najdete své, vidíte jejich hodnotu a můžete ji zvýšit.',
         loginRequired: 'Pro zobrazení svých příspěvků se přihlaste.',
+        receipts: 'Doklady o platbách',
         empty: 'Zatím jste nic nezveřejnili.',
         error: 'Příspěvky se nepodařilo načíst.',
         paid: 'zaplaceno {{amount}}',
         reason: 'Důvod odstranění',
         status: { published: 'Zveřejněný', blocked: 'Zablokovaný', removed: 'Odstraněný' },
+      },
+      receipts: {
+        title: 'Moje doklady',
+        explain: 'Doklady o vašich platbách. Potvrzení smlouvy s dokladem vám po každé platbě přijde i e-mailem.',
+        loginRequired: 'Pro zobrazení dokladů se přihlaste.',
+        empty: 'Zatím jste nic neplatili.',
+        error: 'Doklady se nepodařilo načíst.',
+        documentError: 'Doklad se nepodařilo načíst.',
+        show: 'Zobrazit',
+        emailed: 'Odesláno e-mailem',
+        notEmailed: 'E-mail se nepodařilo odeslat – doklad najdete zde.',
+        frameTitle: 'Doklad {{number}}',
       },
 
       form: {
@@ -294,11 +309,24 @@ const boardsModule: ModuleDefinition = {
         title: 'My posts',
         explain: 'Posts are anonymous on the boards. Here you find your own, see what they are worth and can raise their value.',
         loginRequired: 'Sign in to see your posts.',
+        receipts: 'Payment receipts',
         empty: 'You have not published anything yet.',
         error: 'Could not load the posts.',
         paid: 'paid {{amount}}',
         reason: 'Reason for removal',
         status: { published: 'Published', blocked: 'Blocked', removed: 'Removed' },
+      },
+      receipts: {
+        title: 'My receipts',
+        explain: 'The documents for your payments. After each payment the contract confirmation with its document is also emailed to you.',
+        loginRequired: 'Sign in to see your receipts.',
+        empty: 'You have not paid for anything yet.',
+        error: 'Could not load the receipts.',
+        documentError: 'Could not load the document.',
+        show: 'Show',
+        emailed: 'Sent by email',
+        notEmailed: 'The email could not be sent – you can read the document here.',
+        frameTitle: 'Document {{number}}',
       },
 
       form: {

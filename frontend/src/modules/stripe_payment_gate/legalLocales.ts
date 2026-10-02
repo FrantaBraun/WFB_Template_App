@@ -163,7 +163,7 @@ const cs = {
         paragraphs: [
           'Cenou je částka, kterou uživatel zvolí, v celých amerických dolarech (USD) od {{minAmountUsd}} do {{maxAmountUsd}} USD za jednu platbu; zobrazí se mu před potvrzením platby včetně měny a je konečná. Poskytovatel je: {{vatStatement}}.',
           'Platí se bezhotovostně předem prostřednictvím platební brány Stripe (Stripe Payments Europe, Ltd., Irsko), a to platební kartou nebo jiným způsobem nabídnutým v platební bráně. Údaje o platební kartě zpracovává výhradně Stripe; poskytovatel k nim nemá přístup.',
-          'Případné poplatky za převod měny účtuje banka uživatele. Daňový doklad vystaví poskytovatel v elektronické podobě a zašle jej uživateli e-mailem.',
+          'Případné poplatky za převod měny účtuje banka uživatele. Poskytovatel zašle uživateli e-mailem potvrzení o uzavření smlouvy spolu s dokladem o přijaté platbě; je-li poskytovatel plátcem DPH, vystaví a zašle také daňový doklad. Doklady o platbách jsou uživateli kdykoli k dispozici i v aplikaci v části „Moje doklady“.',
         ],
       },
       {
@@ -245,7 +245,7 @@ const cs = {
           'Vazba obsahu na váš účet: u každého příspěvku a kategorie neveřejně uchováváme, z jakého účtu a kdy vznikl.',
           'Souznění: záznam, že váš účet vyjádřil souznění s příspěvkem. Je neveřejný; zobrazuje se jen počet a nikdo, ani autor příspěvku, nevidí, kdo souznil.',
           'Údaje z moderace: výsledek automatické kontroly obsahu (procenta a nalezené důvody), rozhodnutí administrátora o zablokování příspěvku včetně důvodu, oznámení, která jsme vám v aplikaci poslali, a stav účtu (zablokován, od kdy a proč).',
-          'Údaje o platbách: předmět, částka, měna, stav a identifikátory platby. Údaje o platební kartě zpracovává výhradně Stripe – my je nevidíme ani neukládáme.',
+          'Údaje o platbách: předmět, částka, měna, stav a identifikátory platby, vystavený doklad (číslo, datum a údaje na něm uvedené) a e-mail, na který byl odeslán. Údaje o platební kartě zpracovává výhradně Stripe – my je nevidíme ani neukládáme.',
           'Komunikace: obsah zpráv z kontaktního formuláře a e-mailů, které nám zašlete (např. námitky, dotazy).',
           'Technické údaje: IP adresa, čas a typ požadavku v provozních záznamech serveru.',
         ],
@@ -495,7 +495,7 @@ const en: typeof cs = {
         paragraphs: [
           'The price is the amount the user chooses, in whole US dollars (USD), from {{minAmountUsd}} to {{maxAmountUsd}} USD per payment; it is shown, with its currency, before the payment is confirmed and is final. The provider is: {{vatStatement}}.',
           'Payment is made in advance, cashless, through the Stripe payment gateway (Stripe Payments Europe, Ltd., Ireland), by payment card or another method offered by the gateway. Card details are processed exclusively by Stripe; the provider has no access to them.',
-          'Any currency conversion fees are charged by the user’s bank. The provider issues the tax document electronically and sends it to the user by email.',
+          'Any currency conversion fees are charged by the user’s bank. The provider emails the user a confirmation of the contract together with a document for the payment received; if the provider is a VAT payer, it also issues and sends a tax document. The documents for payments are also available to the user in the app at any time under “My receipts”.',
         ],
       },
       {
@@ -575,7 +575,7 @@ const en: typeof cs = {
           'The link between content and your account: for every post and category we keep, non-publicly, which account it came from and when.',
           'Resonance: a record that your account resonated with a post. It is not public; only the count is shown, and nobody, not even the post’s author, can see who resonated.',
           'Moderation data: the result of the automatic content check (percentages and the reasons found), an administrator’s decision to block a post including the reason, the notifications we sent you in the app, and your account’s status (blocked, since when and why).',
-          'Payment data: subject, amount, currency, status and identifiers of the payment. Card details are processed exclusively by Stripe - we never see or store them.',
+          'Payment data: subject, amount, currency, status and identifiers of the payment, the document issued (its number, date and the details stated on it) and the email address it was sent to. Card details are processed exclusively by Stripe - we never see or store them.',
           'Communication: the content of contact-form messages and emails you send us (e.g. objections, questions).',
           'Technical data: IP address, time and type of request in the server’s operational logs.',
         ],

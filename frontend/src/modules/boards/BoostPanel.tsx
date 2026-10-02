@@ -76,7 +76,13 @@ export default function BoostPanel({
         {valid ? (
           // The button appears only for a valid amount; changing the amount
           // remounts it, so the consent checkbox starts unticked again.
-          <PayButton key={dollars} purpose={POST_BOOST} payload={{ post_id: post.id, amount_usd: dollars }} digitalContent>
+          // `language` picks the language of the confirmation email and the document.
+          <PayButton
+            key={dollars}
+            purpose={POST_BOOST}
+            payload={{ post_id: post.id, amount_usd: dollars, language: i18n.resolvedLanguage ?? i18n.language }}
+            digitalContent
+          >
             {label}
           </PayButton>
         ) : (

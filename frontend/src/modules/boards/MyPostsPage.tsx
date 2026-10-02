@@ -9,7 +9,17 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import usePageMeta from '../../hooks/usePageMeta'
-import { API_BASE, CATEGORIES_PATH, categoryPath, fetchJson, formatUsd, usePaymentsInfo, type MyPost, type Page } from './api'
+import {
+  API_BASE,
+  CATEGORIES_PATH,
+  RECEIPTS_PATH,
+  categoryPath,
+  fetchJson,
+  formatUsd,
+  usePaymentsInfo,
+  type MyPost,
+  type Page,
+} from './api'
 import BoostPanel from './BoostPanel'
 
 /**
@@ -84,7 +94,12 @@ export default function MyPostsPage() {
         </p>
       ) : (
         <>
-          <p className="mb-6 text-sm text-slate-600 dark:text-slate-400">{t('myPosts.explain')}</p>
+          <p className="mb-6 text-sm text-slate-600 dark:text-slate-400">
+            {t('myPosts.explain')}{' '}
+            <Link to={RECEIPTS_PATH} className="underline underline-offset-4 hover:no-underline">
+              {t('myPosts.receipts')}
+            </Link>
+          </p>
           {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{t('myPosts.error')}</p>}
           {items === null ? (
             !error && <p className="text-slate-500 dark:text-slate-400">{t('common.loading')}</p>

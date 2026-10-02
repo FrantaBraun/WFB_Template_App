@@ -12,6 +12,7 @@ export const API_BASE = '/api/modules/boards'
 export const CATEGORIES_PATH = '/categories'
 export const MODERATION_PATH = '/moderation'
 export const MY_POSTS_PATH = '/my-posts'
+export const RECEIPTS_PATH = '/receipts'
 /** Key of the payment purpose this module registers on the backend (app/modules/boards/payments.py). */
 export const POST_BOOST = 'post_boost'
 // Pages other modules provide, linked from here: the terms and rules
@@ -67,6 +68,21 @@ export interface MyPost {
   /** An administrator's free text for a blocked post, or the code "account_blocked". */
   moderation_reason: string | null
   created_at: string
+}
+
+/** One of the signed-in user's payment documents, in brief (GET /me/receipts). */
+export interface Receipt {
+  id: string
+  /** Runs without gaps within a year: 2026-000001. */
+  number: string
+  issued_at: string
+  /** In the currency's minor unit (cents). */
+  amount: number
+  currency: string
+  post_title: string
+  points: number
+  /** Whether the confirmation email went out. */
+  emailed: boolean
 }
 
 /** Whether authors can pay to raise a post's value on this deployment, and within what limits. */
@@ -239,6 +255,11 @@ export function formatUsd(cents: number, locale: string): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: cents % 100 === 0 ? 0 : 2,
   }).format(cents / 100)
+}
+
+/** A minor-unit amount in its own currency, always with cents - how a document states it. */
+export function formatMoney(cents: number, currency: string, locale: string): string {
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: currency.toUpperCase() }).format(cents / 100)
 }
 
 /** The signed-in user's standing here (administrator, blocked); null while unknown and when signed out. */
