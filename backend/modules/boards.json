@@ -2,5 +2,16 @@
   "page_size": 20,
   "points_per_usd": 10,
   "points_per_resonance": 1,
-  "points_per_day": 1
+  "points_per_day": 1,
+  "moderation": {
+    "warn_percent": 30,
+    "risk_percent": 50,
+    "block_percent": 75,
+    "strike_limit": 3,
+    "strike_period_days": 30,
+    "ai_review_enabled": false,
+    "topic_full_confidence_words": 25,
+    "topic_full_confidence_keywords": 8,
+    "topic_similarity_scale": 1.5
+  }
 }
