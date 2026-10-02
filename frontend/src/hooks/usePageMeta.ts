@@ -6,7 +6,7 @@
 
 import { useEffect } from 'react'
 
-const SITE = 'Authenticate WFB'
+const SITE = 'ThoughtAuction'
 
 /**
  * Sets the document title (suffixed with the site name), the
@@ -26,7 +26,7 @@ export default function usePageMeta({ title, description }: { title?: string; de
       meta.name = 'description'
       document.head.appendChild(meta)
     }
-    meta.content = description || 'Shared authentication service with JWT, Google OAuth, and role-based access control.'
+    meta.content = description || 'Publish a thought on a board of your choice. Posts rise with the resonance they earn and sink with age.'
 
     let ogTitle: HTMLMetaElement | null = document.querySelector('meta[property="og:title"]')
     if (!ogTitle) { ogTitle = document.createElement('meta'); ogTitle.setAttribute('property', 'og:title'); document.head.appendChild(ogTitle) }

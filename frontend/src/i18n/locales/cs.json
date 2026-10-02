@@ -17,8 +17,8 @@
     "closeMenu": "Zavřít nabídku"
   },
   "home": {
-    "title": "Šablona projektu",
-    "description": "Toto je výchozí šablona pro tvorbu dalších aplikací. Neobsahuje žádnou funkční logiku — jen předpřipravené prostředí, na kterém lze začít stavět."
+    "title": "Aukce myšlenek",
+    "description": "Zveřejněte myšlenku na nástěnce podle svého výběru. Příspěvky stoupají se souzněním, které získají, a s přibývajícím stářím klesají."
   },
   "login": {
     "pageTitle": "Přihlášení",

@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "The home page now introduces ThoughtAuction and lists the categories, and the page title and meta description carry the ThoughtAuction name instead of the template's",
         "Add a boards module (src/modules/boards): a \"Categories\" nav link to the list of categories, a page per category with its posts ordered by value and loaded endlessly as you scroll (plain bold title and text, value and resonance count, no author), a form to add a post (title and text up to 2048 characters, with an emoji row and live character counters) and a Resonate button for signed-in users, and a page to create a category"
     ],
     "releases": []

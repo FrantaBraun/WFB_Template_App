@@ -17,8 +17,8 @@
     "closeMenu": "Close menu"
   },
   "home": {
-    "title": "Project template",
-    "description": "This is a default template for building further applications. It contains no functional logic — just a ready-made environment to start building on."
+    "title": "ThoughtAuction",
+    "description": "Publish a thought on a board of your choice. Posts rise with the resonance they earn and sink with age."
   },
   "login": {
     "pageTitle": "Sign in",
