@@ -20,6 +20,12 @@ payer wrote and that is still published.
 Nothing is refunded: a post blocked for breaking the rules keeps what was paid
 (see the terms), and a payment that lands after a post was blocked is still
 recorded on it, because the money has been taken either way.
+
+Every confirmed payment also gets a document (receipts.py): numbered and stored
+in the same transaction as the post's new value, then emailed to the payer once
+that transaction is committed. No payment is offered until the provider's
+details are filled in (config.invoicing.provider) - a document without an
+issuer would be worthless, and the money would already be taken.
 """
 
 import logging
@@ -28,7 +34,9 @@ import uuid
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.models.user import User
+from app.modules.boards import documents, receipts
 from app.modules.boards.config import get_config
 from app.modules.boards.models import STATUS_PUBLISHED, Category, Post
 from app.modules.stripe_payment_gate.models import StripePayment
@@ -48,6 +56,8 @@ _DESCRIPTION_TITLE_MAX = 50
 async def resolve_boost(db: AsyncSession, user: User | None, payload: dict) -> PaymentQuote:
     """Prices a boost: payload is {"post_id": ..., "amount_usd": <whole number>}."""
     config = get_config()
+    if not receipts.provider_ready(config):
+        raise PaymentRejected("Payments are not available yet", status_code=503)
     if user.is_blocked:
         raise PaymentRejected("Your account is blocked", status_code=403)
 
@@ -80,13 +90,20 @@ async def resolve_boost(db: AsyncSession, user: User | None, payload: dict) -> P
         description=f"ThoughtAuction: raise the value of the post “{title}” by {points} points",
         reference=str(post.id),
         return_path=f"/categories/{category.slug}",
-        extra={"post_id": str(post.id), "amount_usd": amount_usd, "points": points},
+        extra={
+            "post_id": str(post.id),
+            "amount_usd": amount_usd,
+            "points": points,
+            # The language the payer is using, for their document and email.
+            "language": documents.normalize_language(payload.get("language"), config.invoicing.default_language),
+        },
     )
 
 
 async def apply_boost(db: AsyncSession, payment: StripePayment) -> None:
     """Adds the paid amount to the post. One atomic UPDATE, so two payments
     confirmed at the same moment both count."""
+    config = get_config()
     if payment.currency != CURRENCY:
         # Cannot happen - resolve_boost only quotes USD. Raising would make
         # Stripe retry the webhook for ever, so say so loudly and move on.
@@ -97,9 +114,23 @@ async def apply_boost(db: AsyncSession, payment: StripePayment) -> None:
     )
     if result.rowcount == 0:
         logger.error("Boost payment %s refers to post %s, which does not exist", payment.id, payment.reference)
+    # In the same transaction as the new value: the document and its number
+    # are committed with the money, or not at all.
+    await receipts.issue_receipt(db, payment, config)
+
+
+async def deliver_receipt(db: AsyncSession, payment: StripePayment) -> None:
+    """After the payment is committed: email the confirmation and document."""
+    await receipts.deliver(db, payment, get_settings())
 
 
 def register_payment_purposes() -> None:
     register_purpose(
-        PaymentPurpose(key=POST_BOOST, resolve=resolve_boost, on_paid=apply_boost, required_consents=REQUIRED_CONSENTS)
+        PaymentPurpose(
+            key=POST_BOOST,
+            resolve=resolve_boost,
+            on_paid=apply_boost,
+            after_paid=deliver_receipt,
+            required_consents=REQUIRED_CONSENTS,
+        )
     )

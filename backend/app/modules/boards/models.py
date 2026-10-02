@@ -112,3 +112,43 @@ class Resonance(Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Receipt(Base):
+    """The document issued for one confirmed payment.
+
+    `document` is a snapshot taken when the payment was confirmed - the
+    issuer's details, the payer's email, the amount, the post's title - and
+    is never rewritten, so a document keeps reading as it did when it was
+    issued however the configuration or the post change later. `number` runs
+    without gaps within a year (see ReceiptCounter). The email_* columns are
+    the delivery state: the confirmation email is sent after the payment is
+    committed and may fail, in which case it is retried.
+    """
+
+    __tablename__ = "module_boards_receipts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    payment_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("stripe_payments.id"), unique=True, nullable=False
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
+    number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    document: Mapped[dict] = mapped_column(JSON, nullable=False)
+    email_to: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    emailed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    email_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
+    email_error: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
+class ReceiptCounter(Base):
+    """The last document number issued in a year. Bumped in the transaction
+    that confirms the payment (one INSERT ... ON CONFLICT DO UPDATE), so two
+    simultaneous confirmations queue on the row instead of taking the same
+    number, and a number whose transaction rolls back is never used up."""
+
+    __tablename__ = "module_boards_receipt_counters"
+
+    year: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    last_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

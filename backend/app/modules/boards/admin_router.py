@@ -21,22 +21,26 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_admin
+from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.user import User
 from app.modules.boards.config import BoardsConfig, get_config
-from app.modules.boards.models import STATUS_PUBLISHED, Category, Post
+from app.modules.boards import receipts
+from app.modules.boards.models import STATUS_PUBLISHED, Category, Post, Receipt
 from app.modules.boards.moderation import enforcement
 from app.modules.boards.moderation.ai import AiModerator, get_ai_moderator
 from app.modules.boards.schemas import (
     AdminPostPage,
+    AdminReceiptOut,
     BlockedUserOut,
     BlockPostIn,
     BlockPostOut,
     MachineRules,
+    RetryOut,
     RulesOut,
 )
 from app.modules.boards.service import make_machine_rules
-from app.modules.boards.views import admin_post_out, get_category
+from app.modules.boards.views import admin_post_out, admin_receipt_out, get_category
 
 router = APIRouter(dependencies=[Depends(require_admin)])
 
@@ -126,6 +130,28 @@ async def block_post(
         post=admin_post_out(post, category, config, author_blocked=author.is_blocked, now=now),
         account_blocked=account_blocked,
     )
+
+
+# --- Payment documents --------------------------------------------------------
+
+
+@router.get("/receipts")
+async def list_receipts(
+    unsent: bool = False, db: AsyncSession = Depends(get_db)
+) -> list[AdminReceiptOut]:
+    """Recent payment documents with their delivery state; `unsent=true` for
+    the ones whose confirmation email has not gone out (or has no recipient)."""
+    query = select(Receipt).order_by(Receipt.issued_at.desc()).limit(100)
+    if unsent:
+        query = query.where(Receipt.emailed_at.is_(None))
+    return [admin_receipt_out(receipt) for receipt in await db.scalars(query)]
+
+
+@router.post("/receipts/retry")
+async def retry_receipts(db: AsyncSession = Depends(get_db), settings: Settings = Depends(get_settings)) -> RetryOut:
+    """Tries every unsent confirmation email again, however many times it has
+    failed before - after the mail server was down, say."""
+    return RetryOut(**await receipts.retry_unsent(db, settings))
 
 
 # --- Machine rules ------------------------------------------------------------

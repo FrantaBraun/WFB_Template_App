@@ -26,6 +26,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import HTMLResponse
 from sqlalchemy import and_, exists, func, literal, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
@@ -38,7 +39,8 @@ from app.models.user import User
 from app.modules.boards.admin_router import router as admin_router
 from app.modules.boards.config import BoardsConfig, get_config
 from app.modules.boards.deps import get_active_user, get_optional_user
-from app.modules.boards.models import STATUS_PUBLISHED, Category, Post, Resonance
+from app.modules.boards import documents, receipts
+from app.modules.boards.models import STATUS_PUBLISHED, Category, Post, Receipt, Resonance
 from app.modules.boards.payments import CURRENCY
 from app.modules.boards.moderation.ai import AiModerator, get_ai_moderator
 from app.modules.boards.moderation.assess import Assessment, assess_category, assess_post
@@ -53,9 +55,10 @@ from app.modules.boards.schemas import (
     PostCreate,
     PostOut,
     PostPage,
+    ReceiptOut,
 )
 from app.modules.boards.service import make_machine_rules, rank_expression, unique_slug
-from app.modules.boards.views import assessment_out, category_out, get_category, my_post_out, post_out
+from app.modules.boards.views import assessment_out, category_out, get_category, my_post_out, post_out, receipt_out
 from app.modules.registry import load_enabled_module_keys
 
 router = APIRouter()
@@ -127,6 +130,28 @@ async def my_posts(
     )
 
 
+@router.get("/me/receipts")
+async def my_receipts(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> list[ReceiptOut]:
+    """The signed-in user's payment documents, newest first."""
+    rows = await db.scalars(select(Receipt).where(Receipt.user_id == user.id).order_by(Receipt.issued_at.desc()).limit(100))
+    return [receipt_out(receipt) for receipt in rows]
+
+
+@router.get("/me/receipts/{receipt_id}/document")
+async def my_receipt_document(
+    receipt_id: uuid.UUID,
+    language: str | None = Query(default=None, max_length=10),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> HTMLResponse:
+    """A payment document as a complete HTML page, in its own language or
+    the one asked for. Only its payer may read it; anyone else gets 404."""
+    receipt = await db.get(Receipt, receipt_id)
+    if receipt is None or receipt.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return HTMLResponse(documents.render_page(receipt.document, language))
+
+
 def gateway_enabled(settings: Settings = Depends(get_settings)) -> bool:
     """Payments work only where the gateway module is switched on in
     modules.json and its Stripe keys are set - otherwise its endpoints answer
@@ -141,9 +166,10 @@ async def payments_info(
     enabled: bool = Depends(gateway_enabled), config: BoardsConfig = Depends(get_config)
 ) -> PaymentsInfo:
     """Public: whether authors can pay to raise a post's value here, and the
-    limits of one payment."""
+    limits of one payment. Off until the provider's details (who issues the
+    payment documents) are filled in."""
     return PaymentsInfo(
-        enabled=enabled,
+        enabled=enabled and receipts.provider_ready(config),
         currency=CURRENCY,
         min_amount_usd=config.payments.min_amount_usd,
         max_amount_usd=config.payments.max_amount_usd,

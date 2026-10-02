@@ -17,5 +17,23 @@
   "payments": {
     "min_amount_usd": 1,
     "max_amount_usd": 500
+  },
+  "invoicing": {
+    "default_language": "cs",
+    "timezone": "Europe/Prague",
+    "provider": {
+      "name": "",
+      "ico": "",
+      "dic": "",
+      "vat_payer": false,
+      "address": "",
+      "registration": {
+        "cs": "",
+        "en": ""
+      },
+      "email": "",
+      "phone": "",
+      "web": ""
+    }
   }
 }

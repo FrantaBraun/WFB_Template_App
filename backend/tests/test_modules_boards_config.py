@@ -8,7 +8,7 @@ is valid, so a broken edit fails the suite, not production."""
 import pydantic
 import pytest
 
-from app.modules.boards.config import CONFIG_FILE, BoardsConfig, ModerationConfig, load_config
+from app.modules.boards.config import CONFIG_FILE, BoardsConfig, ModerationConfig, ProviderConfig, load_config
 
 
 def test_committed_config_is_valid():
@@ -95,3 +95,46 @@ def test_payments_have_defaults_and_can_be_narrowed(tmp_path):
     path.write_text('{"payments": {"min_amount_usd": 5, "max_amount_usd": 5}}', encoding="utf-8")
     payments = load_config(path).payments
     assert (payments.min_amount_usd, payments.max_amount_usd) == (5, 5)  # a fixed price is a valid range
+
+
+def test_invoicing_defaults_name_no_provider_so_payments_stay_off_until_one_is_filled_in():
+    invoicing = BoardsConfig().invoicing
+    assert (invoicing.default_language, invoicing.timezone) == ("cs", "Europe/Prague")
+    assert invoicing.provider.complete is False
+
+
+@pytest.mark.parametrize("missing", ["name", "ico", "address", "email"])
+def test_the_provider_is_complete_only_with_every_essential(missing):
+    fields = {"name": "Jan Novák", "ico": "12345678", "address": "Ulice 1, Praha", "email": "info@example.com"}
+    assert ProviderConfig(**fields).complete is True
+    assert ProviderConfig(**{**fields, missing: "   "}).complete is False
+
+
+def test_a_provider_and_its_languages_load_from_the_file(tmp_path):
+    path = tmp_path / "boards.json"
+    path.write_text(
+        '{"invoicing": {"default_language": "en", "provider": {"name": "X", "vat_payer": true,'
+        ' "registration": {"cs": "zapsán", "en": "registered"}}}}',
+        encoding="utf-8",
+    )
+    invoicing = load_config(path).invoicing
+    assert invoicing.default_language == "en"
+    assert invoicing.provider.vat_payer is True and invoicing.provider.registration == {"cs": "zapsán", "en": "registered"}
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        '{"invoicing": {"timezone": "Mars/Olympus_Mons"}}',
+        '{"invoicing": {"default_language": "de"}}',
+        '{"invoicing": {"unknown": 1}}',
+        '{"invoicing": {"provider": {"unknown": 1}}}',
+        '{"invoicing": {"provider": {"registration": {"de": "x"}}}}',
+        '{"invoicing": {"provider": {"vat_payer": "sometimes"}}}',
+    ],
+)
+def test_a_malformed_invoicing_section_raises(tmp_path, content):
+    path = tmp_path / "boards.json"
+    path.write_text(content, encoding="utf-8")
+    with pytest.raises(pydantic.ValidationError):
+        load_config(path)

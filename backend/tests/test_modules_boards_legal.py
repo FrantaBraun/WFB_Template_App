@@ -78,3 +78,24 @@ def test_every_param_is_checked_above(params):
         "minAmountUsd", "maxAmountUsd",
     }  # fmt: skip
     assert set(params) == guarded
+
+
+def test_the_issuer_on_the_documents_is_the_provider_the_legal_pages_name():
+    """Who sells is printed on every payment document (boards.json) and named
+    on the About and Terms pages (legal.json): two files, one person. If they
+    differed, a customer would read one seller in the contract and another on
+    the receipt."""
+    legal = json.loads(LEGAL_FILE.read_text(encoding="utf-8"))["provider"]
+    document = load_config().invoicing.provider
+
+    for legal_key, attribute in (
+        ("name", "name"), ("ico", "ico"), ("dic", "dic"), ("address", "address"),
+        ("email", "email"), ("phone", "phone"), ("web", "web"),
+    ):  # fmt: skip
+        assert legal.get(legal_key, "") == getattr(document, attribute), legal_key
+    assert legal.get("vatPayer", False) == document.vat_payer
+
+    registration = legal.get("registration", "")
+    for language in ("cs", "en"):
+        in_legal = registration if isinstance(registration, str) else registration.get(language, "")
+        assert in_legal == document.registration.get(language, ""), f"registration ({language})"

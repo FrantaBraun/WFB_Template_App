@@ -13,6 +13,8 @@ per-application values that follow the branch, like backend/modules.json
 - moderation: the thresholds and parameters of the content checks (see
   ModerationConfig and moderation/).
 - payments: what an author may pay to raise a post's value (PaymentsConfig).
+- invoicing: who issues the payment documents and in what language/time zone
+  (InvoicingConfig). Payments are refused until the provider is filled in.
 
 The text limits (post title / text, category title / description) are
 fixed in schemas.py and the column sizes in models.py, not configured here:
@@ -21,8 +23,10 @@ changing one would need a migration.
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
+from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.config import BASE_DIR
 
@@ -89,6 +93,56 @@ class PaymentsConfig(BaseModel):
         return self
 
 
+class ProviderConfig(BaseModel):
+    """Who is selling: printed on every payment document. The same data as
+    the `provider` in the frontend's public/legal.json (which the legal pages
+    show) - a test keeps the two equal. `registration` is per language."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = ""
+    ico: str = ""
+    dic: str = ""
+    vat_payer: bool = False
+    address: str = ""
+    registration: dict[Literal["cs", "en"], str] = Field(default_factory=dict)
+    email: str = ""
+    phone: str = ""
+    web: str = ""
+
+    @property
+    def complete(self) -> bool:
+        """The minimum a document needs to identify its issuer."""
+        return all((self.name.strip(), self.ico.strip(), self.address.strip(), self.email.strip()))
+
+
+class InvoicingConfig(BaseModel):
+    """Payment documents and the confirmation email.
+
+    - provider: the issuer. While it is incomplete, payments are not offered
+      or accepted - a document without an issuer would be worthless, and the
+      money would already be taken.
+    - default_language: the document's language when the payer's is unknown.
+    - timezone: where "the date" of a document and the year of its number are
+      reckoned (the provider's, not the server's).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    provider: ProviderConfig = Field(default_factory=ProviderConfig)
+    default_language: Literal["cs", "en"] = "cs"
+    timezone: str = "Europe/Prague"
+
+    @field_validator("timezone")
+    @classmethod
+    def _known_timezone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (KeyError, ValueError, OSError) as exc:  # not a validation error until we say so
+            raise ValueError(f"unknown time zone {value!r}") from exc
+        return value
+
+
 class BoardsConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -98,6 +152,7 @@ class BoardsConfig(BaseModel):
     points_per_day: int = Field(default=1, ge=0)
     moderation: ModerationConfig = Field(default_factory=ModerationConfig)
     payments: PaymentsConfig = Field(default_factory=PaymentsConfig)
+    invoicing: InvoicingConfig = Field(default_factory=InvoicingConfig)
 
 
 def load_config(path: Path = CONFIG_FILE) -> BoardsConfig:

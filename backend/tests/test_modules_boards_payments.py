@@ -26,7 +26,7 @@ from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.user import User
 from app.modules.boards import payments
-from app.modules.boards.config import BoardsConfig, PaymentsConfig, get_config
+from app.modules.boards.config import BoardsConfig, InvoicingConfig, PaymentsConfig, ProviderConfig, get_config
 from app.modules.boards.models import Category, Post, Resonance
 from app.modules.boards.payments import POST_BOOST, apply_boost, resolve_boost
 from app.modules.boards.router import gateway_enabled
@@ -46,12 +46,35 @@ _app = FastAPI()
 _app.include_router(boards_router, prefix=BOARDS)
 _app.include_router(stripe_router, prefix=STRIPE)
 
+# mail_suppress_send: the confirmation email is built and "sent" but no SMTP
+# connection is ever opened - these tests must never really send anything.
 _settings = Settings(
     stripe_secret_key="sk_test_123",
     stripe_webhook_secret=WEBHOOK_SECRET,
     stripe_api_url=STRIPE_URL,
     frontend_url="http://front.test",
+    mail_username="user",
+    mail_password="pass",
+    mail_from="noreply@example.com",
+    mail_server="smtp.example.com",
+    mail_port=587,
+    mail_starttls=True,
+    mail_ssl_tls=False,
+    mail_suppress_send=True,
 )
+
+PROVIDER = ProviderConfig(
+    name="Jan Novák",
+    ico="12345678",
+    address="Ulice 1, 110 00 Praha 1",
+    email="info@example.com",
+    registration={"cs": "fyzická osoba zapsaná v živnostenském rejstříku", "en": "sole trader"},
+)
+
+
+def _config(**fields) -> BoardsConfig:
+    """A configuration with the issuer filled in - payments are refused without one."""
+    return BoardsConfig(invoicing=InvoicingConfig(provider=PROVIDER), **fields)
 
 
 def _use_config(config: BoardsConfig, monkeypatch=None):
@@ -71,7 +94,8 @@ async def _overrides(db_session, rsa_keypair, monkeypatch):
     _app.dependency_overrides[get_db] = lambda: db_session
     _app.dependency_overrides[get_settings] = lambda: _settings
     _app.dependency_overrides[gateway_enabled] = lambda: True
-    _use_config(BoardsConfig(page_size=20), monkeypatch)
+    monkeypatch.setattr(payments, "get_settings", lambda: _settings)
+    _use_config(_config(page_size=20), monkeypatch)
     yield
     _app.dependency_overrides.clear()
 
@@ -192,11 +216,21 @@ async def test_a_boost_is_priced_server_side_in_dollars_for_the_authors_own_post
     assert quote.reference == str(post.id)
     assert quote.return_path == "/categories/philosophy"
     assert "Attention" in quote.description and "50 points" in quote.description
-    assert quote.extra == {"post_id": str(post.id), "amount_usd": 5, "points": 50}
+    assert quote.extra == {"post_id": str(post.id), "amount_usd": 5, "points": 50, "language": "cs"}
+
+
+@pytest.mark.parametrize(
+    ("sent", "kept"),
+    [("en", "en"), ("EN", "en"), ("en-GB", "en"), ("cs-CZ", "cs"), ("de", "cs"), ("", "cs"), (None, "cs"), (5, "cs"), ("x" * 99, "cs")],
+)
+async def test_the_payers_language_is_kept_for_their_document_or_falls_back(db_session, alice, sent, kept):
+    post = await _post(db_session, alice, await _category(db_session, alice))
+    payload = {**_payload(post), "language": sent}
+    assert (await resolve_boost(db_session, alice.user, payload)).extra["language"] == kept
 
 
 async def test_the_points_in_the_description_follow_the_configured_factor(db_session, alice, monkeypatch):
-    _use_config(BoardsConfig(points_per_usd=20), monkeypatch)
+    _use_config(_config(points_per_usd=20), monkeypatch)
     post = await _post(db_session, alice, await _category(db_session, alice))
     quote = await resolve_boost(db_session, alice.user, _payload(post, 5))
     assert quote.extra["points"] == 100
@@ -234,7 +268,7 @@ async def test_the_ends_of_the_range_are_allowed(db_session, alice, amount):
 
 
 async def test_the_range_comes_from_the_configuration(db_session, alice, monkeypatch):
-    _use_config(BoardsConfig(payments=PaymentsConfig(min_amount_usd=5, max_amount_usd=50)), monkeypatch)
+    _use_config(_config(payments=PaymentsConfig(min_amount_usd=5, max_amount_usd=50)), monkeypatch)
     post = await _post(db_session, alice, await _category(db_session, alice))
 
     for amount in (4, 51):
@@ -281,20 +315,35 @@ async def test_a_blocked_account_cannot_pay(make_person, db_session):
 # --- Applying a paid boost (on_paid) ------------------------------------------
 
 
-def _payment(post, amount, currency="usd") -> StripePayment:
-    return StripePayment(id=uuid.uuid4(), reference=str(post.id), amount=amount, currency=currency)
+async def _payment(db_session, post, amount, currency="usd") -> StripePayment:
+    """A confirmed payment, stored - the receipt issued for it refers to its row."""
+    payment = StripePayment(
+        id=uuid.uuid4(),
+        user_id=getattr(post, "author_id", None),
+        purpose=POST_BOOST,
+        reference=str(post.id),
+        amount=amount,
+        currency=currency,
+        description="Boost",
+        status="paid",
+        paid_at=datetime.now(timezone.utc),
+        extra={"points": amount // 10, "customer_email": "payer@example.com", "language": "cs"},
+    )
+    db_session.add(payment)
+    await db_session.flush()
+    return payment
 
 
 async def test_a_paid_boost_adds_the_amount_to_the_post(db_session, alice):
     post = await _post(db_session, alice, await _category(db_session, alice))
-    await apply_boost(db_session, _payment(post, 500))
+    await apply_boost(db_session, await _payment(db_session, post, 500))
     assert await _paid_cents(db_session, post) == 500
 
 
 async def test_payments_accumulate(db_session, alice):
     post = await _post(db_session, alice, await _category(db_session, alice), paid_cents=300)
-    await apply_boost(db_session, _payment(post, 500))
-    await apply_boost(db_session, _payment(post, 200))
+    await apply_boost(db_session, await _payment(db_session, post, 500))
+    await apply_boost(db_session, await _payment(db_session, post, 200))
     assert await _paid_cents(db_session, post) == 1000
 
 
@@ -304,7 +353,7 @@ async def test_dollars_become_points_in_the_value(db_session, alice):
     now = datetime.now(timezone.utc)
     before = post_value(post.paid_cents, post.resonance_count, post.created_at, now, BoardsConfig())
 
-    await apply_boost(db_session, _payment(post, 500))
+    await apply_boost(db_session, await _payment(db_session, post, 500))
     await db_session.refresh(post)
 
     assert post_value(post.paid_cents, post.resonance_count, post.created_at, now, BoardsConfig()) - before == 50
@@ -314,20 +363,20 @@ async def test_dollars_become_points_in_the_value(db_session, alice):
 async def test_a_payment_that_lands_after_a_block_is_still_recorded(db_session, alice, status):
     """The money has been taken either way; nothing is refunded."""
     post = await _post(db_session, alice, await _category(db_session, alice), status=status)
-    await apply_boost(db_session, _payment(post, 500))
+    await apply_boost(db_session, await _payment(db_session, post, 500))
     assert await _paid_cents(db_session, post) == 500
 
 
 async def test_a_payment_for_a_missing_post_does_not_raise(db_session, caplog):
     """Raising would make Stripe retry the webhook for ever."""
     ghost = Post(id=uuid.uuid4())
-    await apply_boost(db_session, _payment(ghost, 500))
+    await apply_boost(db_session, await _payment(db_session, ghost, 500))
     assert "does not exist" in caplog.text
 
 
 async def test_a_payment_in_another_currency_is_not_applied(db_session, alice, caplog):
     post = await _post(db_session, alice, await _category(db_session, alice))
-    await apply_boost(db_session, _payment(post, 500, currency="czk"))
+    await apply_boost(db_session, await _payment(db_session, post, 500, currency="czk"))
     assert await _paid_cents(db_session, post) == 0
     assert "not applied" in caplog.text
 
@@ -523,7 +572,7 @@ async def test_my_posts_lists_only_my_posts_in_every_state_newest_first(client, 
 
 async def test_my_posts_needs_a_login_and_pages(client, db_session, alice):
     assert (await client.get(f"{BOARDS}/me/posts")).status_code == 401
-    _use_config(BoardsConfig(page_size=2))
+    _use_config(_config(page_size=2))
     category = await _category(db_session, alice)
     for i in range(5):
         await _post(db_session, alice, category, f"p{i}", created_at=datetime.now(timezone.utc) - timedelta(minutes=i))

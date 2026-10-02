@@ -12,15 +12,17 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.boards.config import BoardsConfig
-from app.modules.boards.models import Category, Post
+from app.modules.boards.models import Category, Post, Receipt
 from app.modules.boards.moderation.assess import Assessment
 from app.modules.boards.schemas import (
     AdminPostOut,
+    AdminReceiptOut,
     AssessmentOut,
     CategoryOut,
     FindingOut,
     MyPostOut,
     PostOut,
+    ReceiptOut,
     ScoreOut,
 )
 from app.modules.boards.service import post_value
@@ -99,6 +101,30 @@ def admin_post_out(
         author_id=post.author_id,
         author_blocked=author_blocked,
         created_at=post.created_at,
+    )
+
+
+def receipt_out(receipt: Receipt) -> ReceiptOut:
+    document = receipt.document
+    return ReceiptOut(
+        id=receipt.id,
+        number=receipt.number,
+        issued_at=receipt.issued_at,
+        amount=document["amount"],
+        currency=document["currency"],
+        post_title=document["item"]["post_title"],
+        points=document["item"]["points"],
+        emailed=receipt.emailed_at is not None,
+    )
+
+
+def admin_receipt_out(receipt: Receipt) -> AdminReceiptOut:
+    return AdminReceiptOut(
+        **receipt_out(receipt).model_dump(),
+        payment_id=receipt.payment_id,
+        email_to=receipt.email_to,
+        email_attempts=receipt.email_attempts,
+        email_error=receipt.email_error,
     )
 
 

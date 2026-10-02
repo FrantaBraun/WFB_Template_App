@@ -136,6 +136,37 @@ class MyPostPage(BaseModel):
     has_more: bool
 
 
+class ReceiptOut(BaseModel):
+    """One of the signed-in user's payment documents, in brief; the document
+    itself is GET /me/receipts/{id}/document. `emailed` says whether the
+    confirmation email went out."""
+
+    id: uuid.UUID
+    number: str
+    issued_at: datetime
+    amount: int
+    currency: str
+    post_title: str
+    points: int
+    emailed: bool
+
+
+class AdminReceiptOut(ReceiptOut):
+    """What an administrator sees of a document's delivery - including the
+    address it was sent to and why a send failed."""
+
+    payment_id: uuid.UUID
+    email_to: str | None
+    email_attempts: int
+    email_error: str | None
+
+
+class RetryOut(BaseModel):
+    tried: int
+    sent: int
+    still_unsent: int
+
+
 class PaymentsInfo(BaseModel):
     """Whether authors can pay to raise a post's value on this deployment,
     and within what limits. enabled is false until the payment gateway is
