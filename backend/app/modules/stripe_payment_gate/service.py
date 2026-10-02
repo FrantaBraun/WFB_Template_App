@@ -62,6 +62,9 @@ async def create_payment(
         raise PaymentRejected("Unknown payment purpose", status_code=404)
     if purpose.require_user and user is None:
         raise PaymentRejected("Sign in to pay", status_code=401)
+    missing = [consent for consent in purpose.required_consents if consent not in (consents or [])]
+    if missing:
+        raise PaymentRejected(f"Missing consent: {', '.join(missing)}", status_code=422)
 
     quote = await purpose.resolve(db, user, payload)
     currency = quote.currency.lower()

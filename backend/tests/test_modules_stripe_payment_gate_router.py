@@ -447,3 +447,51 @@ async def test_webhook_on_paid_failure_rolls_back_and_500s(db_session, paid_call
     assert resp.status_code == 500
     await db_session.refresh(payment)
     assert payment.status == "pending"
+
+
+@respx.mock
+async def test_checkout_refuses_a_payment_missing_a_consent_the_purpose_requires(client, db_session, make_access_token):
+    """A purpose can insist on consents (e.g. the express request for
+    immediate delivery); a request that skips the pay button must not skip
+    them, and nothing is created or sent to Stripe without them."""
+
+    async def resolve(db, user, payload):
+        return PaymentQuote(amount=500, currency="usd", description="Boost", reference="p-1")
+
+    register_purpose(
+        PaymentPurpose(key="test_consent", resolve=resolve, required_consents=("terms", "digital_content_waiver"))
+    )
+    try:
+        route = respx.post(f"{STRIPE_URL}/v1/checkout/sessions").mock(
+            return_value=Response(200, json=_session(uuid.uuid4()))
+        )
+        headers = _auth(make_access_token(sub=str(uuid.uuid4())))
+
+        for consents in ([], ["terms"], ["digital_content_waiver"]):
+            resp = await client.post(
+                f"{BASE}/checkout", json={"purpose": "test_consent", "consents": consents}, headers=headers
+            )
+            assert resp.status_code == 422
+            assert "Missing consent" in resp.json()["detail"]
+        assert not route.called
+        assert (await db_session.scalar(select(func.count()).select_from(StripePayment))) == 0
+
+        ok = await client.post(
+            f"{BASE}/checkout",
+            json={"purpose": "test_consent", "consents": ["terms", "digital_content_waiver"]},
+            headers=headers,
+        )
+        assert ok.status_code == 200
+        assert route.called
+    finally:
+        unregister_purpose("test_consent")
+
+
+async def test_a_purpose_without_required_consents_needs_none(client, make_access_token, paid_calls):
+    """The default is unchanged: nothing is required unless a purpose says so."""
+    with respx.mock:
+        respx.post(f"{STRIPE_URL}/v1/checkout/sessions").mock(return_value=Response(200, json=_session(uuid.uuid4())))
+        resp = await client.post(
+            f"{BASE}/checkout", json={"purpose": "test_order"}, headers=_auth(make_access_token(sub=str(uuid.uuid4())))
+        )
+    assert resp.status_code == 200

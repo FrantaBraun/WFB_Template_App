@@ -78,6 +78,11 @@ class PaymentPurpose:
     resolve: ResolveFn
     on_paid: OnPaidFn | None = None
     require_user: bool = True
+    required_consents: tuple[str, ...] = ()
+    """Consents (schemas.Consent values) the payer must have given for a
+    payment to start at all. The pay button collects them, but a request that
+    skips the button must not skip the consent - e.g. the express request for
+    immediate delivery that makes a consumer lose the right of withdrawal."""
 
 
 _purposes: dict[str, PaymentPurpose] = {}
