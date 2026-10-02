@@ -85,6 +85,8 @@ register_purpose(PaymentPurpose(key="order", resolve=resolve, on_paid=on_paid))
 
 - `require_user=False` povolí platbu i nepřihlášeným (např. dar).
 - `required_consents=("terms", "digital_content_waiver")` předepíše souhlasy, bez kterých se platba vůbec nezačne (422 ještě před založením platby a před voláním Stripe) - tlačítko je sbírá, ale požadavek, který tlačítko obejde, nesmí obejít i souhlas, např. výslovnou žádost o okamžité plnění.
+- `after_paid(db, payment)` se spustí jednou, **až po commitu** transakce, která platbu označila za zaplacenou - místo pro věci, které nesmějí proběhnout, když se transakce vrátí zpět, a nesmějí platbu shodit, když selžou (typicky potvrzovací e-mail). Výjimka se zaloguje a spolkne; co hook mění, musí sám commitnout. Co musí být atomické s platbou, patří do `on_paid`.
+- E-mail platícího (z přihlášení) se ukládá do `payment.extra["customer_email"]`, aby ho `after_paid` měl po ruce, i když z platby zná jen její řádek.
 - Výjimka v `on_paid` vrátí celou transakci zpět, webhook odpoví `500` a Stripe ho zopakuje – `on_paid` proto musí být idempotentní vůči vlastním vedlejším efektům mimo DB (e-maily posílejte až po úspěchu, nebo si hlídejte stav).
 - Platbu lze zahájit i z Pythonu: `service.create_payment(db, settings, purpose_key=..., payload=..., user=...)`.
 

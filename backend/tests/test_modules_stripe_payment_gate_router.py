@@ -495,3 +495,128 @@ async def test_a_purpose_without_required_consents_needs_none(client, make_acces
             f"{BASE}/checkout", json={"purpose": "test_order"}, headers=_auth(make_access_token(sub=str(uuid.uuid4())))
         )
     assert resp.status_code == 200
+
+
+# --- The payer's email and the after-commit hook ------------------------------
+
+
+@respx.mock
+async def test_checkout_keeps_the_payers_email_with_the_payment(client, db_session, make_access_token, paid_calls):
+    respx.post(f"{STRIPE_URL}/v1/checkout/sessions").mock(return_value=Response(200, json=_session(uuid.uuid4())))
+    token = make_access_token(sub=str(uuid.uuid4()), email="payer@example.com")
+
+    resp = await client.post(f"{BASE}/checkout", json={"purpose": "test_order"}, headers=_auth(token))
+
+    payment = await db_session.get(StripePayment, uuid.UUID(resp.json()["payment_id"]))
+    assert payment.extra["customer_email"] == "payer@example.com"
+
+
+@respx.mock
+async def test_an_anonymous_payment_has_no_email_to_keep(client, db_session, paid_calls):
+    respx.post(f"{STRIPE_URL}/v1/checkout/sessions").mock(return_value=Response(200, json=_session(uuid.uuid4())))
+
+    resp = await client.post(f"{BASE}/checkout", json={"purpose": "test_donation"})
+
+    payment = await db_session.get(StripePayment, uuid.UUID(resp.json()["payment_id"]))
+    assert "customer_email" not in payment.extra
+
+
+@pytest.fixture()
+def after_paid_log():
+    """Three purposes for one test: one with an after_paid hook, one whose
+    hook raises, and one whose on_paid raises (so the payment never commits).
+    Everything they do is appended to the yielded dict's lists."""
+    log = {"after": [], "on_paid": []}
+
+    async def resolve(db, user, payload):
+        return PaymentQuote(amount=500, currency="usd", description="Boost", reference="p-1")
+
+    async def on_paid(db, payment):
+        log["on_paid"].append(payment.id)
+
+    async def on_paid_broken(db, payment):
+        raise RuntimeError("downstream failure")
+
+    async def after_paid(db, payment):
+        log["after"].append((payment.id, payment.status))
+
+    async def after_paid_broken(db, payment):
+        log["after"].append((payment.id, "tried"))
+        raise RuntimeError("smtp is down")
+
+    register_purpose(PaymentPurpose(key="test_after", resolve=resolve, on_paid=on_paid, after_paid=after_paid))
+    register_purpose(PaymentPurpose(key="test_after_broken", resolve=resolve, on_paid=on_paid, after_paid=after_paid_broken))
+    register_purpose(PaymentPurpose(key="test_after_blocked", resolve=resolve, on_paid=on_paid_broken, after_paid=after_paid))
+    yield log
+    for key in ("test_after", "test_after_broken", "test_after_blocked"):
+        unregister_purpose(key)
+
+
+def _completed(payment) -> tuple[bytes, dict]:
+    return _signed(
+        {"id": "evt_1", "type": "checkout.session.completed", "data": {"object": _session(payment.id, status="complete", payment_status="paid")}}
+    )
+
+
+async def test_after_paid_runs_once_when_the_payment_is_confirmed(client, db_session, after_paid_log):
+    payment = await _seed_payment(db_session, purpose="test_after")
+
+    for _ in range(3):  # a webhook delivered again, and again
+        body, headers = _completed(payment)
+        assert (await client.post(f"{BASE}/webhook", content=body, headers=headers)).status_code == 200
+
+    assert after_paid_log["after"] == [(payment.id, "paid")]
+    assert after_paid_log["on_paid"] == [payment.id]
+
+
+async def test_the_result_page_poll_after_the_webhook_does_not_run_after_paid_again(client, db_session, after_paid_log):
+    payment = await _seed_payment(db_session, purpose="test_after")  # anonymous, so no token is needed to read it
+    body, headers = _completed(payment)
+    await client.post(f"{BASE}/webhook", content=body, headers=headers)
+
+    resp = await client.get(f"{BASE}/payments/{payment.id}")
+
+    assert resp.status_code == 200
+    assert len(after_paid_log["after"]) == 1
+
+
+async def test_a_failing_after_paid_does_not_undo_or_fail_the_payment(client, db_session, after_paid_log):
+    payment = await _seed_payment(db_session, purpose="test_after_broken")
+    body, headers = _completed(payment)
+
+    resp = await client.post(f"{BASE}/webhook", content=body, headers=headers)
+
+    assert resp.status_code == 200  # Stripe must not retry: the payment is done
+    await db_session.refresh(payment)
+    assert payment.status == "paid" and payment.paid_at is not None
+    assert after_paid_log["on_paid"] == [payment.id]
+    assert after_paid_log["after"] == [(payment.id, "tried")]
+
+
+async def test_after_paid_does_not_run_when_the_payment_could_not_be_applied(db_session, after_paid_log):
+    """A failing on_paid rolls the payment back (Stripe retries), and then the
+    after-commit hook must not announce a payment that was never committed."""
+    payment = await _seed_payment(db_session, purpose="test_after_blocked")
+    body, headers = _completed(payment)
+    transport = ASGITransport(app=_stripe_app, raise_app_exceptions=False)
+
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post(f"{BASE}/webhook", content=body, headers=headers)
+
+    assert resp.status_code == 500
+    await db_session.refresh(payment)
+    assert payment.status == "pending"
+    assert after_paid_log["after"] == []
+
+
+@pytest.mark.parametrize(
+    ("event_type", "session_status"),
+    [("checkout.session.expired", "expired"), ("checkout.session.async_payment_failed", "complete")],
+)
+async def test_after_paid_does_not_run_for_a_payment_that_did_not_succeed(client, db_session, after_paid_log, event_type, session_status):
+    payment = await _seed_payment(db_session, purpose="test_after")
+    body, headers = _signed({"id": "evt_1", "type": event_type, "data": {"object": _session(payment.id, status=session_status)}})
+
+    assert (await client.post(f"{BASE}/webhook", content=body, headers=headers)).status_code == 200
+
+    assert after_paid_log["after"] == []

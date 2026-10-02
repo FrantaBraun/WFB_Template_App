@@ -72,6 +72,10 @@ async def create_payment(
         raise ValueError(f"Purpose {purpose_key!r} produced an invalid quote: {quote!r}")
 
     extra = dict(quote.extra)
+    if customer_email:
+        # Kept with the payment: the email is what a purpose needs later (to
+        # send a confirmation, say), when only the payment row is at hand.
+        extra["customer_email"] = customer_email
     if consents:
         # Evidence of what the payer agreed to, and when - the burden of
         # proving that the terms (or a withdrawal waiver) were accepted lies
@@ -140,6 +144,8 @@ async def sync_from_session(db: AsyncSession, session: dict, *, failed: bool = F
         await db.commit()
         return payment
 
+    became_paid = False
+
     if session.get("payment_intent"):
         payment.stripe_payment_intent_id = session["payment_intent"]
 
@@ -148,6 +154,7 @@ async def sync_from_session(db: AsyncSession, session: dict, *, failed: bool = F
     elif session.get("status") == "complete" and session.get("payment_status") in ("paid", "no_payment_required"):
         payment.status = STATUS_PAID
         payment.paid_at = datetime.now(timezone.utc)
+        became_paid = True
         purpose = get_purpose(payment.purpose)
         if purpose is None:
             logger.warning("Payment %s paid for unregistered purpose %r - on_paid skipped", payment.id, payment.purpose)
@@ -161,4 +168,21 @@ async def sync_from_session(db: AsyncSession, session: dict, *, failed: bool = F
         payment.status = STATUS_EXPIRED
 
     await db.commit()
+    if became_paid:
+        await _run_after_paid(db, payment)
     return payment
+
+
+async def _run_after_paid(db: AsyncSession, payment: StripePayment) -> None:
+    """The purpose's after_paid hook, once the payment is safely committed.
+    It runs only on the call that moved the payment out of `pending` (the row
+    is locked, so exactly one call does), and nothing it does may undo or fail
+    the payment."""
+    purpose = get_purpose(payment.purpose)
+    if purpose is None or purpose.after_paid is None:
+        return
+    try:
+        await purpose.after_paid(db, payment)
+    except Exception:
+        logger.exception("after_paid failed for payment %s - the payment itself is recorded as paid", payment.id)
+        await db.rollback()

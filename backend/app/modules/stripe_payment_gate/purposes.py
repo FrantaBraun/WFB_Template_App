@@ -70,6 +70,7 @@ class PaymentQuote:
 
 ResolveFn = Callable[[AsyncSession, User | None, dict], Awaitable[PaymentQuote]]
 OnPaidFn = Callable[[AsyncSession, StripePayment], Awaitable[None]]
+AfterPaidFn = Callable[[AsyncSession, StripePayment], Awaitable[None]]
 
 
 @dataclass(frozen=True)
@@ -78,6 +79,13 @@ class PaymentPurpose:
     resolve: ResolveFn
     on_paid: OnPaidFn | None = None
     require_user: bool = True
+    after_paid: AfterPaidFn | None = None
+    """Runs once, *after* the transaction that marked the payment paid has
+    been committed - the place for things that must not happen if that
+    transaction rolls back and must not break it if they fail: sending the
+    confirmation email, say. Anything it changes it must commit itself. An
+    exception is logged and swallowed; the payment stays paid. (The follow-up
+    that has to be atomic with the payment belongs in on_paid.)"""
     required_consents: tuple[str, ...] = ()
     """Consents (schemas.Consent values) the payer must have given for a
     payment to start at all. The pay button collects them, but a request that
