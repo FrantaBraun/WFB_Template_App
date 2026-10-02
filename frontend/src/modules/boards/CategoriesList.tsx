@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { API_BASE, CATEGORIES_PATH, categoryPath, fetchJson, type Category, type Page } from './api'
+import { API_BASE, CATEGORIES_PATH, MODERATION_PATH, categoryPath, fetchJson, useBoardsMe, type Category, type Page } from './api'
 
 /**
  * The list of categories (boards), busiest first, with a "Load more"
@@ -20,6 +20,7 @@ import { API_BASE, CATEGORIES_PATH, categoryPath, fetchJson, type Category, type
 export default function CategoriesList({ headingTag: Heading = 'h2' }: { headingTag?: 'h1' | 'h2' }) {
   const { t } = useTranslation('boards')
   const { user } = useAuth()
+  const me = useBoardsMe()
   const [items, setItems] = useState<Category[] | null>(null)
   const [hasMore, setHasMore] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -78,12 +79,16 @@ export default function CategoriesList({ headingTag: Heading = 'h2' }: { heading
         <Heading className={Heading === 'h1' ? 'text-3xl font-semibold tracking-tight' : 'text-xl font-semibold tracking-tight'}>
           {t('list.title')}
         </Heading>
-        <Link
-          to={user ? `${CATEGORIES_PATH}/new` : '/login'}
-          className="text-sm underline underline-offset-4 hover:no-underline"
-        >
-          {user ? t('list.create') : t('list.loginToCreate')}
-        </Link>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          {me?.is_admin && (
+            <Link to={MODERATION_PATH} className="underline underline-offset-4 hover:no-underline">
+              {t('list.moderation')}
+            </Link>
+          )}
+          <Link to={user ? `${CATEGORIES_PATH}/new` : '/login'} className="underline underline-offset-4 hover:no-underline">
+            {user ? t('list.create') : t('list.loginToCreate')}
+          </Link>
+        </div>
       </div>
 
       {error && (

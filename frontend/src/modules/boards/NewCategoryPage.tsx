@@ -17,20 +17,33 @@ import {
   CATEGORY_TITLE_MAX,
   categoryPath,
   charCount,
+  errorDetail,
   postJson,
+  useBoardsMe,
+  type Assessment,
   type Category,
 } from './api'
+import AssessmentPanel from './AssessmentPanel'
+import BlockedNotice from './BlockedNotice'
 import { Counter } from './PostForm'
 
-/** /categories/new - a signed-in user creates a category: a title (its address is generated from it) and a short description. */
+/**
+ * /categories/new - a signed-in user creates a category: a title (its
+ * address is generated from it) and a short description. Like a post, it
+ * goes through the content check first - a violating title or description
+ * is refused, a risky one needs confirming - and a new category gets
+ * machine rules that later posts are compared against.
+ */
 export default function NewCategoryPage() {
   const { t } = useTranslation('boards')
   const { user, loading } = useAuth()
+  const me = useBoardsMe()
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [busy, setBusy] = useState(false)
   const [errorKey, setErrorKey] = useState<string | null>(null)
+  const [review, setReview] = useState<Assessment | null>(null)
 
   usePageMeta({ title: t('newCategory.title') })
 
@@ -42,18 +55,35 @@ export default function NewCategoryPage() {
     descriptionLength > 0 &&
     descriptionLength <= CATEGORY_DESCRIPTION_MAX
 
-  async function submit(event: FormEvent) {
-    event.preventDefault()
-    if (!valid || busy) return
+  async function create(confirmRisk: boolean) {
+    const category = await postJson<Category>(`${API_BASE}/categories`, { title, description, confirm_risk: confirmRisk })
+    navigate(categoryPath(category.slug))
+  }
+
+  async function run(action: () => Promise<void>) {
     setBusy(true)
     setErrorKey(null)
     try {
-      const category = await postJson<Category>(`${API_BASE}/categories`, { title, description })
-      navigate(categoryPath(category.slug))
+      await action()
     } catch (err) {
-      setErrorKey(err instanceof ApiError && err.status === 422 ? 'newCategory.invalid' : 'newCategory.error')
+      const detail = errorDetail(err)
+      if (detail?.assessment) setReview(detail.assessment)
+      else if (detail?.code === 'account_blocked') setErrorKey('newCategory.accountBlocked')
+      else setErrorKey(err instanceof ApiError && err.status === 422 ? 'newCategory.invalid' : 'newCategory.error')
+    } finally {
       setBusy(false)
     }
+  }
+
+  function submit(event: FormEvent) {
+    event.preventDefault()
+    if (!valid || busy) return
+    setReview(null)
+    run(async () => {
+      const assessment = await postJson<Assessment>(`${API_BASE}/categories/check`, { title, description })
+      if (assessment.level === 'ok') await create(false)
+      else setReview(assessment)
+    })
   }
 
   const input =
@@ -76,13 +106,24 @@ export default function NewCategoryPage() {
             {t('newCategory.loginRequired')}
           </Link>
         </p>
+      ) : me?.blocked ? (
+        <BlockedNotice reason={me.blocked_reason} />
       ) : (
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label htmlFor="category-title" className="mb-1 block text-sm font-medium">
               {t('newCategory.name')}
             </label>
-            <input id="category-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={input} />
+            <input
+              id="category-title"
+              type="text"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value)
+                setReview(null)
+              }}
+              className={input}
+            />
             <div className="mt-1 flex justify-between gap-2 text-xs">
               <span className="text-slate-500 dark:text-slate-400">{t('newCategory.nameHint')}</span>
               <Counter count={titleLength} max={CATEGORY_TITLE_MAX} />
@@ -97,13 +138,39 @@ export default function NewCategoryPage() {
               id="category-description"
               rows={8}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value)
+                setReview(null)
+              }}
               className={input}
             />
-            <div className="mt-1 text-right text-xs">
+            <div className="mt-1 flex justify-between gap-2 text-xs">
+              <span className="text-slate-500 dark:text-slate-400">{t('newCategory.descriptionHint')}</span>
               <Counter count={descriptionLength} max={CATEGORY_DESCRIPTION_MAX} />
             </div>
           </div>
+
+          {review && (
+            <AssessmentPanel assessment={review} subject="category">
+              {review.level !== 'blocked' && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => run(() => create(review.level === 'risk'))}
+                  className="rounded-lg bg-slate-900 px-4 py-2 font-medium text-slate-100 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+                >
+                  {busy ? t('newCategory.creating') : t('moderation.createAnyway')}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setReview(null)}
+                className="rounded-lg border border-slate-300 px-4 py-2 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+              >
+                {t('moderation.edit')}
+              </button>
+            </AssessmentPanel>
+          )}
 
           <div className="flex flex-wrap items-center gap-3">
             <button

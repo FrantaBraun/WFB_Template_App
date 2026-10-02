@@ -6,7 +6,18 @@
 
 import { useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { API_BASE, ApiError, POST_BODY_MAX, POST_TITLE_MAX, charCount, postJson, type Post } from './api'
+import {
+  API_BASE,
+  POST_BODY_MAX,
+  POST_TITLE_MAX,
+  ApiError,
+  charCount,
+  errorDetail,
+  postJson,
+  type Assessment,
+  type Post,
+} from './api'
+import AssessmentPanel from './AssessmentPanel'
 
 const EMOJI = ['😀', '😂', '🙂', '😍', '🤔', '😢', '😡', '👍', '👎', '🙏', '💡', '❤️', '🔥', '🎉', '✨', '🤝']
 
@@ -26,6 +37,11 @@ export function Counter({ count, max }: { count: number; max: number }) {
  * Limits are counted like the backend counts them (see charCount), and the
  * textarea has no maxLength: that counts UTF-16 units, so it would cut an
  * emoji-heavy text short of the real limit.
+ *
+ * Publishing goes through the content check: the draft is checked first and
+ * published straight away only when there is nothing to report; otherwise
+ * the verdict is shown with its reasons - a warning to edit, a risk to
+ * confirm ("publish anyway"), or a refusal. Editing the text dismisses it.
  */
 export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (post: Post) => void }) {
   const { t } = useTranslation('boards')
@@ -33,6 +49,7 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
   const [body, setBody] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; key: string } | null>(null)
+  const [review, setReview] = useState<Assessment | null>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const caretAfterInsert = useRef<number | null>(null)
 
@@ -45,6 +62,7 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
     const start = field?.selectionStart ?? body.length
     const end = field?.selectionEnd ?? body.length
     setBody(body.slice(0, start) + emoji + body.slice(end))
+    setReview(null)
     caretAfterInsert.current = start + emoji.length
   }
 
@@ -58,22 +76,47 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
     bodyRef.current?.setSelectionRange(caret, caret)
   }, [body])
 
-  async function submit(event: FormEvent) {
-    event.preventDefault()
-    if (!valid || busy) return
+  async function publish(confirmRisk: boolean) {
+    const post = await postJson<Post>(`${API_BASE}/categories/${slug}/posts`, { title, body, confirm_risk: confirmRisk })
+    setTitle('')
+    setBody('')
+    setReview(null)
+    setMessage({ kind: 'ok', key: 'form.published' })
+    onPosted(post)
+  }
+
+  function explain(err: unknown) {
+    const detail = errorDetail(err)
+    if (detail?.assessment) {
+      setReview(detail.assessment) // the server's verdict differs from the draft check's - show the current one
+    } else if (detail?.code === 'account_blocked') {
+      setMessage({ kind: 'error', key: 'form.accountBlocked' })
+    } else {
+      setMessage({ kind: 'error', key: err instanceof ApiError && err.status === 422 ? 'form.invalid' : 'form.error' })
+    }
+  }
+
+  async function run(action: () => Promise<void>) {
     setBusy(true)
     setMessage(null)
     try {
-      const post = await postJson<Post>(`${API_BASE}/categories/${slug}/posts`, { title, body })
-      setTitle('')
-      setBody('')
-      setMessage({ kind: 'ok', key: 'form.published' })
-      onPosted(post)
+      await action()
     } catch (err) {
-      setMessage({ kind: 'error', key: err instanceof ApiError && err.status === 422 ? 'form.invalid' : 'form.error' })
+      explain(err)
     } finally {
       setBusy(false)
     }
+  }
+
+  function submit(event: FormEvent) {
+    event.preventDefault()
+    if (!valid || busy) return
+    setReview(null)
+    run(async () => {
+      const assessment = await postJson<Assessment>(`${API_BASE}/categories/${slug}/posts/check`, { title, body })
+      if (assessment.level === 'ok') await publish(false)
+      else setReview(assessment)
+    })
   }
 
   const input =
@@ -87,7 +130,16 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
         <label htmlFor="post-title" className="mb-1 block text-sm font-medium">
           {t('form.title')}
         </label>
-        <input id="post-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={input} />
+        <input
+          id="post-title"
+          type="text"
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value)
+            setReview(null)
+          }}
+          className={input}
+        />
         <div className="mt-1 text-right text-xs">
           <Counter count={titleLength} max={POST_TITLE_MAX} />
         </div>
@@ -102,7 +154,10 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
           ref={bodyRef}
           rows={6}
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={(e) => {
+            setBody(e.target.value)
+            setReview(null)
+          }}
           className={input}
         />
         <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -122,13 +177,38 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
         </div>
       </div>
 
+      {review && (
+        <AssessmentPanel assessment={review} subject="post">
+          {review.level !== 'blocked' && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => run(() => publish(review.level === 'risk'))}
+              className="rounded-lg bg-slate-900 px-4 py-2 font-medium text-slate-100 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+            >
+              {busy ? t('form.publishing') : t('moderation.publishAnyway')}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setReview(null)
+              bodyRef.current?.focus()
+            }}
+            className="rounded-lg border border-slate-300 px-4 py-2 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+          >
+            {t('moderation.edit')}
+          </button>
+        </AssessmentPanel>
+      )}
+
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
           disabled={!valid || busy}
           className="rounded-lg bg-slate-900 px-4 py-2 font-medium text-slate-100 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
         >
-          {busy ? t('form.publishing') : t('form.publish')}
+          {busy ? t('form.checking') : t('form.publish')}
         </button>
         {message && (
           <span

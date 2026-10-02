@@ -9,7 +9,8 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import usePageMeta from '../../hooks/usePageMeta'
-import { API_BASE, ApiError, CATEGORIES_PATH, fetchJson, type Category } from './api'
+import { API_BASE, ApiError, CATEGORIES_PATH, fetchJson, useBoardsMe, type Category } from './api'
+import BlockedNotice from './BlockedNotice'
 import PostForm from './PostForm'
 import PostList from './PostList'
 
@@ -18,6 +19,7 @@ export default function CategoryPage() {
   const { slug = '' } = useParams()
   const { t } = useTranslation('boards')
   const { user } = useAuth()
+  const me = useBoardsMe()
   const [category, setCategory] = useState<Category | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'notFound' | 'error'>('loading')
   // Bumped after a post is published, to start the list over from the top.
@@ -62,7 +64,9 @@ export default function CategoryPage() {
             <p className="whitespace-pre-line break-words text-slate-600 dark:text-slate-400">{category.description}</p>
           </header>
 
-          {user ? (
+          {user && me?.blocked ? (
+            <BlockedNotice reason={me.blocked_reason} />
+          ) : user ? (
             <PostForm slug={category.slug} onPosted={() => setListKey((key) => key + 1)} />
           ) : (
             <p className="mb-8 rounded-lg border border-slate-200 p-4 text-sm dark:border-slate-800">
