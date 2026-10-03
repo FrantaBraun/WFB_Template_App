@@ -6,25 +6,27 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { apiFetch } from '../../api/client'
 import { useAuth } from '../../context/AuthContext'
 import usePageMeta from '../../hooks/usePageMeta'
-import { API_BASE, MY_POSTS_PATH, fetchJson, formatMoney, type Receipt } from './api'
+import { API_BASE, MY_PAYMENTS_PATH, MY_POSTS_PATH, fetchJson, formatMoney, type Receipt } from './api'
 
 /**
  * /receipts - the documents issued for the signed-in user's payments, each
  * with the confirmation it was emailed with. The document is the server's own
  * HTML (the very one in the email), shown in a sandboxed frame: it is data
  * built from outside input, and a frame with no permissions cannot run or
- * navigate anything. The newest is open by default.
+ * navigate anything. The newest is open by default, or the one a link names
+ * (?receipt=<id>, as the payment overview does).
  */
 export default function ReceiptsPage() {
   const { t, i18n } = useTranslation('boards')
   const { user, loading } = useAuth()
   const [items, setItems] = useState<Receipt[] | null>(null)
   const [error, setError] = useState(false)
-  const [selected, setSelected] = useState<string | null>(null)
+  const [params] = useSearchParams()
+  const [selected, setSelected] = useState<string | null>(params.get('receipt'))
   const [html, setHtml] = useState<string | null>(null)
   const [documentError, setDocumentError] = useState(false)
   const language = i18n.resolvedLanguage ?? i18n.language
@@ -38,7 +40,8 @@ export default function ReceiptsPage() {
       .then((found) => {
         if (cancelled) return
         setItems(found)
-        setSelected((current) => current ?? found[0]?.id ?? null)
+        // The one a link names - if it is one of theirs - else the newest.
+        setSelected((current) => (current && found.some((r) => r.id === current) ? current : (found[0]?.id ?? null)))
       })
       .catch(() => !cancelled && setError(true))
     return () => {
@@ -72,6 +75,10 @@ export default function ReceiptsPage() {
       <p className="mb-6 text-sm">
         <Link to={MY_POSTS_PATH} className="underline underline-offset-4 hover:no-underline">
           ← {t('myPosts.title')}
+        </Link>
+        {' · '}
+        <Link to={MY_PAYMENTS_PATH} className="underline underline-offset-4 hover:no-underline">
+          {t('receipts.payments')}
         </Link>
       </p>
       <h1 className="mb-6 text-3xl font-bold tracking-tight">{t('receipts.title')}</h1>

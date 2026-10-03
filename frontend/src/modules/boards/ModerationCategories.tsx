@@ -78,7 +78,7 @@ export default function ModerationCategories({ onEditRules }: { onEditRules: (sl
 
   function search(event: FormEvent) {
     event.preventDefault()
-    setApplied(draft)
+    setApplied({ ...draft })
   }
 
   function replace(updated: AdminCategory) {

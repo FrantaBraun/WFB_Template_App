@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.boards.config import BoardsConfig
+from app.modules.boards.history import Entry
 from app.modules.boards.models import STATUS_BLOCKED, STATUS_PUBLISHED, Category, Post, Receipt
 from app.modules.boards.moderation.assess import Assessment
 from app.modules.boards.schemas import (
@@ -22,6 +23,7 @@ from app.modules.boards.schemas import (
     CategoryOut,
     FindingOut,
     MyPostOut,
+    PaymentOut,
     PostOut,
     ReceiptOut,
     ScoreOut,
@@ -134,6 +136,25 @@ def receipt_out(receipt: Receipt) -> ReceiptOut:
         post_title=document["item"]["post_title"],
         points=document["item"]["points"],
         emailed=receipt.emailed_at is not None,
+    )
+
+
+def payment_out(entry: Entry) -> PaymentOut:
+    payment, post, category, receipt = entry.payment, entry.post, entry.category, entry.receipt
+    return PaymentOut(
+        id=payment.id,
+        status=payment.status,
+        amount=payment.amount,
+        currency=payment.currency,
+        points=(payment.extra or {}).get("points", 0),
+        created_at=payment.created_at,
+        paid_at=payment.paid_at,
+        # The post as it is now; the document's snapshot is the fallback.
+        post_title=post.title if post else receipt.document["item"]["post_title"] if receipt else None,
+        post_status=post.status if post else None,
+        category_blocked=category is not None and category.status == STATUS_BLOCKED,
+        receipt_id=receipt.id if receipt else None,
+        receipt_number=receipt.number if receipt else None,
     )
 
 

@@ -13,6 +13,7 @@ export const CATEGORIES_PATH = '/categories'
 export const MODERATION_PATH = '/moderation'
 export const MY_POSTS_PATH = '/my-posts'
 export const RECEIPTS_PATH = '/receipts'
+export const MY_PAYMENTS_PATH = '/my-payments'
 /** Key of the payment purpose this module registers on the backend (app/modules/boards/payments.py). */
 export const POST_BOOST = 'post_boost'
 // Pages other modules provide, linked from here: the terms and rules
@@ -85,6 +86,41 @@ export interface Receipt {
   points: number
   /** Whether the confirmation email went out. */
   emailed: boolean
+}
+
+/** One payment the signed-in user started for one of their posts (GET /me/payments). */
+export interface Payment {
+  id: string
+  /** The gateway's: "pending" until Stripe confirms; only "paid" is money spent. */
+  status: 'pending' | 'paid' | 'failed' | 'expired'
+  /** In the currency's minor unit (cents). */
+  amount: number
+  currency: string
+  points: number
+  created_at: string
+  paid_at: string | null
+  /** The post's title today; null when the post cannot be found and there is no document. */
+  post_title: string | null
+  /** The post's state today; null when it cannot be found. A blocked or removed post keeps what was paid. */
+  post_status: PostStatus | null
+  /** The post is hidden because its category is blocked. */
+  category_blocked: boolean
+  /** The document issued for a paid payment (see `Receipt`). */
+  receipt_id: string | null
+  receipt_number: string | null
+}
+
+/** What the user has actually paid: completed payments only, in cents, over every page. */
+export interface PaymentSummary {
+  paid_count: number
+  paid_cents: number
+  currency: string
+}
+
+export interface PaymentHistory {
+  summary: PaymentSummary
+  items: Payment[]
+  has_more: boolean
 }
 
 /** Whether authors can pay to raise a post's value on this deployment, and within what limits. */

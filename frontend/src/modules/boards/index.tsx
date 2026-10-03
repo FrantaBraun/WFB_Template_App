@@ -6,7 +6,8 @@
 
 // Boards: /categories (every category), /categories/:slug (one category's
 // posts, endlessly scrolling, with the form to add one), /categories/new,
-// /my-posts (your own posts - find them again, raise their value) and
+// /my-posts (your own posts - find them again, raise their value),
+// /my-payments (what you paid and for which post), /receipts (the documents) and
 // /moderation (this application's administrators). CategoriesList is
 // exported for applications that want it on other pages too (the home page
 // does).
@@ -16,6 +17,7 @@ import CategoryPage from './CategoryPage'
 import ModerationPage from './ModerationPage'
 import MyPostsPage from './MyPostsPage'
 import NewCategoryPage from './NewCategoryPage'
+import PaymentsPage from './PaymentsPage'
 import ReceiptsPage from './ReceiptsPage'
 
 export { default as CategoriesList } from './CategoriesList'
@@ -29,6 +31,7 @@ const boardsModule: ModuleDefinition = {
     { path: '/categories/new', element: <NewCategoryPage /> },
     { path: '/categories/:slug', element: <CategoryPage /> },
     { path: '/my-posts', element: <MyPostsPage /> },
+    { path: '/my-payments', element: <PaymentsPage /> },
     { path: '/receipts', element: <ReceiptsPage /> },
     { path: '/moderation', element: <ModerationPage /> },
   ],
@@ -88,6 +91,7 @@ const boardsModule: ModuleDefinition = {
         title: 'Moje příspěvky',
         explain: 'Příspěvky jsou na nástěnkách anonymní. Tady najdete své, vidíte jejich hodnotu a můžete ji zvýšit.',
         loginRequired: 'Pro zobrazení svých příspěvků se přihlaste.',
+        payments: 'Přehled plateb',
         receipts: 'Doklady o platbách',
         empty: 'Zatím jste nic nezveřejnili.',
         error: 'Příspěvky se nepodařilo načíst.',
@@ -108,6 +112,31 @@ const boardsModule: ModuleDefinition = {
         emailed: 'Odesláno e-mailem',
         notEmailed: 'E-mail se nepodařilo odeslat – doklad najdete zde.',
         frameTitle: 'Doklad {{number}}',
+        payments: 'Přehled plateb',
+      },
+      payments: {
+        title: 'Moje platby',
+        explain: 'Všechny vaše platby za zvýšení hodnoty příspěvků, i ty, které se nedokončily. Ke každé zaplacené platbě patří doklad.',
+        receipts: 'Doklady',
+        loginRequired: 'Pro zobrazení plateb se přihlaste.',
+        empty: 'Zatím jste nic neplatili.',
+        error: 'Platby se nepodařilo načíst.',
+        total: 'Celkem zaplaceno',
+        count_one: 'v {{count}} platbě',
+        count_few: 've {{count}} platbách',
+        count_many: 've {{count}} platbách',
+        count_other: 've {{count}} platbách',
+        status: { pending: 'Čeká na potvrzení', paid: 'Zaplaceno', failed: 'Nezdařilo se', expired: 'Nedokončeno' },
+        points: '+{{points}} bodů',
+        pendingNote: 'Platba zatím nebyla potvrzena. Pokud jste ji dokončili, potvrzení může chvíli trvat; nedokončená platba se do celkové částky nepočítá.',
+        document: 'Doklad {{number}}',
+        postState: {
+          gone: 'příspěvek nenalezen',
+          blocked: 'Příspěvek byl zablokován, zaplacená částka se nevrací.',
+          removed: 'Příspěvek byl odstraněn, zaplacená částka se nevrací.',
+          hidden: 'Příspěvek je skrytý, protože administrátor zablokoval jeho kategorii. Zaplacená částka mu zůstává.',
+        },
+        noRefund: 'Za příspěvek zablokovaný pro porušení pravidel se zaplacená částka nevrací. Viz <rules>pravidla a podmínky</rules>.',
       },
 
       form: {
@@ -335,6 +364,7 @@ const boardsModule: ModuleDefinition = {
         title: 'My posts',
         explain: 'Posts are anonymous on the boards. Here you find your own, see what they are worth and can raise their value.',
         loginRequired: 'Sign in to see your posts.',
+        payments: 'Payment overview',
         receipts: 'Payment receipts',
         empty: 'You have not published anything yet.',
         error: 'Could not load the posts.',
@@ -355,6 +385,29 @@ const boardsModule: ModuleDefinition = {
         emailed: 'Sent by email',
         notEmailed: 'The email could not be sent – you can read the document here.',
         frameTitle: 'Document {{number}}',
+        payments: 'Payment overview',
+      },
+      payments: {
+        title: 'My payments',
+        explain: 'All your payments to raise the value of posts, including the ones that were not completed. Every completed payment has a document.',
+        receipts: 'Documents',
+        loginRequired: 'Sign in to see your payments.',
+        empty: 'You have not paid for anything yet.',
+        error: 'Could not load the payments.',
+        total: 'Paid in total',
+        count_one: 'in {{count}} payment',
+        count_other: 'in {{count}} payments',
+        status: { pending: 'Awaiting confirmation', paid: 'Paid', failed: 'Failed', expired: 'Not completed' },
+        points: '+{{points}} points',
+        pendingNote: 'The payment has not been confirmed yet. If you completed it, the confirmation may take a moment; a payment that was not completed does not count towards the total.',
+        document: 'Document {{number}}',
+        postState: {
+          gone: 'post not found',
+          blocked: 'The post was blocked; the amount paid is not refunded.',
+          removed: 'The post was removed; the amount paid is not refunded.',
+          hidden: 'The post is hidden because an administrator blocked its category. The amount paid stays with it.',
+        },
+        noRefund: 'The amount paid is not refunded for a post blocked for breaking the rules. See the <rules>terms and rules</rules>.',
       },
 
       form: {

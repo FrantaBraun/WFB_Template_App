@@ -155,6 +155,44 @@ class ReceiptOut(BaseModel):
     emailed: bool
 
 
+class PaymentOut(BaseModel):
+    """One payment the signed-in user started for one of their posts, whatever
+    became of it: status is the gateway's ("pending" until Stripe confirms,
+    "paid", "failed" or "expired" - only a paid one counts as money spent).
+    post_title and post_status are the post's *today* (the document keeps the
+    title as it was when issued); category_blocked says the post is hidden
+    because its category is. A blocked or removed post keeps what was paid for
+    it - nothing is refunded. receipt_id / receipt_number identify the
+    document issued for a paid payment (GET /me/receipts/{id}/document)."""
+
+    id: uuid.UUID
+    status: Literal["pending", "paid", "failed", "expired"]
+    amount: int
+    currency: str
+    points: int
+    created_at: datetime
+    paid_at: datetime | None
+    post_title: str | None
+    post_status: Literal["published", "blocked", "removed"] | None
+    category_blocked: bool
+    receipt_id: uuid.UUID | None
+    receipt_number: str | None
+
+
+class PaymentSummary(BaseModel):
+    """What the user has actually paid: completed payments only, in cents."""
+
+    paid_count: int
+    paid_cents: int
+    currency: str
+
+
+class PaymentHistory(BaseModel):
+    summary: PaymentSummary
+    items: list[PaymentOut]
+    has_more: bool
+
+
 class AdminReceiptOut(ReceiptOut):
     """What an administrator sees of a document's delivery - including the
     address it was sent to and why a send failed."""

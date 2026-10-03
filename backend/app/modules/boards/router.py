@@ -39,7 +39,7 @@ from app.models.user import User
 from app.modules.boards.admin_router import router as admin_router
 from app.modules.boards.config import BoardsConfig, get_config
 from app.modules.boards.deps import get_active_user, get_optional_user
-from app.modules.boards import documents, receipts
+from app.modules.boards import documents, history, receipts
 from app.modules.boards.models import STATUS_PUBLISHED, Category, Post, Receipt, Resonance
 from app.modules.boards.payments import CURRENCY
 from app.modules.boards.moderation.ai import AiModerator, get_ai_moderator
@@ -51,14 +51,24 @@ from app.modules.boards.schemas import (
     CategoryPage,
     MeOut,
     MyPostPage,
+    PaymentHistory,
     PaymentsInfo,
+    PaymentSummary,
     PostCreate,
     PostOut,
     PostPage,
     ReceiptOut,
 )
 from app.modules.boards.service import make_machine_rules, rank_expression, unique_slug
-from app.modules.boards.views import assessment_out, category_out, get_category, my_post_out, post_out, receipt_out
+from app.modules.boards.views import (
+    assessment_out,
+    category_out,
+    get_category,
+    my_post_out,
+    payment_out,
+    post_out,
+    receipt_out,
+)
 from app.modules.registry import load_enabled_module_keys
 
 router = APIRouter()
@@ -126,6 +136,26 @@ async def my_posts(
     now = datetime.now(timezone.utc)
     return MyPostPage(
         items=[my_post_out(post, category, config, now=now) for post, category in rows[: config.page_size]],
+        has_more=len(rows) > config.page_size,
+    )
+
+
+@router.get("/me/payments")
+async def my_payments(
+    offset: int = Query(default=0, ge=0),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    config: BoardsConfig = Depends(get_config),
+) -> PaymentHistory:
+    """The signed-in user's payment overview: every payment they started for
+    their posts, newest first, whatever became of it, with the post's state
+    today and the document issued - and what the completed ones add up to
+    (the total covers all pages). A blocked account may still look."""
+    paid_count, paid_cents = await history.paid_totals(db, user.id)
+    rows = await history.entries(db, user.id, offset=offset, limit=config.page_size + 1)
+    return PaymentHistory(
+        summary=PaymentSummary(paid_count=paid_count, paid_cents=paid_cents, currency=CURRENCY),
+        items=[payment_out(entry) for entry in rows[: config.page_size]],
         has_more=len(rows) > config.page_size,
     )
 

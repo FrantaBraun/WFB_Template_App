@@ -12,6 +12,7 @@ import usePageMeta from '../../hooks/usePageMeta'
 import {
   API_BASE,
   CATEGORIES_PATH,
+  MY_PAYMENTS_PATH,
   RECEIPTS_PATH,
   categoryPath,
   fetchJson,
@@ -101,6 +102,10 @@ export default function MyPostsPage() {
         <>
           <p className="mb-6 text-sm text-slate-600 dark:text-slate-400">
             {t('myPosts.explain')}{' '}
+            <Link to={MY_PAYMENTS_PATH} className="underline underline-offset-4 hover:no-underline">
+              {t('myPosts.payments')}
+            </Link>
+            {' · '}
             <Link to={RECEIPTS_PATH} className="underline underline-offset-4 hover:no-underline">
               {t('myPosts.receipts')}
             </Link>

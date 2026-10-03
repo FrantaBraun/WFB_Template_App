@@ -79,7 +79,7 @@ export default function ModerationPosts({ onEditRules }: { onEditRules: (slug: s
 
   function search(event: FormEvent) {
     event.preventDefault()
-    setApplied(draft)
+    setApplied({ ...draft })
   }
 
   function replace(updated: AdminPost) {
