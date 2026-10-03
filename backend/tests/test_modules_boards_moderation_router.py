@@ -4,7 +4,7 @@
 
 """Moderation through the boards endpoints: the check before publishing, the
 risk confirmation, blocked accounts, and the administrators' /manage side
-(finding and blocking posts, strikes, machine rules).
+(finding, blocking and restoring posts, strikes, machine rules).
 
 Same setup as test_modules_boards_router.py: the module's router on a
 throwaway app, ASGITransport, and boards tables emptied inside each test's
@@ -528,6 +528,7 @@ async def test_blocked_and_removed_posts_are_gone_from_the_boards(client, alice,
     [
         ("get", "/posts", None),
         ("post", f"/posts/{uuid.uuid4()}/block", {"reason": "x"}),
+        ("post", f"/posts/{uuid.uuid4()}/restore", None),
         ("get", "/categories/general/rules", None),
         ("put", "/categories/general/rules", {"keywords": [], "notes": ""}),
         ("post", "/categories/general/rules/rebuild", None),
@@ -695,6 +696,143 @@ async def test_only_a_published_post_can_be_blocked(client, alice, admin, db_ses
     assert (again.status_code, missing.status_code) == (409, 404)
     notifications = await db_session.scalar(select(func.count()).select_from(Notification).where(Notification.user_id == alice.user.id))
     assert notifications == 1  # not told twice
+
+
+# --- Restoring a post ---------------------------------------------------------
+
+
+async def _restore(client, admin, post):
+    return await client.post(f"{MANAGE}/posts/{post.id}/restore", headers=admin.headers)
+
+
+async def test_restoring_a_blocked_post_publishes_it_again_exactly_as_it_was(client, alice, bob, admin, db_session):
+    category = await _category(db_session, alice)
+    post = await _post(db_session, alice, category, "mistake", paid_cents=2500, resonance_count=3)
+    await _block(client, admin, post)
+    assert (await client.get(f"{BASE}/categories/general/posts")).json()["items"] == []
+
+    resp = await _restore(client, admin, post)
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert (body["status"], body["moderation_reason"], body["moderated_at"]) == ("published", None, None)
+    assert body["author_blocked"] is False
+    await db_session.refresh(post)
+    assert (post.status, post.moderation_reason, post.moderated_at, post.moderated_by_id) == ("published", None, None, None)
+    # What was paid and agreed with is exactly what it was - nothing was refunded when it was blocked.
+    assert (post.paid_cents, post.resonance_count) == (2500, 3)
+    shown = (await client.get(f"{BASE}/categories/general/posts")).json()["items"]
+    assert [p["title"] for p in shown] == ["mistake"]
+    assert (await client.post(f"{BASE}/posts/{post.id}/resonance", headers=bob.headers)).status_code == 200
+
+
+async def test_restoring_tells_the_author(client, alice, admin, db_session):
+    post = await _post(db_session, alice, await _category(db_session, alice), "mistake")
+    await _block(client, admin, post)
+    await _restore(client, admin, post)
+
+    restored = [
+        n
+        for n in await db_session.scalars(select(Notification).where(Notification.user_id == alice.user.id))
+        if n.message_key == "boards:notification.postRestored"
+    ]
+
+    assert len(restored) == 1
+    assert restored[0].message_params == {"title": "mistake"}
+    assert restored[0].reference_id == post.id
+
+
+async def test_the_author_sees_a_restored_post_as_published_without_a_reason(client, alice, admin, db_session):
+    post = await _post(db_session, alice, await _category(db_session, alice))
+    await _block(client, admin, post)
+    await _restore(client, admin, post)
+
+    mine = (await client.get(f"{BASE}/me/posts", headers=alice.headers)).json()["items"][0]
+
+    assert (mine["status"], mine["moderation_reason"]) == ("published", None)
+
+
+async def test_a_restored_post_no_longer_counts_as_a_strike(client, alice, admin, db_session):
+    """Two violations, one of them withdrawn: a third makes two, not three."""
+    category = await _category(db_session, alice)
+    first, second, third = await _published_posts(db_session, alice, category, 3)
+    await _block(client, admin, first)
+    await _block(client, admin, second)
+
+    await _restore(client, admin, first)
+    result = await _block(client, admin, third)
+
+    assert result.json()["account_blocked"] is False
+    await db_session.refresh(alice.user)
+    assert alice.user.is_blocked is False
+
+
+async def test_a_post_can_be_blocked_again_after_a_restore(client, alice, admin, db_session):
+    post = await _post(db_session, alice, await _category(db_session, alice))
+    await _block(client, admin, post, "First reason.")
+    await _restore(client, admin, post)
+
+    resp = await _block(client, admin, post, "Second reason.")
+
+    assert (resp.status_code, resp.json()["post"]["moderation_reason"]) == (200, "Second reason.")
+
+
+async def test_only_a_post_that_is_down_can_be_restored(client, alice, admin, db_session):
+    post = await _post(db_session, alice, await _category(db_session, alice))
+
+    published = await _restore(client, admin, post)
+    missing = await client.post(f"{MANAGE}/posts/{uuid.uuid4()}/restore", headers=admin.headers)
+
+    assert (published.status_code, missing.status_code) == (409, 404)
+    assert await db_session.scalar(select(func.count()).select_from(Notification).where(Notification.user_id == alice.user.id)) == 0
+
+
+async def test_a_post_taken_down_with_an_account_comes_back_only_after_the_account_does(client, alice, admin, db_session):
+    category = await _category(db_session, alice)
+    posts = await _published_posts(db_session, alice, category, 4)
+    for post in posts[:3]:
+        await _block(client, admin, post)
+    removed = posts[3]
+    await db_session.refresh(removed)
+    assert removed.status == "removed"
+
+    refused = await _restore(client, admin, removed)
+    assert refused.status_code == 409
+    assert refused.json()["detail"] == {"code": "author_blocked"}
+    await db_session.refresh(removed)
+    assert removed.status == "removed"
+
+    await client.post(f"{MANAGE}/users/{alice.user.id}/unblock", headers=admin.headers)
+    accepted = await _restore(client, admin, removed)
+
+    assert accepted.status_code == 200
+    await db_session.refresh(removed)
+    assert removed.status == "published"
+
+
+async def test_a_blocked_post_of_a_blocked_account_is_not_restored_either(client, alice, admin, db_session):
+    _use_config(strike_limit=1)
+    post = await _post(db_session, alice, await _category(db_session, alice))
+    assert (await _block(client, admin, post)).json()["account_blocked"] is True
+
+    resp = await _restore(client, admin, post)
+
+    assert (resp.status_code, resp.json()["detail"]["code"]) == (409, "author_blocked")
+    await db_session.refresh(post)
+    assert post.status == "blocked"
+
+
+async def test_a_post_restored_into_a_blocked_category_stays_hidden(client, alice, admin, db_session):
+    category = await _category(db_session, alice)
+    post = await _post(db_session, alice, category)
+    await _block(client, admin, post)
+    category.status = "blocked"
+    await db_session.commit()
+
+    resp = await _restore(client, admin, post)
+
+    assert (resp.status_code, resp.json()["category_blocked"]) == (200, True)
+    assert (await client.get(f"{BASE}/categories/general/posts")).status_code == 404
 
 
 # --- Strikes and account blocks -----------------------------------------------

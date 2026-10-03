@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { API_BASE, categoryPath, fetchJson, postJson, type AdminPost, type Page } from './api'
+import { API_BASE, categoryPath, errorDetail, fetchJson, postJson, type AdminPost, type Page } from './api'
 import ReasonForm from './ReasonForm'
 
 interface Filters {
@@ -184,7 +184,9 @@ function PostRow({
 }) {
   const { t } = useTranslation('boards')
   const [blocking, setBlocking] = useState(false)
-  const [outcome, setOutcome] = useState<{ ok: boolean; accountBlocked?: boolean } | null>(null)
+  const [busy, setBusy] = useState(false)
+  // What the last action did: a message key, and for a block whether it also blocked the account.
+  const [outcome, setOutcome] = useState<{ ok: boolean; key: string; accountBlocked?: boolean } | null>(null)
 
   async function block(reason: string) {
     try {
@@ -194,9 +196,24 @@ function PostRow({
       )
       onChange(result.post)
       setBlocking(false)
-      setOutcome({ ok: true, accountBlocked: result.account_blocked })
+      setOutcome({ ok: true, key: 'admin.posts.blocked', accountBlocked: result.account_blocked })
     } catch {
-      setOutcome({ ok: false })
+      setOutcome({ ok: false, key: 'admin.error' })
+    }
+  }
+
+  async function restore() {
+    if (busy || !window.confirm(t('admin.posts.confirmRestore'))) return
+    setBusy(true)
+    try {
+      onChange(await postJson<AdminPost>(`${API_BASE}/manage/posts/${post.id}/restore`))
+      setOutcome({ ok: true, key: 'admin.posts.restoredDone' })
+    } catch (err) {
+      // A blocked account comes first: its posts stay down until it is unblocked.
+      const authorBlocked = errorDetail(err)?.code === 'author_blocked'
+      setOutcome({ ok: false, key: authorBlocked ? 'admin.posts.restoreAuthorBlocked' : 'admin.error' })
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -264,13 +281,23 @@ function PostRow({
         <button type="button" onClick={() => onEditRules(post.category_slug)} className="underline underline-offset-4 hover:no-underline">
           {t('admin.posts.editRules')}
         </button>
+        {post.status !== 'published' && (
+          <button
+            type="button"
+            onClick={restore}
+            disabled={busy}
+            className="rounded border border-slate-300 px-3 py-1 hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
+          >
+            {t('admin.posts.restore')}
+          </button>
+        )}
         {outcome?.ok && (
           <span role="status">
-            {t('admin.posts.blocked')}
+            {t(outcome.key)}
             {outcome.accountBlocked && <strong> {t('admin.posts.accountBlocked')}</strong>}
           </span>
         )}
-        {outcome && !outcome.ok && <span role="alert" className="text-red-600 dark:text-red-400">{t('admin.error')}</span>}
+        {outcome && !outcome.ok && <span role="alert" className="text-red-600 dark:text-red-400">{t(outcome.key)}</span>}
       </div>
 
       {blocking && (

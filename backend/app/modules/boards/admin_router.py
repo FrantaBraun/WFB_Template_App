@@ -7,7 +7,7 @@
 Administrators are this application's own: the local User.is_admin flag
 (app.api.deps.require_admin), never the auth service's role. They can find
 any post, block it with a reason (level 3 of the content checks - see
-moderation/enforcement.py), read and edit a category's machine rules, and
+moderation/enforcement.py) or restore a blocked one, read and edit a category's machine rules, and
 lift an account block. They can also block a whole category (and restore
 it). This is the only place an author's or a creator's id is ever returned:
 following up on repeat violations needs it.
@@ -33,6 +33,7 @@ from app.modules.boards.moderation.ai import AiModerator, get_ai_moderator
 from app.modules.boards.schemas import (
     AdminCategoryOut,
     AdminCategoryPage,
+    AdminPostOut,
     AdminPostPage,
     AdminReceiptOut,
     BlockCategoryIn,
@@ -134,6 +135,35 @@ async def block_post(
         post=admin_post_out(post, category, config, author_blocked=author.is_blocked, now=now),
         account_blocked=account_blocked,
     )
+
+
+@router.post("/posts/{post_id}/restore")
+async def restore_post(
+    post_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    config: BoardsConfig = Depends(get_config),
+) -> AdminPostOut:
+    """Undoes a block: publishes a blocked - or removed - post again, tells
+    its author, and stops counting it as a violation (so it may also keep the
+    author's account clear of the strike limit). It keeps what was paid for
+    it. Refused while its author's account is blocked: that comes first, as
+    a published post of a blocked account would contradict the block."""
+    # Locked, like blocking: two administrators can't both notify the author.
+    post = (await db.scalars(select(Post).where(Post.id == post_id).with_for_update())).first()
+    if post is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.status == STATUS_PUBLISHED:
+        raise HTTPException(status_code=409, detail="Post is not blocked")
+    author = await db.get(User, post.author_id)
+    if author.is_blocked:
+        raise HTTPException(status_code=409, detail={"code": "author_blocked"})
+
+    await enforcement.restore_post(db, post)
+    await db.commit()
+
+    category = await db.get(Category, post.category_id)
+    await db.refresh(post)
+    return admin_post_out(post, category, config, author_blocked=False, now=datetime.now(timezone.utc))
 
 
 # --- Categories ---------------------------------------------------------------
@@ -307,7 +337,8 @@ async def list_blocked_users(db: AsyncSession = Depends(get_db)) -> list[Blocked
 @router.post("/users/{user_id}/unblock")
 async def unblock_user(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> BlockedUserOut:
     """Lifts an account block and gives the account a clean start (earlier
-    violations stop counting). The posts taken down with it stay down."""
+    violations stop counting). The posts taken down with it stay down until
+    an administrator restores them one by one."""
     user = await db.get(User, user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")

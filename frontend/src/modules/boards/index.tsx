@@ -196,6 +196,7 @@ const boardsModule: ModuleDefinition = {
         postBlocked: 'Váš příspěvek „{{title}}“ byl odstraněn pro porušení pravidel. Důvod: {{reason}}',
         accountBlocked:
           'Váš účet byl zablokován pro opakované porušení pravidel. Nelze přidávat příspěvky ani kategorie a vyjadřovat souznění.',
+        postRestored: 'Váš příspěvek „{{title}}“ byl obnoven a je zase zveřejněný. Omlouváme se za potíže.',
         categoryBlocked: 'Vaše kategorie „{{title}}“ byla zablokována pro porušení pravidel a už není veřejná. Důvod: {{reason}}',
         categoryRestored: 'Vaše kategorie „{{title}}“ byla obnovena a je zase veřejná.',
       },
@@ -233,6 +234,10 @@ const boardsModule: ModuleDefinition = {
           reasonLabel: 'Důvod (uvidí ho autor jako oznámení)',
           reasonHint: 'Příspěvek bude odstraněn bez náhrady zaplacené částky.',
           confirmBlock: 'Zablokovat příspěvek',
+          restore: 'Obnovit',
+          confirmRestore: 'Obnovit příspěvek? Zveřejní se znovu i se zaplacenou částkou, přestane se počítat jako závadný a autor o tom dostane oznámení.',
+          restoredDone: 'Příspěvek byl obnoven a autor upozorněn.',
+          restoreAuthorBlocked: 'Účet autora je zablokován. Nejdřív ho odblokujte (záložka Zablokované účty), pak příspěvek obnovte.',
         },
         categories: {
           explain:
@@ -273,10 +278,10 @@ const boardsModule: ModuleDefinition = {
           invalid: 'Zkontrolujte pravidla – klíčová slova nesmí být prázdná a váha musí být mezi 0,1 a 10.',
         },
         accounts: {
-          explain: 'Účty zablokované pro opakovaná porušení pravidel. Odblokováním účet začne s čistým štítem; odstraněné příspěvky se nevracejí.',
+          explain: 'Účty zablokované pro opakovaná porušení pravidel. Odblokováním účet začne s čistým štítem; odstraněné příspěvky se samy nevrátí, ale můžete je obnovit na záložce Příspěvky (stav Odstraněné).',
           empty: 'Žádné zablokované účty.',
           unblock: 'Odblokovat',
-          confirmUnblock: 'Odblokovat účet? Dřívější porušení se přestanou počítat, odstraněné příspěvky se ale nevrátí.',
+          confirmUnblock: 'Odblokovat účet? Dřívější porušení se přestanou počítat, odstraněné příspěvky se ale samy nevrátí – obnovíte je jednotlivě.',
         },
       },
     },
@@ -438,6 +443,7 @@ const boardsModule: ModuleDefinition = {
         postBlocked: 'Your post "{{title}}" was removed for breaking the rules. Reason: {{reason}}',
         accountBlocked:
           'Your account was blocked for repeated rule violations. You can no longer add posts or categories or resonate.',
+        postRestored: 'Your post "{{title}}" was restored and is published again. We are sorry for the trouble.',
         categoryBlocked: 'Your category "{{title}}" was blocked for breaking the rules and is no longer public. Reason: {{reason}}',
         categoryRestored: 'Your category "{{title}}" was restored and is public again.',
       },
@@ -475,6 +481,10 @@ const boardsModule: ModuleDefinition = {
           reasonLabel: 'Reason (the author will see it as a notification)',
           reasonHint: 'The post is removed without a refund of what was paid for it.',
           confirmBlock: 'Block the post',
+          restore: 'Restore',
+          confirmRestore: 'Restore this post? It is published again with what was paid for it, stops counting as a violation, and its author is notified.',
+          restoredDone: 'The post was restored and its author notified.',
+          restoreAuthorBlocked: "The author's account is blocked. Unblock it first (the Blocked accounts tab), then restore the post.",
         },
         categories: {
           explain:
@@ -515,10 +525,10 @@ const boardsModule: ModuleDefinition = {
           invalid: 'Check the rules - keywords cannot be empty and a weight must be between 0.1 and 10.',
         },
         accounts: {
-          explain: 'Accounts blocked for repeated rule violations. Unblocking gives an account a clean slate; removed posts do not come back.',
+          explain: 'Accounts blocked for repeated rule violations. Unblocking gives an account a clean slate; removed posts do not come back by themselves, but you can restore them on the Posts tab (state Removed).',
           empty: 'No blocked accounts.',
           unblock: 'Unblock',
-          confirmUnblock: 'Unblock this account? Earlier violations stop counting, but removed posts do not come back.',
+          confirmUnblock: 'Unblock this account? Earlier violations stop counting, but removed posts do not come back by themselves - you restore them one by one.',
         },
       },
     },

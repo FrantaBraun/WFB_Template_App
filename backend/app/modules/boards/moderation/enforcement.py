@@ -15,6 +15,10 @@ Those collateral removals are "removed", not "blocked": they are not strikes.
 When an administrator lifts the block, the account gets a clean start:
 violations from before that moment (User.strikes_reset_at) no longer count.
 
+An administrator can also undo a block: the post is published again, no longer
+counts as a strike, and keeps what was paid for it. (An account that was
+blocked must be unblocked first - see the admin router.)
+
 Blocking a category hides the board and everything in it from the public and
 tells the category's creator why, but changes nothing in it: the posts keep
 their state, what was paid for them and their resonances, and none of it is a
@@ -41,6 +45,7 @@ REASON_ACCOUNT_BLOCKED = "account_blocked"
 
 NOTIFICATION_POST_BLOCKED = "boards:notification.postBlocked"
 NOTIFICATION_ACCOUNT_BLOCKED = "boards:notification.accountBlocked"
+NOTIFICATION_POST_RESTORED = "boards:notification.postRestored"
 NOTIFICATION_CATEGORY_BLOCKED = "boards:notification.categoryBlocked"
 NOTIFICATION_CATEGORY_RESTORED = "boards:notification.categoryRestored"
 
@@ -104,6 +109,18 @@ async def block_post(
         return False
     await block_account(db, author, REASON_REPEATED_VIOLATIONS, now)
     return True
+
+
+async def restore_post(db: AsyncSession, post: Post) -> None:
+    """Publishes a blocked (or removed) post again and tells its author. It
+    stops counting towards the strike limit - it is no longer blocked - and
+    keeps its payments, resonances and age as they were; nothing about the
+    time it was down is made up for."""
+    post.status = STATUS_PUBLISHED
+    post.moderation_reason = None
+    post.moderated_at = None
+    post.moderated_by_id = None
+    await create_notification(db, post.author_id, NOTIFICATION_POST_RESTORED, {"title": post.title}, reference_id=post.id)
 
 
 async def block_category(db: AsyncSession, category: Category, admin_id: uuid.UUID, reason: str, now: datetime) -> None:
