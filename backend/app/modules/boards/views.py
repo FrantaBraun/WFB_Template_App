@@ -12,9 +12,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.boards.config import BoardsConfig
-from app.modules.boards.models import Category, Post, Receipt
+from app.modules.boards.models import STATUS_BLOCKED, STATUS_PUBLISHED, Category, Post, Receipt
 from app.modules.boards.moderation.assess import Assessment
 from app.modules.boards.schemas import (
+    AdminCategoryOut,
     AdminPostOut,
     AdminReceiptOut,
     AssessmentOut,
@@ -70,6 +71,7 @@ def my_post_out(post: Post, category: Category, config: BoardsConfig, *, now: da
         value=_value(post, config, now),
         resonance_count=post.resonance_count,
         paid_cents=post.paid_cents,
+        category_blocked=category.status == STATUS_BLOCKED,
         moderation_reason=post.moderation_reason,
         created_at=post.created_at,
     )
@@ -96,11 +98,28 @@ def admin_post_out(
         violation_score=post.violation_score,
         topic_mismatch_score=post.topic_mismatch_score,
         findings=stored_findings(post),
+        category_blocked=category.status != STATUS_PUBLISHED,
         moderation_reason=post.moderation_reason,
         moderated_at=post.moderated_at,
         author_id=post.author_id,
         author_blocked=author_blocked,
         created_at=post.created_at,
+    )
+
+
+def admin_category_out(category: Category, post_count: int) -> AdminCategoryOut:
+    return AdminCategoryOut(
+        id=category.id,
+        title=category.title,
+        slug=category.slug,
+        description=category.description,
+        status=category.status,
+        post_count=post_count,
+        violation_score=category.violation_score,
+        moderation_reason=category.moderation_reason,
+        moderated_at=category.moderated_at,
+        created_by_id=category.created_by_id,
+        created_at=category.created_at,
     )
 
 
@@ -146,8 +165,13 @@ def assessment_out(assessment: Assessment) -> AssessmentOut:
     )
 
 
-async def get_category(db: AsyncSession, slug: str) -> Category:
-    category = (await db.scalars(select(Category).where(Category.slug == slug))).first()
+async def get_category(db: AsyncSession, slug: str, *, include_blocked: bool = False) -> Category:
+    """The category with this slug. A blocked one is "not found" for everyone
+    but the administrators, who ask for it with include_blocked."""
+    query = select(Category).where(Category.slug == slug)
+    if not include_blocked:
+        query = query.where(Category.status == STATUS_PUBLISHED)
+    category = (await db.scalars(query)).first()
     if category is None:
         raise HTTPException(status_code=404, detail="Category not found")
     return category

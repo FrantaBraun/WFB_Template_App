@@ -93,7 +93,9 @@ const boardsModule: ModuleDefinition = {
         error: 'Příspěvky se nepodařilo načíst.',
         paid: 'zaplaceno {{amount}}',
         reason: 'Důvod odstranění',
-        status: { published: 'Zveřejněný', blocked: 'Zablokovaný', removed: 'Odstraněný' },
+        status: { published: 'Zveřejněný', blocked: 'Zablokovaný', removed: 'Odstraněný', hidden: 'Skrytý' },
+        hiddenNote:
+          'Kategorii zablokoval administrátor, a proto příspěvek teď nikdo nevidí. Nic se nesmazalo: pokud kategorii obnoví, příspěvek se vrátí i se zaplacenou částkou.',
       },
       receipts: {
         title: 'Moje doklady',
@@ -194,6 +196,8 @@ const boardsModule: ModuleDefinition = {
         postBlocked: 'Váš příspěvek „{{title}}“ byl odstraněn pro porušení pravidel. Důvod: {{reason}}',
         accountBlocked:
           'Váš účet byl zablokován pro opakované porušení pravidel. Nelze přidávat příspěvky ani kategorie a vyjadřovat souznění.',
+        categoryBlocked: 'Vaše kategorie „{{title}}“ byla zablokována pro porušení pravidel a už není veřejná. Důvod: {{reason}}',
+        categoryRestored: 'Vaše kategorie „{{title}}“ byla obnovena a je zase veřejná.',
       },
       admin: {
         title: 'Moderace',
@@ -201,7 +205,7 @@ const boardsModule: ModuleDefinition = {
         forbidden: 'K moderaci nemáte oprávnění.',
         error: 'Operace se nezdařila.',
         cancel: 'Zrušit',
-        tabs: { posts: 'Příspěvky', rules: 'Pravidla kategorií', accounts: 'Zablokované účty' },
+        tabs: { posts: 'Příspěvky', categories: 'Kategorie', rules: 'Pravidla kategorií', accounts: 'Zablokované účty' },
         status: { published: 'Zveřejněné', blocked: 'Zablokované', removed: 'Odstraněné', all: 'Všechny' },
         reason: {
           account_blocked: 'odstraněno se zablokováním účtu autora',
@@ -221,6 +225,7 @@ const boardsModule: ModuleDefinition = {
           reason: 'Důvod blokace',
           author: 'Autor',
           authorBlocked: 'účet autora je zablokován',
+          categoryBlocked: 'Kategorie je zablokována – příspěvek veřejně není vidět.',
           block: 'Zablokovat…',
           editRules: 'Pravidla kategorie',
           blocked: 'Příspěvek byl zablokován a autor upozorněn.',
@@ -228,6 +233,22 @@ const boardsModule: ModuleDefinition = {
           reasonLabel: 'Důvod (uvidí ho autor jako oznámení)',
           reasonHint: 'Příspěvek bude odstraněn bez náhrady zaplacené částky.',
           confirmBlock: 'Zablokovat příspěvek',
+        },
+        categories: {
+          explain:
+            'Všechny kategorie, i zablokované (veřejný seznam je vynechává). Zablokovaná kategorie zmizí pro návštěvníky i se všemi příspěvky, nelze do ní psát, souznít ani platit. Nic se nemaže: po obnovení je všechno, jak bylo. Příspěvky ani jejich autoři se tím nepenalizují.',
+          search: 'Hledat v názvu a adrese',
+          empty: 'Nic nenalezeno.',
+          created: 'založeno {{date}}, skóre při založení {{score}} %',
+          creator: 'Zakladatel',
+          block: 'Zablokovat…',
+          restore: 'Obnovit',
+          reasonLabel: 'Důvod (uvidí ho zakladatel kategorie jako oznámení)',
+          reasonHint: 'Kategorie i s příspěvky zmizí ze všech seznamů; nic se nemaže a po obnovení se vrátí.',
+          confirmBlock: 'Zablokovat kategorii',
+          confirmRestore: 'Obnovit kategorii? Vrátí se i se všemi příspěvky a zakladatel o tom dostane oznámení.',
+          blockedDone: 'Kategorie byla zablokována a zakladatel upozorněn.',
+          restoredDone: 'Kategorie byla obnovena a zakladatel upozorněn.',
         },
         rules: {
           category: 'Kategorie (adresa)',
@@ -314,7 +335,9 @@ const boardsModule: ModuleDefinition = {
         error: 'Could not load the posts.',
         paid: 'paid {{amount}}',
         reason: 'Reason for removal',
-        status: { published: 'Published', blocked: 'Blocked', removed: 'Removed' },
+        status: { published: 'Published', blocked: 'Blocked', removed: 'Removed', hidden: 'Hidden' },
+        hiddenNote:
+          'An administrator blocked the category, so nobody can see this post right now. Nothing was deleted: if the category is restored, the post comes back with what was paid for it.',
       },
       receipts: {
         title: 'My receipts',
@@ -415,6 +438,8 @@ const boardsModule: ModuleDefinition = {
         postBlocked: 'Your post "{{title}}" was removed for breaking the rules. Reason: {{reason}}',
         accountBlocked:
           'Your account was blocked for repeated rule violations. You can no longer add posts or categories or resonate.',
+        categoryBlocked: 'Your category "{{title}}" was blocked for breaking the rules and is no longer public. Reason: {{reason}}',
+        categoryRestored: 'Your category "{{title}}" was restored and is public again.',
       },
       admin: {
         title: 'Moderation',
@@ -422,7 +447,7 @@ const boardsModule: ModuleDefinition = {
         forbidden: 'You are not allowed to moderate.',
         error: 'The operation failed.',
         cancel: 'Cancel',
-        tabs: { posts: 'Posts', rules: 'Category rules', accounts: 'Blocked accounts' },
+        tabs: { posts: 'Posts', categories: 'Categories', rules: 'Category rules', accounts: 'Blocked accounts' },
         status: { published: 'Published', blocked: 'Blocked', removed: 'Removed', all: 'All' },
         reason: {
           account_blocked: 'removed when its author was blocked',
@@ -442,6 +467,7 @@ const boardsModule: ModuleDefinition = {
           reason: 'Reason for blocking',
           author: 'Author',
           authorBlocked: "the author's account is blocked",
+          categoryBlocked: "The category is blocked - the post can't be seen publicly.",
           block: 'Block…',
           editRules: "Category's rules",
           blocked: 'The post was blocked and its author notified.',
@@ -449,6 +475,22 @@ const boardsModule: ModuleDefinition = {
           reasonLabel: 'Reason (the author will see it as a notification)',
           reasonHint: 'The post is removed without a refund of what was paid for it.',
           confirmBlock: 'Block the post',
+        },
+        categories: {
+          explain:
+            "Every category, blocked ones included (the public list leaves them out). A blocked category disappears for visitors together with all its posts, and nothing can be posted, resonated with or paid for in it. Nothing is deleted: once it is restored, everything is as it was. This is no penalty for the posts or their authors.",
+          search: 'Search the title and address',
+          empty: 'Nothing found.',
+          created: 'created {{date}}, score when created {{score}} %',
+          creator: 'Creator',
+          block: 'Block…',
+          restore: 'Restore',
+          reasonLabel: 'Reason (the category\'s creator will see it as a notification)',
+          reasonHint: 'The category disappears from every list together with its posts; nothing is deleted, and it comes back when restored.',
+          confirmBlock: 'Block the category',
+          confirmRestore: 'Restore this category? It comes back with all its posts, and its creator is notified.',
+          blockedDone: 'The category was blocked and its creator notified.',
+          restoredDone: 'The category was restored and its creator notified.',
         },
         rules: {
           category: 'Category (address)',

@@ -15,7 +15,7 @@ The gateway module knows nothing of posts: it calls resolve() to price a
 request and on_paid() - exactly once, in the transaction that marks the
 payment paid - to apply it. The payer picks the amount, so resolve() is where
 it is validated: a whole number inside the configured range, for a post the
-payer wrote and that is still published.
+payer wrote and that is still published, in a category that is not blocked.
 
 Nothing is refunded: a post blocked for breaking the rules keeps what was paid
 (see the terms), and a payment that lands after a post was blocked is still
@@ -81,6 +81,8 @@ async def resolve_boost(db: AsyncSession, user: User | None, payload: dict) -> P
     post, category = row
     if post.status != STATUS_PUBLISHED:
         raise PaymentRejected("The post is no longer published", status_code=409)
+    if category.status != STATUS_PUBLISHED:
+        raise PaymentRejected("The category is blocked", status_code=409)
 
     points = amount_usd * config.points_per_usd
     title = post.title if len(post.title) <= _DESCRIPTION_TITLE_MAX else post.title[: _DESCRIPTION_TITLE_MAX - 1] + "…"

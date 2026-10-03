@@ -65,6 +65,8 @@ export interface MyPost {
   value: number
   resonance_count: number
   paid_cents: number
+  /** The post's category is blocked: the post is still "published" but nobody can see it. */
+  category_blocked: boolean
   /** An administrator's free text for a blocked post, or the code "account_blocked". */
   moderation_reason: string | null
   created_at: string
@@ -147,10 +149,27 @@ export interface AdminPost {
   violation_score: number
   topic_mismatch_score: number
   findings: Finding[]
+  category_blocked: boolean
   moderation_reason: string | null
   moderated_at: string | null
   author_id: string
   author_blocked: boolean
+  created_at: string
+}
+
+/** A category as an administrator sees it, blocked or not (GET /manage/categories). */
+export interface AdminCategory {
+  id: string
+  title: string
+  slug: string
+  description: string
+  status: 'published' | 'blocked'
+  /** Published posts in it. */
+  post_count: number
+  violation_score: number
+  moderation_reason: string | null
+  moderated_at: string | null
+  created_by_id: string
   created_at: string
 }
 

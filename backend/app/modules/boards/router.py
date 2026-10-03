@@ -187,12 +187,13 @@ async def list_categories(
     config: BoardsConfig = Depends(get_config),
 ) -> CategoryPage:
     """Busiest categories first (most published posts), then by title; the
-    client asks for the next page via offset."""
+    client asks for the next page via offset. A blocked category is not listed."""
     post_count = func.count(Post.id)
     rows = (
         await db.execute(
             select(Category, post_count)
             .outerjoin(Post, and_(Post.category_id == Category.id, Post.status == STATUS_PUBLISHED))
+            .where(Category.status == STATUS_PUBLISHED)
             .group_by(Category.id)
             .order_by(post_count.desc(), Category.title.asc(), Category.id.asc())
             .offset(offset)
@@ -355,8 +356,15 @@ async def add_resonance(
     decides whether this one counts - the primary key plus ON CONFLICT DO
     NOTHING keeps two simultaneous requests from both counting - and the
     counter only moves when it did. A post that is no longer published
-    (blocked, removed) can't be resonated with: it is as good as gone."""
-    post = await db.get(Post, post_id)
+    (blocked, removed) can't be resonated with: it is as good as gone - and
+    neither can one in a blocked category."""
+    post = (
+        await db.scalars(
+            select(Post)
+            .join(Category, Category.id == Post.category_id)
+            .where(Post.id == post_id, Category.status == STATUS_PUBLISHED)
+        )
+    ).first()
     if post is None or post.status != STATUS_PUBLISHED:
         raise HTTPException(status_code=404, detail="Post not found")
 

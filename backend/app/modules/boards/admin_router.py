@@ -8,8 +8,9 @@ Administrators are this application's own: the local User.is_admin flag
 (app.api.deps.require_admin), never the auth service's role. They can find
 any post, block it with a reason (level 3 of the content checks - see
 moderation/enforcement.py), read and edit a category's machine rules, and
-lift an account block. This is the only place a post's author id is ever
-returned: following up on repeat violations needs it.
+lift an account block. They can also block a whole category (and restore
+it). This is the only place an author's or a creator's id is ever returned:
+following up on repeat violations needs it.
 """
 
 import uuid
@@ -17,7 +18,7 @@ from datetime import datetime, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_admin
@@ -26,12 +27,15 @@ from app.database import get_db
 from app.models.user import User
 from app.modules.boards.config import BoardsConfig, get_config
 from app.modules.boards import receipts
-from app.modules.boards.models import STATUS_PUBLISHED, Category, Post, Receipt
+from app.modules.boards.models import STATUS_BLOCKED, STATUS_PUBLISHED, Category, Post, Receipt
 from app.modules.boards.moderation import enforcement
 from app.modules.boards.moderation.ai import AiModerator, get_ai_moderator
 from app.modules.boards.schemas import (
+    AdminCategoryOut,
+    AdminCategoryPage,
     AdminPostPage,
     AdminReceiptOut,
+    BlockCategoryIn,
     BlockedUserOut,
     BlockPostIn,
     BlockPostOut,
@@ -40,7 +44,7 @@ from app.modules.boards.schemas import (
     RulesOut,
 )
 from app.modules.boards.service import make_machine_rules
-from app.modules.boards.views import admin_post_out, admin_receipt_out, get_category
+from app.modules.boards.views import admin_category_out, admin_post_out, admin_receipt_out, get_category
 
 router = APIRouter(dependencies=[Depends(require_admin)])
 
@@ -132,6 +136,93 @@ async def block_post(
     )
 
 
+# --- Categories ---------------------------------------------------------------
+
+
+async def _published_posts(db: AsyncSession, category: Category) -> int:
+    return (
+        await db.scalar(
+            select(func.count())
+            .select_from(Post)
+            .where(Post.category_id == category.id, Post.status == STATUS_PUBLISHED)
+        )
+        or 0
+    )
+
+
+@router.get("/categories")
+async def find_categories(
+    q: str | None = Query(default=None, max_length=100),
+    status: Literal["published", "blocked", "all"] = "all",
+    offset: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    config: BoardsConfig = Depends(get_config),
+) -> AdminCategoryPage:
+    """Every category, blocked ones included (the public list leaves them
+    out): filter by words in the title or the address and by state; newest
+    first."""
+    post_count = func.count(Post.id)
+    query = (
+        select(Category, post_count)
+        .outerjoin(Post, and_(Post.category_id == Category.id, Post.status == STATUS_PUBLISHED))
+        .group_by(Category.id)
+    )
+    if q:
+        pattern = _like_pattern(q)
+        query = query.where(Category.title.ilike(pattern, escape="\\") | Category.slug.ilike(pattern, escape="\\"))
+    if status != "all":
+        query = query.where(Category.status == status)
+    rows = (
+        await db.execute(
+            query.order_by(Category.created_at.desc(), Category.id.desc()).offset(offset).limit(config.page_size + 1)
+        )
+    ).all()
+    return AdminCategoryPage(
+        items=[admin_category_out(category, count) for category, count in rows[: config.page_size]],
+        has_more=len(rows) > config.page_size,
+    )
+
+
+@router.post("/categories/{slug}/block")
+async def block_category(
+    slug: str,
+    body: BlockCategoryIn,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> AdminCategoryOut:
+    """Takes a whole category off the boards: hidden from every visitor, no
+    new posts, resonances or payments in it, its creator told why. Nothing in
+    it is changed or deleted - the posts keep what was paid for them, and
+    restoring the category brings everything back."""
+    # Locked, so two administrators can't both notify the creator.
+    category = (await db.scalars(select(Category).where(Category.slug == slug).with_for_update())).first()
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+    if category.status == STATUS_BLOCKED:
+        raise HTTPException(status_code=409, detail="Category is already blocked")
+
+    await enforcement.block_category(db, category, admin.id, body.reason, datetime.now(timezone.utc))
+    await db.commit()
+    await db.refresh(category)
+    return admin_category_out(category, await _published_posts(db, category))
+
+
+@router.post("/categories/{slug}/restore")
+async def restore_category(slug: str, db: AsyncSession = Depends(get_db)) -> AdminCategoryOut:
+    """Puts a blocked category back on the boards exactly as it was, and
+    tells its creator."""
+    category = (await db.scalars(select(Category).where(Category.slug == slug).with_for_update())).first()
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+    if category.status != STATUS_BLOCKED:
+        raise HTTPException(status_code=409, detail="Category is not blocked")
+
+    await enforcement.restore_category(db, category)
+    await db.commit()
+    await db.refresh(category)
+    return admin_category_out(category, await _published_posts(db, category))
+
+
 # --- Payment documents --------------------------------------------------------
 
 
@@ -165,14 +256,14 @@ def _rules_out(category: Category) -> RulesOut:
 @router.get("/categories/{slug}/rules")
 async def read_rules(slug: str, db: AsyncSession = Depends(get_db)) -> RulesOut:
     """The category's machine rules (empty for a category that has none)."""
-    return _rules_out(await get_category(db, slug))
+    return _rules_out(await get_category(db, slug, include_blocked=True))
 
 
 @router.put("/categories/{slug}/rules")
 async def write_rules(slug: str, body: MachineRules, db: AsyncSession = Depends(get_db)) -> RulesOut:
     """Replaces the machine rules with the administrator's own. An empty
     keyword list switches the topic check off for the category."""
-    category = await get_category(db, slug)
+    category = await get_category(db, slug, include_blocked=True)
     category.machine_rules = body.model_dump()
     category.machine_rules_source = "admin"
     category.machine_rules_updated_at = datetime.now(timezone.utc)
@@ -189,7 +280,7 @@ async def rebuild_rules(
 ) -> RulesOut:
     """Throws away the current rules (an administrator's edits included) and
     builds them again from the category's title and description."""
-    category = await get_category(db, slug)
+    category = await get_category(db, slug, include_blocked=True)
     rules, source = await make_machine_rules(category.title, category.description, config.moderation, ai)
     category.machine_rules = rules
     category.machine_rules_source = source

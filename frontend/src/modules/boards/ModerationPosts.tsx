@@ -7,17 +7,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import {
-  API_BASE,
-  MODERATION_REASON_MAX,
-  categoryPath,
-  charCount,
-  fetchJson,
-  postJson,
-  type AdminPost,
-  type Page,
-} from './api'
-import { Counter } from './PostForm'
+import { API_BASE, categoryPath, fetchJson, postJson, type AdminPost, type Page } from './api'
+import ReasonForm from './ReasonForm'
 
 interface Filters {
   q: string
@@ -193,16 +184,9 @@ function PostRow({
 }) {
   const { t } = useTranslation('boards')
   const [blocking, setBlocking] = useState(false)
-  const [reason, setReason] = useState('')
-  const [busy, setBusy] = useState(false)
   const [outcome, setOutcome] = useState<{ ok: boolean; accountBlocked?: boolean } | null>(null)
 
-  const reasonLength = charCount(reason)
-
-  async function block(event: FormEvent) {
-    event.preventDefault()
-    if (busy || reasonLength === 0 || reasonLength > MODERATION_REASON_MAX) return
-    setBusy(true)
+  async function block(reason: string) {
     try {
       const result = await postJson<{ post: AdminPost; account_blocked: boolean }>(
         `${API_BASE}/manage/posts/${post.id}/block`,
@@ -213,8 +197,6 @@ function PostRow({
       setOutcome({ ok: true, accountBlocked: result.account_blocked })
     } catch {
       setOutcome({ ok: false })
-    } finally {
-      setBusy(false)
     }
   }
 
@@ -260,6 +242,11 @@ function PostRow({
         {t('admin.posts.author')}: <code>{post.author_id}</code>
         {post.author_blocked && <strong> — {t('admin.posts.authorBlocked')}</strong>}
       </p>
+      {post.category_blocked && (
+        <p className="mt-1 text-xs">
+          <strong>{t('admin.posts.categoryBlocked')}</strong>
+        </p>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
         {post.status === 'published' && !blocking && (
@@ -287,34 +274,14 @@ function PostRow({
       </div>
 
       {blocking && (
-        <form onSubmit={block} className="mt-3 space-y-2 rounded-lg border border-slate-300 p-3 text-sm dark:border-slate-700">
-          <label htmlFor={`reason-${post.id}`} className="block font-medium">
-            {t('admin.posts.reasonLabel')}
-          </label>
-          <textarea
-            id={`reason-${post.id}`}
-            rows={3}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className={`${field} w-full`}
-          />
-          <p className="flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span className="text-slate-500 dark:text-slate-400">{t('admin.posts.reasonHint')}</span>
-            <Counter count={reasonLength} max={MODERATION_REASON_MAX} />
-          </p>
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={busy || reasonLength === 0 || reasonLength > MODERATION_REASON_MAX}
-              className="rounded-lg bg-red-700 px-4 py-1.5 font-medium text-white disabled:opacity-50"
-            >
-              {busy ? t('common.loading') : t('admin.posts.confirmBlock')}
-            </button>
-            <button type="button" onClick={() => setBlocking(false)} className="rounded-lg border border-slate-300 px-4 py-1.5 dark:border-slate-700">
-              {t('admin.cancel')}
-            </button>
-          </div>
-        </form>
+        <ReasonForm
+          id={`reason-${post.id}`}
+          label={t('admin.posts.reasonLabel')}
+          hint={t('admin.posts.reasonHint')}
+          submitLabel={t('admin.posts.confirmBlock')}
+          onSubmit={block}
+          onCancel={() => setBlocking(false)}
+        />
       )}
     </li>
   )

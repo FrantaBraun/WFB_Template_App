@@ -11,15 +11,17 @@ import { useAuth } from '../../context/AuthContext'
 import usePageMeta from '../../hooks/usePageMeta'
 import { CATEGORIES_PATH, useBoardsMe } from './api'
 import ModerationAccounts from './ModerationAccounts'
+import ModerationCategories from './ModerationCategories'
 import ModerationPosts from './ModerationPosts'
 import ModerationRules from './ModerationRules'
 
-type Tab = 'posts' | 'rules' | 'accounts'
-const TABS: Tab[] = ['posts', 'rules', 'accounts']
+type Tab = 'posts' | 'categories' | 'rules' | 'accounts'
+const TABS: Tab[] = ['posts', 'categories', 'rules', 'accounts']
 
 /**
  * /moderation - this application's administrators: find and block posts,
- * edit a category's machine rules, lift account blocks. Anyone else sees
+ * block or restore categories, edit a category's machine rules, lift account
+ * blocks. Anyone else sees
  * only that they may not be here (the endpoints refuse them anyway). The
  * category being edited lives in the URL (?rules=<slug>), so a post's "edit
  * the category's rules" link and a reload both land on the same editor.
@@ -78,6 +80,7 @@ export default function ModerationPage() {
           </div>
 
           {tab === 'posts' && <ModerationPosts onEditRules={editRules} />}
+          {tab === 'categories' && <ModerationCategories onEditRules={editRules} />}
           {tab === 'rules' && <ModerationRules slug={ruleSlug} onSlugChange={editRules} />}
           {tab === 'accounts' && <ModerationAccounts />}
         </>

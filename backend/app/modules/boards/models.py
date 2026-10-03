@@ -31,7 +31,13 @@ STATUS_REMOVED = "removed"
 class Category(Base):
     """One publication board: a title (its slug is generated from it) and a
     short description of what belongs there. created_by_id is kept for
-    moderation and never leaves the backend - boards show no authors."""
+    moderation and never leaves the backend - boards show no authors.
+
+    status is "published" or "blocked" (an administrator took the whole board
+    down, with a reason its creator is sent). A blocked category is gone for
+    every visitor - not listed, not found, nothing can be posted, resonated
+    with or paid for in it - but nothing in it is changed or deleted, so
+    restoring it brings it back as it was. Its slug stays taken."""
 
     # Prefixed like module_events / module_notifications, so it can't collide
     # with an application's own table (module models are imported even when
@@ -53,6 +59,13 @@ class Category(Base):
     machine_rules: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     machine_rules_source: Mapped[str | None] = mapped_column(String(20), nullable=True)
     machine_rules_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default=STATUS_PUBLISHED, server_default=STATUS_PUBLISHED, index=True
+    )
+    # Set while the category is blocked: why, when, and by whom.
+    moderation_reason: Mapped[str | None] = mapped_column(String(MODERATION_REASON_MAX), nullable=True)
+    moderated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    moderated_by_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
 
 class Post(Base):
@@ -63,7 +76,7 @@ class Post(Base):
     orders by that value. resonance_count is denormalized from the
     Resonance rows (kept in step in the same transaction) so ordering needs
     no per-post count. paid_cents is the running total of what has been paid
-    for the post; nothing writes it until payments are built, so it is 0.
+    for the post; only a confirmed payment writes it (see payments.py).
     author_id is kept for moderation and never exposed.
     """
 

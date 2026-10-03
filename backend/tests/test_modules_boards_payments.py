@@ -304,6 +304,18 @@ async def test_a_post_that_is_no_longer_published_cannot_be_paid_for(db_session,
     assert raised.value.status_code == 409
 
 
+async def test_a_post_in_a_blocked_category_cannot_be_paid_for(db_session, alice):
+    category = await _category(db_session, alice)
+    post = await _post(db_session, alice, category)
+    category.status = "blocked"
+    await db_session.commit()
+
+    with pytest.raises(PaymentRejected) as raised:
+        await resolve_boost(db_session, alice.user, _payload(post))
+
+    assert (raised.value.status_code, raised.value.detail) == (409, "The category is blocked")
+
+
 async def test_a_blocked_account_cannot_pay(make_person, db_session):
     blocked = await make_person(is_blocked=True)
     post = await _post(db_session, blocked, await _category(db_session, blocked))
@@ -364,6 +376,17 @@ async def test_a_payment_that_lands_after_a_block_is_still_recorded(db_session, 
     """The money has been taken either way; nothing is refunded."""
     post = await _post(db_session, alice, await _category(db_session, alice), status=status)
     await apply_boost(db_session, await _payment(db_session, post, 500))
+    assert await _paid_cents(db_session, post) == 500
+
+
+async def test_a_payment_that_lands_after_the_category_was_blocked_is_still_recorded(db_session, alice):
+    category = await _category(db_session, alice)
+    post = await _post(db_session, alice, category)
+    category.status = "blocked"
+    await db_session.commit()
+
+    await apply_boost(db_session, await _payment(db_session, post, 500))
+
     assert await _paid_cents(db_session, post) == 500
 
 

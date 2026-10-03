@@ -116,7 +116,10 @@ class PostPage(BaseModel):
 class MyPostOut(BaseModel):
     """One of the signed-in user's own posts, whatever its state - what the
     "my posts" page shows. moderation_reason is set for a blocked or removed
-    post (a free text from an administrator, or the code "account_blocked")."""
+    post (a free text from an administrator, or the code "account_blocked").
+    category_blocked says the post's category is blocked: the post is still
+    "published", but nobody can see it until the category is restored (the
+    reason for that is the category creator's business, not shown here)."""
 
     id: uuid.UUID
     category_slug: str
@@ -127,6 +130,7 @@ class MyPostOut(BaseModel):
     value: int
     resonance_count: int
     paid_cents: int
+    category_blocked: bool
     moderation_reason: str | None
     created_at: datetime
 
@@ -273,6 +277,7 @@ class AdminPostOut(BaseModel):
     violation_score: int
     topic_mismatch_score: int
     findings: list[FindingOut]
+    category_blocked: bool
     moderation_reason: str | None
     moderated_at: datetime | None
     author_id: uuid.UUID
@@ -299,6 +304,33 @@ class BlockPostIn(BaseModel):
 class BlockPostOut(BaseModel):
     post: AdminPostOut
     account_blocked: bool
+
+
+class BlockCategoryIn(BlockPostIn):
+    """The reason for blocking a category - sent to the category's creator."""
+
+
+class AdminCategoryOut(BaseModel):
+    """A category as an administrator sees it, blocked or not: with its
+    creator's id (shown nowhere else), its state and the reason it was
+    blocked. post_count counts the published posts in it."""
+
+    id: uuid.UUID
+    title: str
+    slug: str
+    description: str
+    status: Literal["published", "blocked"]
+    post_count: int
+    violation_score: int
+    moderation_reason: str | None
+    moderated_at: datetime | None
+    created_by_id: uuid.UUID
+    created_at: datetime
+
+
+class AdminCategoryPage(BaseModel):
+    items: list[AdminCategoryOut]
+    has_more: bool
 
 
 class BlockedUserOut(BaseModel):

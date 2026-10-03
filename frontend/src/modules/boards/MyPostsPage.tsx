@@ -22,6 +22,11 @@ import {
 } from './api'
 import BoostPanel from './BoostPanel'
 
+/** Published, but its whole category was blocked: nobody can see it until the category is restored. */
+function hidden(post: MyPost): boolean {
+  return post.status === 'published' && post.category_blocked
+}
+
 /**
  * /my-posts - the signed-in user's own posts in every state, since posts are
  * anonymous on the boards and this is where an author finds them again: to
@@ -114,13 +119,17 @@ export default function MyPostsPage() {
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h2 className="break-words font-bold">{post.title}</h2>
                     <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      {t(`myPosts.status.${post.status}`)}
+                      {t(`myPosts.status.${hidden(post) ? 'hidden' : post.status}`)}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    <Link to={categoryPath(post.category_slug)} className="underline">
-                      {post.category_title}
-                    </Link>
+                    {post.category_blocked ? (
+                      post.category_title
+                    ) : (
+                      <Link to={categoryPath(post.category_slug)} className="underline">
+                        {post.category_title}
+                      </Link>
+                    )}
                     {' · '}
                     {new Date(post.created_at).toLocaleDateString(i18n.language)}
                   </p>
@@ -133,6 +142,7 @@ export default function MyPostsPage() {
                     <span>{t('myPosts.paid', { amount: formatUsd(post.paid_cents, i18n.language) })}</span>
                   </p>
 
+                  {hidden(post) && <p className="mt-2 text-sm">{t('myPosts.hiddenNote')}</p>}
                   {post.status !== 'published' && post.moderation_reason && (
                     <p className="mt-2 text-sm">
                       <strong>{t('myPosts.reason')}:</strong>{' '}
@@ -140,7 +150,7 @@ export default function MyPostsPage() {
                     </p>
                   )}
 
-                  {post.status === 'published' && payments?.enabled && boosting !== post.id && (
+                  {post.status === 'published' && !post.category_blocked && payments?.enabled && boosting !== post.id && (
                     <button
                       type="button"
                       onClick={() => setBoosting(post.id)}
