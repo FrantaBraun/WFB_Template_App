@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "The Terms now say that an administrator can block a whole category (its posts are hidden, not deleted or counted as violating, and keep what was paid) and that a block - of a post or of a category - can be withdrawn, which publishes the post or the category again and stops it counting towards the account limit",
         "A new \"My payments\" page shows the total you have paid and every payment for your posts - which post, when, its status, what the post is now (blocked and removed posts say the amount is not refunded) - with a link to each payment's document, which opens on the receipts page. \"My posts\" and \"My receipts\" link to it",
         "Moderation posts have a \"Restore\" button for blocked and removed posts (the author is notified, and told it was restored); if the author's account is blocked it says to unblock the account first. The blocked-accounts tab now points to it for the posts removed with an account",
         "Moderation has a new \"Categories\" tab: every category, blocked ones too, searchable, with a button to block one (with a reason its creator is sent) and one to restore it. A post in a blocked category shows on \"My posts\" as hidden, with an explanation, and cannot be boosted; the creator gets the block and the restore as notifications",

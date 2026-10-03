@@ -138,6 +138,7 @@ const cs = {
         paragraphs: [
           'Při upozornění i při odmítnutí se autorovi zobrazí důvod a konkrétní aspekty, kvůli kterým k němu došlo.',
           'Kromě automatické kontroly může kterýkoli zveřejněný příspěvek kdykoli ručně posoudit administrátor. Příspěvek, který porušuje pravidla, označí jako závadný a zablokuje; autorovi sdělí důvod oznámením v aplikaci.',
+          'Administrátor může zablokovat i celou kategorii, která porušuje pravidla. Zablokovaná kategorie ani příspěvky v ní nejsou veřejně vidět a nelze do ní psát, vyjadřovat souznění ani platit. Příspěvky se přitom nemažou, nepočítají se jako závadné a zaplacené částky jim zůstávají. Zakladateli kategorie sdělíme důvod oznámením v aplikaci.',
           'Automatická kontrola je jen pomůcka a může se mýlit. Pokud se domníváte, že byl váš obsah posouzen chybně, napište nám; posoudíme to a odpovíme.',
         ],
       },
@@ -147,6 +148,7 @@ const cs = {
           'Příspěvek označený jako závadný se odstraní a za již zaplacené částky se nevrací žádná náhrada. Tím nejsou dotčena zákonná práva spotřebitele.',
           'Jakmile počet příspěvků téhož uživatele, které administrátor označil jako závadné, dosáhne {{strikeLimit}} v období {{strikePeriodDays}} dnů, účet uživatele se zablokuje a všechny jeho zveřejněné příspěvky se odeberou, rovněž bez náhrady.',
           'Zablokovaný uživatel může službu dál číst, ale nemůže přidávat příspěvky a kategorie ani vyjadřovat souznění. Poskytovatel může blokaci zrušit; po jejím zrušení se dřívější závadné příspěvky do limitu už nepočítají.',
+          'Poskytovatel může označení příspěvku za závadný i zablokování kategorie zrušit. Příspěvek se pak znovu zveřejní i se zaplacenou částkou a přestane se počítat do limitu; zablokovaná kategorie se vrátí i s příspěvky. Autora, respektive zakladatele o tom upozorníme v aplikaci.',
           'Proti označení příspěvku za závadný i proti zablokování účtu můžete podat námitku kontaktním formulářem nebo e-mailem na {{email}}. Poskytovatel ji nechá posoudit člověkem a odpoví.',
         ],
       },
@@ -470,6 +472,7 @@ const en: typeof cs = {
         paragraphs: [
           'Whether you get a notice or a refusal, the author is shown the reason and the specific aspects behind it.',
           'In addition to the automatic check, an administrator can manually review any published post at any time. A post that breaks the rules is marked as violating and blocked; the administrator tells the author the reason in an in-app notification.',
+          'An administrator can also block a whole category that breaks the rules. A blocked category and the posts in it are not publicly visible, and nothing can be posted, resonated with or paid for in it. The posts are not deleted, do not count as violating, and the amounts paid for them stay with them. We tell the category’s creator the reason in an in-app notification.',
           'The automatic check is only an aid and can be wrong. If you believe your content was assessed wrongly, write to us; we will look into it and reply.',
         ],
       },
@@ -479,6 +482,7 @@ const en: typeof cs = {
           'A post marked as violating is removed, and no compensation is paid for amounts already paid. This does not affect a consumer’s statutory rights.',
           'Once the number of a user’s posts that an administrator has marked as violating reaches {{strikeLimit}} within {{strikePeriodDays}} days, the user’s account is blocked and all of their published posts are removed, likewise without compensation.',
           'A blocked user can still read the service but cannot add posts or categories or resonate. The provider may lift the block; once it is lifted, earlier violating posts no longer count towards the limit.',
+          'The provider may withdraw both the marking of a post as violating and the blocking of a category. The post is then published again with the amount paid for it and stops counting towards the limit; a blocked category returns with its posts. We notify the author or the creator in the app.',
           'You can object both to a post being marked as violating and to your account being blocked, using the contact form or by email to {{email}}. The provider has a person assess the objection and replies.',
         ],
       },
