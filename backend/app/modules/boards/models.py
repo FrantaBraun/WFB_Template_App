@@ -19,11 +19,15 @@ POST_BODY_MAX = 2048
 SLUG_MAX = 140
 MODERATION_REASON_MAX = 1000
 
-# A post is "published" (listed, can be resonated with), "blocked" (an
-# administrator marked it as violating the rules - removed without refund,
-# and it counts as a strike against its author) or "removed" (taken down
-# because its author's account was blocked - no strike of its own).
+# A post is "published" (listed, can be resonated with), "hidden" (its author
+# took it off the boards and can show it again - nothing else changes: it
+# keeps what was paid for it and its resonances, and its value keeps falling
+# with age), "blocked" (an administrator marked it as violating the rules -
+# removed without refund, and it counts as a strike against its author) or
+# "removed" (taken down because its author's account was blocked - no strike
+# of its own).
 STATUS_PUBLISHED = "published"
+STATUS_HIDDEN = "hidden"
 STATUS_BLOCKED = "blocked"
 STATUS_REMOVED = "removed"
 

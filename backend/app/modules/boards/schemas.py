@@ -115,7 +115,9 @@ class PostPage(BaseModel):
 
 class MyPostOut(BaseModel):
     """One of the signed-in user's own posts, whatever its state - what the
-    "my posts" page shows. moderation_reason is set for a blocked or removed
+    "my posts" page shows. status "hidden" is the author's own doing (they can
+    show the post again; its value keeps falling with age meanwhile).
+    moderation_reason is set for a blocked or removed
     post (a free text from an administrator, or the code "account_blocked").
     category_blocked says the post's category is blocked: the post is still
     "published", but nobody can see it until the category is restored (the
@@ -126,7 +128,7 @@ class MyPostOut(BaseModel):
     category_title: str
     title: str
     body: str
-    status: Literal["published", "blocked", "removed"]
+    status: Literal["published", "hidden", "blocked", "removed"]
     value: int
     resonance_count: int
     paid_cents: int
@@ -173,7 +175,7 @@ class PaymentOut(BaseModel):
     created_at: datetime
     paid_at: datetime | None
     post_title: str | None
-    post_status: Literal["published", "blocked", "removed"] | None
+    post_status: Literal["published", "hidden", "blocked", "removed"] | None
     category_blocked: bool
     receipt_id: uuid.UUID | None
     receipt_number: str | None
@@ -309,7 +311,7 @@ class AdminPostOut(BaseModel):
     category_title: str
     title: str
     body: str
-    status: Literal["published", "blocked", "removed"]
+    status: Literal["published", "hidden", "blocked", "removed"]
     value: int
     resonance_count: int
     violation_score: int

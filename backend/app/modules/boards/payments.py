@@ -38,7 +38,7 @@ from app.config import get_settings
 from app.models.user import User
 from app.modules.boards import documents, receipts
 from app.modules.boards.config import get_config
-from app.modules.boards.models import STATUS_PUBLISHED, Category, Post
+from app.modules.boards.models import STATUS_HIDDEN, STATUS_PUBLISHED, Category, Post
 from app.modules.stripe_payment_gate.models import StripePayment
 from app.modules.stripe_payment_gate.purposes import PaymentPurpose, PaymentQuote, PaymentRejected, register_purpose
 
@@ -79,6 +79,8 @@ async def resolve_boost(db: AsyncSession, user: User | None, payload: dict) -> P
     if row is None or row[0].author_id != user.id:
         raise PaymentRejected("Post not found", status_code=404)
     post, category = row
+    if post.status == STATUS_HIDDEN:
+        raise PaymentRejected("The post is hidden - show it first", status_code=409)
     if post.status != STATUS_PUBLISHED:
         raise PaymentRejected("The post is no longer published", status_code=409)
     if category.status != STATUS_PUBLISHED:

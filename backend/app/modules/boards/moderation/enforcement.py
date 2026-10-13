@@ -37,7 +37,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.modules.boards.config import ModerationConfig
-from app.modules.boards.models import STATUS_BLOCKED, STATUS_PUBLISHED, STATUS_REMOVED, Category, Post
+from app.modules.boards.models import (
+    STATUS_BLOCKED,
+    STATUS_HIDDEN,
+    STATUS_PUBLISHED,
+    STATUS_REMOVED,
+    Category,
+    Post,
+)
 from app.modules.notifications.service import create_notification
 
 REASON_REPEATED_VIOLATIONS = "repeated_violations"
@@ -68,13 +75,14 @@ async def strikes_in_period(db: AsyncSession, author: User, config: ModerationCo
 
 async def block_account(db: AsyncSession, user: User, reason: str, now: datetime) -> None:
     """Blocks the account and takes down everything of theirs that is still
-    published."""
+    published - or hidden: hiding a post must not be a way to keep it past the
+    block, and unhiding it later would put it back."""
     user.is_blocked = True
     user.blocked_at = now
     user.blocked_reason = reason
     await db.execute(
         update(Post)
-        .where(Post.author_id == user.id, Post.status == STATUS_PUBLISHED)
+        .where(Post.author_id == user.id, Post.status.in_((STATUS_PUBLISHED, STATUS_HIDDEN)))
         .values(status=STATUS_REMOVED, moderation_reason=REASON_ACCOUNT_BLOCKED, moderated_at=now, moderated_by_id=None)
     )
     await create_notification(db, user.id, NOTIFICATION_ACCOUNT_BLOCKED, {})

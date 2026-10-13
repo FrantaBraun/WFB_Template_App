@@ -40,7 +40,7 @@ from app.modules.boards.admin_router import router as admin_router
 from app.modules.boards.config import BoardsConfig, get_config
 from app.modules.boards.deps import get_active_user, get_optional_user
 from app.modules.boards import documents, history, receipts
-from app.modules.boards.models import STATUS_PUBLISHED, Category, Post, Receipt, Resonance
+from app.modules.boards.models import STATUS_HIDDEN, STATUS_PUBLISHED, Category, Post, Receipt, Resonance
 from app.modules.boards.payments import CURRENCY
 from app.modules.boards.moderation.ai import AiModerator, get_ai_moderator
 from app.modules.boards.moderation.assess import Assessment, assess_category, assess_post
@@ -50,6 +50,7 @@ from app.modules.boards.schemas import (
     CategoryOut,
     CategoryPage,
     MeOut,
+    MyPostOut,
     MyPostPage,
     PaymentHistory,
     PaymentsInfo,
@@ -138,6 +139,67 @@ async def my_posts(
         items=[my_post_out(post, category, config, now=now) for post, category in rows[: config.page_size]],
         has_more=len(rows) > config.page_size,
     )
+
+
+async def _lock_own_post(db: AsyncSession, post_id: uuid.UUID, user: User) -> tuple[Post, Category]:
+    """The signed-in user's own post with its row locked, so hiding it and an
+    administrator's block can't interleave. Somebody else's post is a plain
+    404, no different from a missing one."""
+    row = (
+        await db.execute(
+            select(Post, Category)
+            .join(Category, Category.id == Post.category_id)
+            .where(Post.id == post_id)
+            .with_for_update(of=Post)
+        )
+    ).first()
+    if row is None or row[0].author_id != user.id:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return row
+
+
+@router.post("/me/posts/{post_id}/hide")
+async def hide_post(
+    post_id: uuid.UUID,
+    user: User = Depends(get_active_user),
+    db: AsyncSession = Depends(get_db),
+    config: BoardsConfig = Depends(get_config),
+) -> MyPostOut:
+    """Takes the user's own published post off the boards. Nothing is lost: it
+    keeps what was paid for it and its resonances, nobody is refunded, and its
+    value keeps falling with age - hiding it freezes nothing. Hiding a hidden
+    post changes nothing; a blocked or removed one cannot be hidden (409)."""
+    post, category = await _lock_own_post(db, post_id, user)
+    if post.status == STATUS_PUBLISHED:
+        post.status = STATUS_HIDDEN
+    elif post.status != STATUS_HIDDEN:
+        raise HTTPException(status_code=409, detail="Post is blocked or removed")
+    await db.commit()
+    await db.refresh(post)
+    await db.refresh(category)
+    return my_post_out(post, category, config)
+
+
+@router.post("/me/posts/{post_id}/show")
+async def show_post(
+    post_id: uuid.UUID,
+    user: User = Depends(get_active_user),
+    db: AsyncSession = Depends(get_db),
+    config: BoardsConfig = Depends(get_config),
+) -> MyPostOut:
+    """Puts a hidden post back on the boards, where its value - which went on
+    falling while it was hidden - places it. Showing a published post changes
+    nothing; a blocked or removed one cannot be shown (409): only an
+    administrator can restore it."""
+    post, category = await _lock_own_post(db, post_id, user)
+    if post.status == STATUS_HIDDEN:
+        post.status = STATUS_PUBLISHED
+    elif post.status != STATUS_PUBLISHED:
+        raise HTTPException(status_code=409, detail="Post is blocked or removed")
+    await db.commit()
+    await db.refresh(post)
+    await db.refresh(category)
+    return my_post_out(post, category, config)
 
 
 @router.get("/me/payments")

@@ -27,7 +27,15 @@ from app.database import get_db
 from app.models.user import User
 from app.modules.boards.config import BoardsConfig, get_config
 from app.modules.boards import receipts
-from app.modules.boards.models import STATUS_BLOCKED, STATUS_PUBLISHED, Category, Post, Receipt
+from app.modules.boards.models import (
+    STATUS_BLOCKED,
+    STATUS_HIDDEN,
+    STATUS_PUBLISHED,
+    STATUS_REMOVED,
+    Category,
+    Post,
+    Receipt,
+)
 from app.modules.boards.moderation import enforcement
 from app.modules.boards.moderation.ai import AiModerator, get_ai_moderator
 from app.modules.boards.schemas import (
@@ -65,7 +73,7 @@ def _like_pattern(text: str) -> str:
 async def find_posts(
     q: str | None = Query(default=None, max_length=100),
     category: str | None = Query(default=None, max_length=140),
-    status: Literal["published", "blocked", "removed", "all"] = "published",
+    status: Literal["published", "hidden", "blocked", "removed", "all"] = "published",
     min_score: int | None = Query(default=None, ge=0, le=100),
     sort: Literal["new", "score"] = "new",
     offset: int = Query(default=0, ge=0),
@@ -113,15 +121,16 @@ async def block_post(
     db: AsyncSession = Depends(get_db),
     config: BoardsConfig = Depends(get_config),
 ) -> BlockPostOut:
-    """Marks a published post as violating the public rules: removed with no
-    refund, its author notified with `reason`, and a strike against them -
-    which may block their account (`account_blocked` in the answer)."""
+    """Marks a published - or hidden - post as violating the public rules:
+    removed with no refund, its author notified with `reason`, and a strike
+    against them - which may block their account (`account_blocked` in the
+    answer). A hidden post can be blocked too: hiding it is not a way out."""
     # Locked, so two administrators blocking the same post can't both notify
     # the author and both count a strike.
     post = (await db.scalars(select(Post).where(Post.id == post_id).with_for_update())).first()
     if post is None:
         raise HTTPException(status_code=404, detail="Post not found")
-    if post.status != STATUS_PUBLISHED:
+    if post.status not in (STATUS_PUBLISHED, STATUS_HIDDEN):
         raise HTTPException(status_code=409, detail="Post is not published")
 
     now = datetime.now(timezone.utc)
@@ -152,7 +161,8 @@ async def restore_post(
     post = (await db.scalars(select(Post).where(Post.id == post_id).with_for_update())).first()
     if post is None:
         raise HTTPException(status_code=404, detail="Post not found")
-    if post.status == STATUS_PUBLISHED:
+    # A hidden post is its author's own doing, not a block: not for an administrator to undo.
+    if post.status not in (STATUS_BLOCKED, STATUS_REMOVED):
         raise HTTPException(status_code=409, detail="Post is not blocked")
     author = await db.get(User, post.author_id)
     if author.is_blocked:

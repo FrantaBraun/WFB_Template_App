@@ -304,6 +304,15 @@ async def test_a_post_that_is_no_longer_published_cannot_be_paid_for(db_session,
     assert raised.value.status_code == 409
 
 
+async def test_a_hidden_post_cannot_be_paid_for_until_it_is_shown(db_session, alice):
+    post = await _post(db_session, alice, await _category(db_session, alice), status="hidden")
+
+    with pytest.raises(PaymentRejected) as raised:
+        await resolve_boost(db_session, alice.user, _payload(post))
+
+    assert (raised.value.status_code, raised.value.detail) == (409, "The post is hidden - show it first")
+
+
 async def test_a_post_in_a_blocked_category_cannot_be_paid_for(db_session, alice):
     category = await _category(db_session, alice)
     post = await _post(db_session, alice, category)
