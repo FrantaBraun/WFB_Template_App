@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "The \"Add a post\" button and the Cancel button on a category page are now translated into English (they showed the Czech text for English readers)",
         "A category's posts now refresh by themselves, so you can watch the order change: the list is fetched again every minute while the tab is visible (as many posts as you have scrolled through, replacing what is shown), at once when you come back to a tab that was in the background, and right after you click \"Resonate\", so the post takes its new place immediately. A small line above the list says when it was last updated",
         "The Terms now say that an administrator can block a whole category (its posts are hidden, not deleted or counted as violating, and keep what was paid) and that a block - of a post or of a category - can be withdrawn, which publishes the post or the category again and stops it counting towards the account limit",
         "A new \"My payments\" page shows the total you have paid and every payment for your posts - which post, when, its status, what the post is now (blocked and removed posts say the amount is not refunded) - with a link to each payment's document, which opens on the receipts page. \"My posts\" and \"My receipts\" link to it",

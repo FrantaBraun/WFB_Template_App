@@ -318,7 +318,7 @@ const boardsModule: ModuleDefinition = {
     },
     en: {
       nav: { categories: 'Categories' },
-      common: { loading: 'Loading…', loadMore: 'Load more', retry: 'Try again' },
+      common: { loading: 'Loading…', loadMore: 'Load more', retry: 'Try again', cancel: 'Cancel' },
       list: {
         title: 'Categories',
         create: 'New category',
@@ -337,6 +337,7 @@ const boardsModule: ModuleDefinition = {
         loginToPost: 'Sign in to add a post and to resonate.',
         empty: 'No posts here yet. Be the first.',
         error: 'Could not load the posts.',
+        addPost: 'Add a post',
         refreshInfo: 'The order refreshes by itself every minute · last updated {{time}}',
       },
       post: {
