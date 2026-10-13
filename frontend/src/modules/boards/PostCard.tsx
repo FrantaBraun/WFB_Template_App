@@ -24,11 +24,14 @@ export default function PostCard({
   rank,
   trend,
   onChange,
+  onHidden,
 }: {
   post: Post
   rank: number
   trend: number
   onChange: (post: Post) => void
+  /** The author hid this post: it is no longer on the board. */
+  onHidden: (id: string) => void
 }) {
   const { t, i18n } = useTranslation('boards')
   const { user } = useAuth()
@@ -36,7 +39,22 @@ export default function PostCard({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(false)
   const [boosting, setBoosting] = useState(false)
+  const [hideError, setHideError] = useState(false)
   const tier = tierOf(rank)
+
+  async function hide() {
+    if (busy || !window.confirm(t('myPosts.confirmHide'))) return
+    setBusy(true)
+    setHideError(false)
+    try {
+      await postJson(`${API_BASE}/me/posts/${post.id}/hide`)
+      onHidden(post.id)
+    } catch {
+      setHideError(true)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function resonate() {
     setBusy(true)
@@ -124,6 +142,17 @@ export default function PostCard({
               {post.paid_cents ? ` · ${t('post.paidByYou', { amount: formatUsd(post.paid_cents, i18n.language) })}` : ''}
             </span>
           )}
+          {post.mine && (
+            <button
+              type="button"
+              onClick={hide}
+              disabled={busy}
+              className="inline-flex items-center rounded-full border border-slate-300 px-3 py-1 text-sm font-medium transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+              {t('myPosts.hide')}
+            </button>
+          )}
+          {hideError && <span className="text-red-600 dark:text-red-400">{t('myPosts.visibilityError')}</span>}
           {post.mine && payments?.enabled && !boosting && (
             <button
               type="button"

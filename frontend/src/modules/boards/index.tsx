@@ -113,8 +113,21 @@ const boardsModule: ModuleDefinition = {
         error: 'Příspěvky se nepodařilo načíst.',
         paid: 'zaplaceno {{amount}}',
         reason: 'Důvod odstranění',
-        status: { published: 'Zveřejněný', blocked: 'Zablokovaný', removed: 'Odstraněný', hidden: 'Skrytý' },
+        status: {
+          published: 'Zveřejněný',
+          hidden: 'Skrytý',
+          categoryBlocked: 'Kategorie zablokována',
+          blocked: 'Zablokovaný',
+          removed: 'Odstraněný',
+        },
+        hide: 'Skrýt',
+        show: 'Znovu zviditelnit',
+        confirmHide:
+          'Skrýt příspěvek? Zmizí z nástěnky a jeho hodnota bude dál klesat stářím. Kdykoli ho můžete znovu zviditelnit v „Mých příspěvcích“.',
+        visibilityError: 'Změnu se nepodařilo uložit.',
         hiddenNote:
+          'Příspěvek jste skryli: nikdo ho nevidí, nelze u něj vyjádřit souznění ani zaplatit. Jeho hodnota ale dál klesá stářím; zaplacená částka a souznění mu zůstávají. Po zviditelnění se zařadí podle své aktuální hodnoty.',
+        categoryBlockedNote:
           'Kategorii zablokoval administrátor, a proto příspěvek teď nikdo nevidí. Nic se nesmazalo: pokud kategorii obnoví, příspěvek se vrátí i se zaplacenou částkou.',
       },
       receipts: {
@@ -150,7 +163,8 @@ const boardsModule: ModuleDefinition = {
           gone: 'příspěvek nenalezen',
           blocked: 'Příspěvek byl zablokován, zaplacená částka se nevrací.',
           removed: 'Příspěvek byl odstraněn, zaplacená částka se nevrací.',
-          hidden: 'Příspěvek je skrytý, protože administrátor zablokoval jeho kategorii. Zaplacená částka mu zůstává.',
+          hidden: 'Příspěvek jste skryli. Zaplacená částka mu zůstává a hodnota dál klesá stářím; zviditelníte ho v Mých příspěvcích.',
+          categoryBlocked: 'Příspěvek je skrytý, protože administrátor zablokoval jeho kategorii. Zaplacená částka mu zůstává.',
         },
         noRefund: 'Za příspěvek zablokovaný pro porušení pravidel se zaplacená částka nevrací. Viz <rules>pravidla a podmínky</rules>.',
       },
@@ -252,7 +266,7 @@ const boardsModule: ModuleDefinition = {
         error: 'Operace se nezdařila.',
         cancel: 'Zrušit',
         tabs: { posts: 'Příspěvky', categories: 'Kategorie', rules: 'Pravidla kategorií', accounts: 'Zablokované účty' },
-        status: { published: 'Zveřejněné', blocked: 'Zablokované', removed: 'Odstraněné', all: 'Všechny' },
+        status: { published: 'Zveřejněné', hidden: 'Skryté autorem', blocked: 'Zablokované', removed: 'Odstraněné', all: 'Všechny' },
         reason: {
           account_blocked: 'odstraněno se zablokováním účtu autora',
           repeated_violations: 'opakovaná porušení pravidel',
@@ -394,8 +408,21 @@ const boardsModule: ModuleDefinition = {
         error: 'Could not load the posts.',
         paid: 'paid {{amount}}',
         reason: 'Reason for removal',
-        status: { published: 'Published', blocked: 'Blocked', removed: 'Removed', hidden: 'Hidden' },
+        status: {
+          published: 'Published',
+          hidden: 'Hidden',
+          categoryBlocked: 'Category blocked',
+          blocked: 'Blocked',
+          removed: 'Removed',
+        },
+        hide: 'Hide',
+        show: 'Show again',
+        confirmHide:
+          'Hide this post? It disappears from the board and its value keeps falling with age. You can show it again any time in “My posts”.',
+        visibilityError: 'Could not save the change.',
         hiddenNote:
+          'You hid this post: nobody can see it, resonate with it or pay for it. Its value keeps falling with age, though; what was paid for it and its resonances stay. When you show it again it takes the place its current value gives it.',
+        categoryBlockedNote:
           'An administrator blocked the category, so nobody can see this post right now. Nothing was deleted: if the category is restored, the post comes back with what was paid for it.',
       },
       receipts: {
@@ -429,7 +456,8 @@ const boardsModule: ModuleDefinition = {
           gone: 'post not found',
           blocked: 'The post was blocked; the amount paid is not refunded.',
           removed: 'The post was removed; the amount paid is not refunded.',
-          hidden: 'The post is hidden because an administrator blocked its category. The amount paid stays with it.',
+          hidden: 'You hid this post. The amount paid stays with it and its value keeps falling with age; show it again in My posts.',
+          categoryBlocked: 'The post is hidden because an administrator blocked its category. The amount paid stays with it.',
         },
         noRefund: 'The amount paid is not refunded for a post blocked for breaking the rules. See the <rules>terms and rules</rules>.',
       },
@@ -531,7 +559,7 @@ const boardsModule: ModuleDefinition = {
         error: 'The operation failed.',
         cancel: 'Cancel',
         tabs: { posts: 'Posts', categories: 'Categories', rules: 'Category rules', accounts: 'Blocked accounts' },
-        status: { published: 'Published', blocked: 'Blocked', removed: 'Removed', all: 'All' },
+        status: { published: 'Published', hidden: 'Hidden by the author', blocked: 'Blocked', removed: 'Removed', all: 'All' },
         reason: {
           account_blocked: 'removed when its author was blocked',
           repeated_violations: 'repeated rule violations',

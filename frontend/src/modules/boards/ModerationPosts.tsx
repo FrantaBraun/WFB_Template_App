@@ -13,7 +13,7 @@ import ReasonForm from './ReasonForm'
 interface Filters {
   q: string
   category: string
-  status: 'published' | 'blocked' | 'removed' | 'all'
+  status: 'published' | 'hidden' | 'blocked' | 'removed' | 'all'
   minScore: string
   sort: 'new' | 'score'
 }
@@ -108,7 +108,7 @@ export default function ModerationPosts({ onEditRules }: { onEditRules: (slug: s
             onChange={(e) => setDraft({ ...draft, status: e.target.value as Filters['status'] })}
             className={field}
           >
-            {(['published', 'blocked', 'removed', 'all'] as const).map((status) => (
+            {(['published', 'hidden', 'blocked', 'removed', 'all'] as const).map((status) => (
               <option key={status} value={status}>
                 {t(`admin.status.${status}`)}
               </option>
@@ -266,7 +266,7 @@ function PostRow({
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-        {post.status === 'published' && !blocking && (
+        {(post.status === 'published' || post.status === 'hidden') && !blocking && (
           <button
             type="button"
             onClick={() => {
@@ -281,7 +281,7 @@ function PostRow({
         <button type="button" onClick={() => onEditRules(post.category_slug)} className="underline underline-offset-4 hover:no-underline">
           {t('admin.posts.editRules')}
         </button>
-        {post.status !== 'published' && (
+        {(post.status === 'blocked' || post.status === 'removed') && (
           <button
             type="button"
             onClick={restore}

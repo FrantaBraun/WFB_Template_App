@@ -53,7 +53,8 @@ export interface Post {
   created_at: string
 }
 
-export type PostStatus = 'published' | 'blocked' | 'removed'
+/** "hidden" is the author's own doing - they can show the post again; the others are the rules'. */
+export type PostStatus = 'published' | 'hidden' | 'blocked' | 'removed'
 
 /** One of the signed-in user's own posts, in any state (GET /me/posts). */
 export interface MyPost {

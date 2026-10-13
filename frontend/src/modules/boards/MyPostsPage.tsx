@@ -17,31 +17,36 @@ import {
   categoryPath,
   fetchJson,
   formatUsd,
+  postJson,
   usePaymentsInfo,
   type MyPost,
   type Page,
 } from './api'
 import BoostPanel from './BoostPanel'
-import { card, secondaryButton } from './styles'
+import { card, primaryButton, secondaryButton } from './styles'
 
-/** The colour of a post's state label; "hidden" is a published post whose category is blocked. */
+/**
+ * The colour of a post's state label. "hidden" is the author's own doing;
+ * "categoryBlocked" is a published post whose category an administrator blocked.
+ */
 const STATUS_CHIP = {
   published: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300',
-  hidden: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200',
+  hidden: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+  categoryBlocked: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200',
   blocked: 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300',
   removed: 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300',
 }
 
 /** Published, but its whole category was blocked: nobody can see it until the category is restored. */
-function hidden(post: MyPost): boolean {
+function inBlockedCategory(post: MyPost): boolean {
   return post.status === 'published' && post.category_blocked
 }
 
 /**
  * /my-posts - the signed-in user's own posts in every state, since posts are
  * anonymous on the boards and this is where an author finds them again: to
- * see what a post is worth and what they paid for it, to raise its value, or
- * to learn that it was blocked (and why).
+ * see what a post is worth and what they paid for it, to raise its value, to
+ * hide it or show it again, or to learn that it was blocked (and why).
  */
 export default function MyPostsPage() {
   const { t, i18n } = useTranslation('boards')
@@ -52,6 +57,9 @@ export default function MyPostsPage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState(false)
   const [boosting, setBoosting] = useState<string | null>(null)
+  // The post a hide / show is under way for, and the one it failed for.
+  const [changing, setChanging] = useState<string | null>(null)
+  const [changeFailed, setChangeFailed] = useState<string | null>(null)
   // Rows handed over so far - the next offset, assigned from the page shown.
   const fetched = useRef(0)
 
@@ -87,6 +95,21 @@ export default function MyPostsPage() {
       setError(true)
     } finally {
       setLoadingMore(false)
+    }
+  }
+
+  async function changeVisibility(post: MyPost, action: 'hide' | 'show') {
+    if (changing || (action === 'hide' && !window.confirm(t('myPosts.confirmHide')))) return
+    setChanging(post.id)
+    setChangeFailed(null)
+    try {
+      const updated = await postJson<MyPost>(`${API_BASE}/me/posts/${post.id}/${action}`)
+      setItems((current) => (current ?? []).map((p) => (p.id === updated.id ? updated : p)))
+      if (action === 'hide') setBoosting((current) => (current === post.id ? null : current))
+    } catch {
+      setChangeFailed(post.id)
+    } finally {
+      setChanging(null)
     }
   }
 
@@ -132,8 +155,8 @@ export default function MyPostsPage() {
                 <li key={post.id} className={`p-5 ${card}`}>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h2 className="break-words text-lg font-bold">{post.title}</h2>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_CHIP[hidden(post) ? 'hidden' : post.status]}`}>
-                      {t(`myPosts.status.${hidden(post) ? 'hidden' : post.status}`)}
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_CHIP[inBlockedCategory(post) ? 'categoryBlocked' : post.status]}`}>
+                      {t(`myPosts.status.${inBlockedCategory(post) ? 'categoryBlocked' : post.status}`)}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -156,7 +179,8 @@ export default function MyPostsPage() {
                     <span>{t('myPosts.paid', { amount: formatUsd(post.paid_cents, i18n.language) })}</span>
                   </p>
 
-                  {hidden(post) && <p className="mt-2 text-sm">{t('myPosts.hiddenNote')}</p>}
+                  {inBlockedCategory(post) && <p className="mt-2 text-sm">{t('myPosts.categoryBlockedNote')}</p>}
+                  {post.status === 'hidden' && <p className="mt-2 text-sm">{t('myPosts.hiddenNote')}</p>}
                   {post.status !== 'published' && post.moderation_reason && (
                     <p className="mt-2 text-sm">
                       <strong>{t('myPosts.reason')}:</strong>{' '}
@@ -164,15 +188,38 @@ export default function MyPostsPage() {
                     </p>
                   )}
 
-                  {post.status === 'published' && !post.category_blocked && payments?.enabled && boosting !== post.id && (
-                    <button
-                      type="button"
-                      onClick={() => setBoosting(post.id)}
-                      className={`mt-3 ${secondaryButton}`}
-                    >
-                      {t('boost.open')}
-                    </button>
-                  )}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {post.status === 'published' && !post.category_blocked && payments?.enabled && boosting !== post.id && (
+                      <button type="button" onClick={() => setBoosting(post.id)} className={secondaryButton}>
+                        {t('boost.open')}
+                      </button>
+                    )}
+                    {post.status === 'published' && (
+                      <button
+                        type="button"
+                        onClick={() => changeVisibility(post, 'hide')}
+                        disabled={changing !== null}
+                        className={secondaryButton}
+                      >
+                        {t('myPosts.hide')}
+                      </button>
+                    )}
+                    {post.status === 'hidden' && (
+                      <button
+                        type="button"
+                        onClick={() => changeVisibility(post, 'show')}
+                        disabled={changing !== null}
+                        className={primaryButton}
+                      >
+                        {t('myPosts.show')}
+                      </button>
+                    )}
+                    {changeFailed === post.id && (
+                      <span role="alert" className="text-sm text-red-600 dark:text-red-400">
+                        {t('myPosts.visibilityError')}
+                      </span>
+                    )}
+                  </div>
                   {boosting === post.id && (
                     <div className="mt-4">
                       <BoostPanel post={post} onClose={() => setBoosting(null)} />

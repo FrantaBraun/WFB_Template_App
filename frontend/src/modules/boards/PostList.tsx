@@ -196,6 +196,12 @@ export default function PostList({ slug }: { slug: string }) {
     return () => observer.disconnect()
   }, [hasMore, error, items.length, revision, loadNext])
 
+  // The author hid a post: it leaves the board, and everybody below moves up - fetch the list again.
+  function hidden(id: string) {
+    setItems((current) => current.filter((p) => p.id !== id))
+    void refresh()
+  }
+
   function replace(updated: Post) {
     setItems((current) => current.map((p) => (p.id === updated.id ? updated : p)))
     // The change - a resonance - moves the post in the ranking: fetch the
@@ -223,7 +229,7 @@ export default function PostList({ slug }: { slug: string }) {
       {items.length > 0 && (
         <div className="space-y-4">
           {items.map((post, index) => (
-            <PostCard key={post.id} post={post} rank={index + 1} trend={moves[post.id] ?? 0} onChange={replace} />
+            <PostCard key={post.id} post={post} rank={index + 1} trend={moves[post.id] ?? 0} onChange={replace} onHidden={hidden} />
           ))}
         </div>
       )}

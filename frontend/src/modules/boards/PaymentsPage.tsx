@@ -34,7 +34,7 @@ const STATUS_CHIP = {
 function postStateKey(payment: Payment): string | null {
   if (payment.post_status === null) return 'gone'
   if (payment.post_status !== 'published') return payment.post_status
-  return payment.category_blocked ? 'hidden' : null
+  return payment.category_blocked ? 'categoryBlocked' : null
 }
 
 /**

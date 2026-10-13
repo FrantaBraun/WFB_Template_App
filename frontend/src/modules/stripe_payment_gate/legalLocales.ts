@@ -102,6 +102,7 @@ const cs = {
           'Příspěvky v kategorii jsou řazeny podle hodnoty, od nejvyšší. Hodnota příspěvku je zaplacená částka (1 USD = {{pointsPerUsd}} bodů) plus počet souznění ({{pointsPerResonance}} bod za každé) minus stáří příspěvku ({{pointsPerDay}} bod za každý celý uplynulý den).',
           'Jeden uživatel může s jedním příspěvkem souznít nejvýše jednou. Autor může za svůj příspěvek platit opakovaně; platby se sčítají a každá z nich zvýší hodnotu příspěvku o zaplacenou částku.',
           'Hodnota se stářím průběžně snižuje, a pořadí se proto mění. Zaplacením není zaručena žádná konkrétní pozice ani doba zobrazení.',
+          'Autor může svůj příspěvek kdykoli skrýt a znovu zviditelnit. Skrytý příspěvek není veřejně vidět a nelze u něj vyjádřit souznění ani zaplatit, ale jeho hodnota se stářím snižuje stejně jako u zveřejněného příspěvku. Zaplacená částka a souznění zůstávají zachovány; skrytím se zaplacená částka nevrací. Po opětovném zviditelnění se příspěvek zařadí podle své aktuální hodnoty. Skrytí příspěvku nebrání jeho posouzení administrátorem podle těchto pravidel.',
         ],
       },
       {
@@ -275,7 +276,7 @@ const cs = {
       {
         title: 'Jak dlouho údaje uchováváme',
         paragraphs: [
-          'Údaje o účtu po dobu trvání účtu. Zveřejněný obsah po dobu jeho zveřejnění. Vazbu obsahu na účet a údaje z moderace po dobu trvání účtu a poté po dobu promlčecí lhůty případných nároků; zablokované a odebrané příspěvky uchováváme neveřejně po dobu nutnou k posouzení opakovaných porušení pravidel a k ochraně našich právních nároků. Souznění po dobu existence příspěvku. Údaje o platbách a daňové doklady po dobu stanovenou účetními a daňovými předpisy (zpravidla 10 let). Komunikaci po dobu nutnou k vyřízení věci a promlčecí lhůty případných nároků. Provozní záznamy nejvýše několik týdnů.',
+          'Údaje o účtu po dobu trvání účtu. Zveřejněný obsah po dobu jeho zveřejnění; skrytý příspěvek neveřejně, dokud ho autor znovu nezviditelní nebo dokud trvá účet. Vazbu obsahu na účet a údaje z moderace po dobu trvání účtu a poté po dobu promlčecí lhůty případných nároků; zablokované a odebrané příspěvky uchováváme neveřejně po dobu nutnou k posouzení opakovaných porušení pravidel a k ochraně našich právních nároků. Souznění po dobu existence příspěvku. Údaje o platbách a daňové doklady po dobu stanovenou účetními a daňovými předpisy (zpravidla 10 let). Komunikaci po dobu nutnou k vyřízení věci a promlčecí lhůty případných nároků. Provozní záznamy nejvýše několik týdnů.',
         ],
       },
     ],
@@ -436,6 +437,7 @@ const en: typeof cs = {
           'Posts in a category are ordered by value, highest first. A post’s value is the amount paid (1 USD = {{pointsPerUsd}} points) plus the number of resonances ({{pointsPerResonance}} point each) minus the post’s age ({{pointsPerDay}} point for every full day that has passed).',
           'One user can resonate with a given post at most once. The author can pay for their post repeatedly; payments add up, and each one raises the post’s value by the amount paid.',
           'Value decreases with age, so the order keeps changing. Paying does not guarantee any particular position or length of display.',
+          'An author can hide a post at any time and show it again. A hidden post is not publicly visible and cannot be resonated with or paid for, but its value decreases with age exactly as a published post’s does. The amount paid and the resonances are kept; hiding a post does not refund what was paid. When it is shown again, the post takes the place its current value gives it. Hiding a post does not stop an administrator from reviewing it under these rules.',
         ],
       },
       {
@@ -607,7 +609,7 @@ const en: typeof cs = {
       {
         title: 'How long we keep it',
         paragraphs: [
-          'Account data for as long as the account exists. Published content for as long as it is published. The link between content and an account, and moderation data, for as long as the account exists and then for the limitation period of any claims; blocked and removed posts we keep non-publicly for as long as needed to assess repeated rule violations and to protect our legal claims. Resonance for as long as the post exists. Payment data and tax documents for the period required by accounting and tax law (usually 10 years). Communication for as long as needed to handle the matter and for the limitation period of any claims. Operational logs for a few weeks at most.',
+          'Account data for as long as the account exists. Published content for as long as it is published; a hidden post non-publicly, until its author shows it again or for as long as the account exists. The link between content and an account, and moderation data, for as long as the account exists and then for the limitation period of any claims; blocked and removed posts we keep non-publicly for as long as needed to assess repeated rule violations and to protect our legal claims. Resonance for as long as the post exists. Payment data and tax documents for the period required by accounting and tax law (usually 10 years). Communication for as long as needed to handle the matter and for the limitation period of any claims. Operational logs for a few weeks at most.',
         ],
       },
     ],
