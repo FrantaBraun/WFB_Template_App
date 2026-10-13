@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import type { ModuleDefinition } from '../modules/types'
 import Footer from './Footer'
@@ -71,11 +71,28 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
 
   function closeMobileMenu() { setMobileMenuOpen(false) }
 
+  // Nav items are pills; the page the reader is on is filled in.
   const navLinks = (
     <>
-      {modules.flatMap((module) => module.nav ?? []).map((item) => (
-        <Link key={item.to} to={item.to} onClick={closeMobileMenu} className="hover:text-slate-900 dark:hover:text-slate-100">{t(item.labelKey)}</Link>
-      ))}
+      {modules
+        .flatMap((module) => module.nav ?? [])
+        .filter((item) => !item.requiresLogin || user)
+        .map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            onClick={closeMobileMenu}
+            className={({ isActive }) =>
+              `rounded-full px-3 py-1.5 font-medium transition ${
+                isActive
+                  ? 'bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+              }`
+            }
+          >
+            {t(item.labelKey)}
+          </NavLink>
+        ))}
     </>
   )
 
@@ -104,7 +121,7 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
   )
 
   return (
-    <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+    <header className="border-b border-t-4 border-slate-200 border-t-violet-600 bg-white dark:border-slate-800 dark:border-t-violet-500 dark:bg-slate-950">
       <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3 text-sm text-slate-600 dark:text-slate-300">
         <Link to="/" className="tracking-tight text-stone-800 hover:text-stone-600 dark:text-stone-200 dark:hover:text-stone-300 flex">
           <img src="/logo.png" alt="" className="mx-1 bg-slate-200 rounded" width={40} />
@@ -112,22 +129,22 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
           <span className='ms-1 text-stone-500 dark:text-stone-400 text-xs pt-4' style={{marginLeft: "-15px"}}>WFB</span>
         </Link>
 
-        <nav className="hidden items-center gap-4 md:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           {navLinks}
         </nav>
 
         <div className="flex items-center gap-2">
           {utilityControls}
           <button type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={t(mobileMenuOpen ? 'common.closeMenu' : 'common.openMenu')} aria-expanded={mobileMenuOpen}
-            className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden">
+            className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 lg:hidden">
             {mobileMenuOpen ? <CloseIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
           </button>
         </div>
       </div>
 
       {mobileMenuOpen && (
-        <div ref={mobileMenuRef} className="border-t border-slate-200 bg-white px-6 py-3 dark:border-slate-800 dark:bg-slate-950 md:hidden">
-          <nav className="flex flex-col items-start gap-3">
+        <div ref={mobileMenuRef} className="border-t border-slate-200 bg-white px-6 py-3 dark:border-slate-800 dark:bg-slate-950 lg:hidden">
+          <nav className="flex flex-col items-start gap-1 text-sm">
             {navLinks}
           </nav>
         </div>

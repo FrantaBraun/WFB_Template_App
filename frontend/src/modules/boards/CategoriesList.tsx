@@ -12,13 +12,13 @@ import {
   API_BASE,
   CATEGORIES_PATH,
   MODERATION_PATH,
-  MY_POSTS_PATH,
   categoryPath,
   fetchJson,
   useBoardsMe,
   type Category,
   type Page,
 } from './api'
+import { card, chip, primaryButton, secondaryButton } from './styles'
 
 /**
  * The list of categories (boards), busiest first, with a "Load more"
@@ -86,21 +86,16 @@ export default function CategoriesList({ headingTag: Heading = 'h2' }: { heading
   return (
     <section>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-        <Heading className={Heading === 'h1' ? 'text-3xl font-semibold tracking-tight' : 'text-xl font-semibold tracking-tight'}>
-          {t('list.title')}
+        <Heading className={Heading === 'h1' ? 'text-3xl font-extrabold tracking-tight' : 'text-2xl font-extrabold tracking-tight'}>
+          <span aria-hidden="true">🏟️</span> {t('list.title')}
         </Heading>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        <div className="flex flex-wrap items-center gap-2">
           {me?.is_admin && (
-            <Link to={MODERATION_PATH} className="underline underline-offset-4 hover:no-underline">
+            <Link to={MODERATION_PATH} className={secondaryButton}>
               {t('list.moderation')}
             </Link>
           )}
-          {user && (
-            <Link to={MY_POSTS_PATH} className="underline underline-offset-4 hover:no-underline">
-              {t('list.myPosts')}
-            </Link>
-          )}
-          <Link to={user ? `${CATEGORIES_PATH}/new` : '/login'} className="underline underline-offset-4 hover:no-underline">
+          <Link to={user ? `${CATEGORIES_PATH}/new` : '/login'} className={user ? primaryButton : secondaryButton}>
             {user ? t('list.create') : t('list.loginToCreate')}
           </Link>
         </div>
@@ -122,16 +117,21 @@ export default function CategoriesList({ headingTag: Heading = 'h2' }: { heading
           {t('list.empty')}
         </p>
       ) : (
-        <ul className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+        <ul className="grid gap-4 sm:grid-cols-2">
           {items.map((category) => (
             <li key={category.id}>
-              <Link to={categoryPath(category.slug)} className="block px-2 py-4 hover:bg-slate-50 dark:hover:bg-slate-900">
-                <h3 className="font-bold">{category.title}</h3>
-                <p className="mt-1 line-clamp-2 whitespace-pre-line break-words text-sm text-slate-600 dark:text-slate-400">
+              <Link
+                to={categoryPath(category.slug)}
+                className={`group flex h-full flex-col p-5 transition hover:border-violet-300 hover:shadow-md motion-safe:hover:-translate-y-0.5 dark:hover:border-violet-500/50 ${card}`}
+              >
+                <h3 className="break-words text-lg font-bold group-hover:text-violet-700 dark:group-hover:text-violet-300">
+                  {category.title}
+                </h3>
+                <p className="mt-1 line-clamp-3 whitespace-pre-line break-words text-sm text-slate-600 dark:text-slate-400">
                   {category.description}
                 </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
-                  {t('list.posts', { count: category.post_count })}
+                <p className="mt-auto pt-4">
+                  <span className={chip}>{t('list.posts', { count: category.post_count })}</span>
                 </p>
               </Link>
             </li>
@@ -145,7 +145,7 @@ export default function CategoriesList({ headingTag: Heading = 'h2' }: { heading
             type="button"
             onClick={loadMore}
             disabled={loadingMore}
-            className="rounded-lg border border-slate-300 px-5 py-2 font-medium hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
+            className={secondaryButton}
           >
             {loadingMore ? t('common.loading') : t('common.loadMore')}
           </button>

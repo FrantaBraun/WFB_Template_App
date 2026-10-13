@@ -25,6 +25,11 @@ const REFRESH_MS = 60_000
  * visible, and at once after a change of the reader's own (a resonance).
  * A refresh is silent: if it fails the list stays as it was and the next one
  * tries again. Each refresh, whoever started it, restarts the minute.
+ *
+ * It is shown as a leaderboard: a post's place is its position in the list,
+ * and after a refresh each card says how many places it climbed or lost among
+ * the posts that were already there (see movesBetween) - a post that merely
+ * got pushed down by a new one at the top has not lost anything.
  */
 export default function PostList({ slug }: { slug: string }) {
   const { t, i18n } = useTranslation('boards')
@@ -36,6 +41,10 @@ export default function PostList({ slug }: { slug: string }) {
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null)
   // Bumped when a refresh ends, to make the scroll observer look again (below).
   const [revision, setRevision] = useState(0)
+  // Places climbed (positive) or lost per post id, as of the last refresh.
+  const [moves, setMoves] = useState<Record<string, number>>({})
+  // What is shown, for a refresh to compare its result with.
+  const shown = useRef<Post[]>([])
   const sentinel = useRef<HTMLDivElement>(null)
   // Rows the server has handed us - the next offset (not items.length: a
   // post that shifted between two pages is dropped as a repeat below, but
@@ -131,6 +140,7 @@ export default function PostList({ slug }: { slug: string }) {
         if (page.items.length === 0) break
       }
       offset.current = handed
+      setMoves(movesBetween(shown.current, fresh))
       setItems(fresh)
       setHasMore(more)
       setError(false)
@@ -150,6 +160,10 @@ export default function PostList({ slug }: { slug: string }) {
   useEffect(() => {
     refreshRef.current = refresh
   }, [refresh])
+
+  useEffect(() => {
+    shown.current = items
+  }, [items])
 
   useEffect(() => {
     schedule()
@@ -191,16 +205,25 @@ export default function PostList({ slug }: { slug: string }) {
 
   return (
     <div>
-      {updatedAt && (
-        <p className="mb-2 text-right text-xs text-slate-500 dark:text-slate-400">
-          {t('category.refreshInfo', { time: updatedAt.toLocaleTimeString(i18n.resolvedLanguage ?? i18n.language) })}
-        </p>
-      )}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <h2 className="text-xl font-extrabold tracking-tight">
+          <span aria-hidden="true">🏆</span> {t('board.title')}
+        </h2>
+        {updatedAt && (
+          <p className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span aria-hidden="true" className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 motion-safe:animate-ping" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            {t('category.refreshInfo', { time: updatedAt.toLocaleTimeString(i18n.resolvedLanguage ?? i18n.language) })}
+          </p>
+        )}
+      </div>
 
       {items.length > 0 && (
-        <div className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-          {items.map((post) => (
-            <PostCard key={post.id} post={post} onChange={replace} />
+        <div className="space-y-4">
+          {items.map((post, index) => (
+            <PostCard key={post.id} post={post} rank={index + 1} trend={moves[post.id] ?? 0} onChange={replace} />
           ))}
         </div>
       )}
@@ -226,4 +249,24 @@ export default function PostList({ slug }: { slug: string }) {
       {hasMore && <div ref={sentinel} aria-hidden="true" className="h-px" />}
     </div>
   )
+}
+
+/**
+ * Places climbed (positive) or lost (negative) per post id between two
+ * orders of the board, counted among the posts present in both - one that
+ * appeared or disappeared is nobody's overtaking. Posts that kept their
+ * place among the others are left out.
+ */
+function movesBetween(before: Post[], after: Post[]): Record<string, number> {
+  const inAfter = new Set(after.map((post) => post.id))
+  const inBefore = new Set(before.map((post) => post.id))
+  const earlier = new Map(before.filter((post) => inAfter.has(post.id)).map((post, index) => [post.id, index]))
+  const moves: Record<string, number> = {}
+  after
+    .filter((post) => inBefore.has(post.id))
+    .forEach((post, index) => {
+      const climbed = (earlier.get(post.id) ?? index) - index
+      if (climbed !== 0) moves[post.id] = climbed
+    })
+  return moves
 }

@@ -9,6 +9,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import PayButton from '../stripe_payment_gate/PayButton'
 import { POST_BOOST, RULES_PATH, formatUsd, usePaymentsInfo } from './api'
+import { primaryButton, secondaryButton } from './styles'
 
 /**
  * Pay to raise the value of one of your own posts: a whole number of US
@@ -40,7 +41,7 @@ export default function BoostPanel({
   const label = t('boost.pay', { amount: valid ? formatUsd(dollars * 100, i18n.language) : '' }).trim()
 
   return (
-    <section aria-label={t('boost.heading')} className="mb-8 space-y-3 rounded-lg border border-slate-300 p-4 text-sm dark:border-slate-700">
+    <section aria-label={t('boost.heading')} className="mb-8 space-y-3 rounded-2xl border border-violet-200 bg-violet-50/60 p-4 text-sm dark:border-violet-500/30 dark:bg-violet-500/10">
       {intro && <p className="font-medium">{intro}</p>}
       <h3 className="font-semibold">{t('boost.heading')}</h3>
       <p className="text-slate-600 dark:text-slate-400">{t('boost.explain', { points: info.points_per_usd })}</p>
@@ -56,7 +57,7 @@ export default function BoostPanel({
             step={1}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-32 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="w-32 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           />
         </label>
         <p aria-live="polite" className="pb-2 font-medium">
@@ -86,14 +87,14 @@ export default function BoostPanel({
             {label}
           </PayButton>
         ) : (
-          <button type="button" disabled className="rounded-lg bg-slate-900 px-4 py-2 font-medium text-slate-100 opacity-50 dark:bg-slate-100 dark:text-slate-900">
+          <button type="button" disabled className={primaryButton}>
             {t('boost.payDisabled')}
           </button>
         )}
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-slate-300 px-4 py-2 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+          className={secondaryButton}
         >
           {t('boost.close')}
         </button>

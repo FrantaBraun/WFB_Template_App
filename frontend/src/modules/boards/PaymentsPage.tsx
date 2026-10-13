@@ -20,6 +20,15 @@ import {
   type PaymentHistory,
   type PaymentSummary,
 } from './api'
+import { card, secondaryButton } from './styles'
+
+/** The colour of a payment's status label. */
+const STATUS_CHIP = {
+  paid: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300',
+  pending: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200',
+  failed: 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300',
+  expired: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+}
 
 /** What the post became, as a key under `payments.postState`; null when there is nothing to add. */
 function postStateKey(payment: Payment): string | null {
@@ -91,7 +100,7 @@ export default function PaymentsPage() {
           ← {t('myPosts.title')}
         </Link>
       </p>
-      <h1 className="mb-6 text-3xl font-bold tracking-tight">{t('payments.title')}</h1>
+      <h1 className="mb-6 text-3xl font-extrabold tracking-tight">{t('payments.title')}</h1>
 
       {loading ? (
         <p className="text-slate-500 dark:text-slate-400">{t('common.loading')}</p>
@@ -112,9 +121,9 @@ export default function PaymentsPage() {
           {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{t('payments.error')}</p>}
 
           {summary && (
-            <p className="mb-6 rounded-lg border border-slate-300 p-4 dark:border-slate-700">
+            <p className="mb-6 rounded-2xl border border-amber-300 bg-gradient-to-br from-amber-50 via-white to-white p-5 shadow-sm dark:border-amber-400/40 dark:from-amber-400/10 dark:via-slate-900/70 dark:to-slate-900/70">
               <span className="block text-sm text-slate-600 dark:text-slate-400">{t('payments.total')}</span>
-              <strong className="text-2xl">{formatMoney(summary.paid_cents, summary.currency, language)}</strong>
+              <strong className="text-3xl font-extrabold tabular-nums text-amber-600 dark:text-amber-300">{formatMoney(summary.paid_cents, summary.currency, language)}</strong>
               <span className="ml-2 text-sm text-slate-600 dark:text-slate-400">
                 {t('payments.count', { count: summary.paid_count })}
               </span>
@@ -124,16 +133,16 @@ export default function PaymentsPage() {
           {items === null ? (
             !error && <p className="text-slate-500 dark:text-slate-400">{t('common.loading')}</p>
           ) : items.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
               {t('payments.empty')}
             </p>
           ) : (
             <>
-              <ul className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+              <ul className="space-y-4">
                 {items.map((payment) => {
                   const state = postStateKey(payment)
                   return (
-                    <li key={payment.id} className="py-4 text-sm">
+                    <li key={payment.id} className={`p-4 text-sm sm:p-5 ${card}`}>
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
                         <p className="min-w-0 break-words font-bold">
                           {payment.post_title ?? t('payments.postState.gone')}
@@ -145,7 +154,7 @@ export default function PaymentsPage() {
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         {new Date(payment.created_at).toLocaleString(language)}
                         {' · '}
-                        <span className="uppercase tracking-wide">{t(`payments.status.${payment.status}`)}</span>
+                        <span className={`rounded-full px-2 py-0.5 font-semibold ${STATUS_CHIP[payment.status]}`}>{t(`payments.status.${payment.status}`)}</span>
                         {payment.status === 'paid' && <> · {t('payments.points', { points: payment.points.toLocaleString(language) })}</>}
                       </p>
                       {payment.status === 'pending' && (
@@ -184,7 +193,7 @@ export default function PaymentsPage() {
                 type="button"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="rounded-lg border border-slate-300 px-5 py-2 font-medium hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                className={secondaryButton}
               >
                 {loadingMore ? t('common.loading') : t('common.loadMore')}
               </button>

@@ -23,6 +23,8 @@ export interface ModuleRoute {
 export interface ModuleNavItem {
   to: string
   labelKey: string
+  /** Show the item only to a signed-in user ("my posts", "my payments") - a visitor has nothing there. */
+  requiresLogin?: boolean
 }
 
 /** Contract a feature module's src/modules/<key>/index.tsx must default-export. */

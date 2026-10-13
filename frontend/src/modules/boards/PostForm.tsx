@@ -20,6 +20,7 @@ import {
   type Post,
 } from './api'
 import AssessmentPanel from './AssessmentPanel'
+import { card, primaryButton, secondaryButton } from './styles'
 
 const EMOJI = ['😀', '😂', '🙂', '😍', '🤔', '😢', '😡', '👍', '👎', '🙏', '💡', '❤️', '🔥', '🎉', '✨', '🤝']
 
@@ -122,10 +123,10 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
   }
 
   const input =
-    'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
+    'w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
 
   return (
-    <form onSubmit={submit} className="mb-8 space-y-3" id="post-form">
+    <form onSubmit={submit} className={`mb-8 space-y-3 p-5 ${card}`} id="post-form">
       <h2 className="text-lg font-semibold">{t('form.heading')}</h2>
 
       <div>
@@ -186,7 +187,7 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
               type="button"
               disabled={busy}
               onClick={() => run(() => publish(review.level === 'risk'))}
-              className="rounded-lg bg-slate-900 px-4 py-2 font-medium text-slate-100 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+              className={primaryButton}
             >
               {busy ? t('form.publishing') : t('moderation.publishAnyway')}
             </button>
@@ -197,7 +198,7 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
               setReview(null)
               bodyRef.current?.focus()
             }}
-            className="rounded-lg border border-slate-300 px-4 py-2 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            className={secondaryButton}
           >
             {t('moderation.edit')}
           </button>
@@ -216,7 +217,7 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
         <button
           type="submit"
           disabled={!valid || busy}
-          className="rounded-lg bg-slate-900 px-4 py-2 font-medium text-slate-100 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+          className={primaryButton}
         >
           {busy ? t('form.checking') : t('form.publish')}
         </button>

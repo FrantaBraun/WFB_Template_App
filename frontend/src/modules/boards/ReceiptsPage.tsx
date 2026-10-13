@@ -11,6 +11,7 @@ import { apiFetch } from '../../api/client'
 import { useAuth } from '../../context/AuthContext'
 import usePageMeta from '../../hooks/usePageMeta'
 import { API_BASE, MY_PAYMENTS_PATH, MY_POSTS_PATH, fetchJson, formatMoney, type Receipt } from './api'
+import { card, secondaryButton } from './styles'
 
 /**
  * /receipts - the documents issued for the signed-in user's payments, each
@@ -81,7 +82,7 @@ export default function ReceiptsPage() {
           {t('receipts.payments')}
         </Link>
       </p>
-      <h1 className="mb-6 text-3xl font-bold tracking-tight">{t('receipts.title')}</h1>
+      <h1 className="mb-6 text-3xl font-extrabold tracking-tight">{t('receipts.title')}</h1>
 
       {loading ? (
         <p className="text-slate-500 dark:text-slate-400">{t('common.loading')}</p>
@@ -103,9 +104,9 @@ export default function ReceiptsPage() {
             </p>
           ) : (
             <>
-              <ul className="mb-6 divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+              <ul className="mb-6 space-y-3">
                 {items.map((receipt) => (
-                  <li key={receipt.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+                  <li key={receipt.id} className={`flex flex-wrap items-center justify-between gap-3 p-4 text-sm ${card}`}>
                     <div className="min-w-0">
                       <p className="font-bold">{receipt.number}</p>
                       <p className="break-words text-slate-600 dark:text-slate-400">
@@ -120,7 +121,7 @@ export default function ReceiptsPage() {
                       type="button"
                       onClick={() => setSelected(receipt.id)}
                       aria-pressed={receipt.id === selected}
-                      className="rounded border border-slate-300 px-3 py-1 hover:bg-slate-100 aria-pressed:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800 dark:aria-pressed:bg-slate-800"
+                      className={`${secondaryButton} aria-pressed:border-violet-400 aria-pressed:bg-violet-50 aria-pressed:text-violet-800 dark:aria-pressed:border-violet-500/50 dark:aria-pressed:bg-violet-500/15 dark:aria-pressed:text-violet-200`}
                     >
                       {t('receipts.show')}
                     </button>

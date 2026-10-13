@@ -14,6 +14,7 @@ import BlockedNotice from './BlockedNotice'
 import BoostPanel from './BoostPanel'
 import PostForm from './PostForm'
 import PostList from './PostList'
+import { card, chip, primaryButton, secondaryButton } from './styles'
 
 /** /categories/:slug - the category's description, the form to add a post (signed in), and its posts by value. */
 export default function CategoryPage() {
@@ -73,9 +74,15 @@ export default function CategoryPage() {
 
       {state === 'ready' && category && (
         <>
-          <header className="mb-8 space-y-3">
-            <h1 className="break-words text-3xl font-bold tracking-tight">{category.title}</h1>
-            <p className="whitespace-pre-line break-words text-slate-600 dark:text-slate-400">{category.description}</p>
+          <header className="mb-8 rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-amber-50 p-6 shadow-sm sm:p-8 dark:border-violet-500/30 dark:from-violet-500/15 dark:via-slate-900 dark:to-amber-500/10">
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-violet-700 dark:text-violet-300">
+              <span aria-hidden="true">🏆</span> {t('category.kicker')}
+            </p>
+            <h1 className="break-words text-3xl font-extrabold tracking-tight sm:text-4xl">{category.title}</h1>
+            <p className="mt-3 whitespace-pre-line break-words text-slate-600 dark:text-slate-300">{category.description}</p>
+            <p className="mt-4">
+              <span className={chip}>{t('list.posts', { count: category.post_count })}</span>
+            </p>
           </header>
 
           {user && me?.blocked ? (
@@ -87,7 +94,7 @@ export default function CategoryPage() {
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="mb-4 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                    className={`mb-4 ${secondaryButton}`}
                   >
                     {'❌'}
                   </button>
@@ -103,7 +110,7 @@ export default function CategoryPage() {
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="mb-4 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                    className={`mb-4 ${secondaryButton}`}
                   >
                     {t('common.cancel')}
                   </button>
@@ -114,14 +121,14 @@ export default function CategoryPage() {
                 <button
                   type="button"
                   onClick={() => setShowForm(true)}
-                  className="mb-8 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                  className={`mb-8 ${primaryButton}`}
                 >
                   {t('category.addPost')}
                 </button>
               </div>
             )
           ) : (
-            <p className="mb-8 rounded-lg border border-slate-200 p-4 text-sm dark:border-slate-800">
+            <p className={`mb-8 p-4 text-sm ${card}`}>
               <Link to="/login" className="font-medium underline underline-offset-4 hover:no-underline">
                 {t('category.loginToPost')}
               </Link>
@@ -136,7 +143,7 @@ export default function CategoryPage() {
               <button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="mt-8 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                className={`mt-8 ${primaryButton}`}
               >
                 {t('category.addPost')}
               </button>

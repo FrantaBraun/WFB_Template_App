@@ -22,6 +22,15 @@ import {
   type Page,
 } from './api'
 import BoostPanel from './BoostPanel'
+import { card, secondaryButton } from './styles'
+
+/** The colour of a post's state label; "hidden" is a published post whose category is blocked. */
+const STATUS_CHIP = {
+  published: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300',
+  hidden: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200',
+  blocked: 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300',
+  removed: 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300',
+}
 
 /** Published, but its whole category was blocked: nobody can see it until the category is restored. */
 function hidden(post: MyPost): boolean {
@@ -88,7 +97,7 @@ export default function MyPostsPage() {
           ← {t('category.back')}
         </Link>
       </p>
-      <h1 className="mb-6 text-3xl font-bold tracking-tight">{t('myPosts.title')}</h1>
+      <h1 className="mb-6 text-3xl font-extrabold tracking-tight">{t('myPosts.title')}</h1>
 
       {loading ? (
         <p className="text-slate-500 dark:text-slate-400">{t('common.loading')}</p>
@@ -114,16 +123,16 @@ export default function MyPostsPage() {
           {items === null ? (
             !error && <p className="text-slate-500 dark:text-slate-400">{t('common.loading')}</p>
           ) : items.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
               {t('myPosts.empty')}
             </p>
           ) : (
-            <ul className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+            <ul className="space-y-4">
               {items.map((post) => (
-                <li key={post.id} className="py-5">
+                <li key={post.id} className={`p-5 ${card}`}>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h2 className="break-words font-bold">{post.title}</h2>
-                    <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    <h2 className="break-words text-lg font-bold">{post.title}</h2>
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_CHIP[hidden(post) ? 'hidden' : post.status]}`}>
                       {t(`myPosts.status.${hidden(post) ? 'hidden' : post.status}`)}
                     </span>
                   </div>
@@ -159,7 +168,7 @@ export default function MyPostsPage() {
                     <button
                       type="button"
                       onClick={() => setBoosting(post.id)}
-                      className="mt-3 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+                      className={`mt-3 ${secondaryButton}`}
                     >
                       {t('boost.open')}
                     </button>
@@ -179,7 +188,7 @@ export default function MyPostsPage() {
                 type="button"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="rounded-lg border border-slate-300 px-5 py-2 font-medium hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                className={secondaryButton}
               >
                 {loadingMore ? t('common.loading') : t('common.loadMore')}
               </button>

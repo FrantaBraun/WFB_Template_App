@@ -16,7 +16,7 @@ export default function HomePage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-12 text-slate-900 dark:text-slate-100">
       <header className="mb-10 space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t('home.title')}</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{t('home.title')}</h1>
         <p className="max-w-xl text-slate-600 dark:text-slate-400">{t('home.description')}</p>
       </header>
 

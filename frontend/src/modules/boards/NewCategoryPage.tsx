@@ -27,6 +27,7 @@ import {
 import AssessmentPanel from './AssessmentPanel'
 import BlockedNotice from './BlockedNotice'
 import { Counter } from './PostForm'
+import { card, primaryButton, secondaryButton } from './styles'
 
 /**
  * /categories/new - a signed-in user creates a category: a title (its
@@ -88,7 +89,7 @@ export default function NewCategoryPage() {
   }
 
   const input =
-    'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
+    'w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12 text-slate-900 dark:text-slate-100">
@@ -110,7 +111,7 @@ export default function NewCategoryPage() {
       ) : me?.blocked ? (
         <BlockedNotice reason={me.blocked_reason} />
       ) : (
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className={`space-y-4 p-5 sm:p-6 ${card}`}>
           <div>
             <label htmlFor="category-title" className="mb-1 block text-sm font-medium">
               {t('newCategory.name')}
@@ -158,7 +159,7 @@ export default function NewCategoryPage() {
                   type="button"
                   disabled={busy}
                   onClick={() => run(() => create(review.level === 'risk'))}
-                  className="rounded-lg bg-slate-900 px-4 py-2 font-medium text-slate-100 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+                  className={primaryButton}
                 >
                   {busy ? t('newCategory.creating') : t('moderation.createAnyway')}
                 </button>
@@ -166,7 +167,7 @@ export default function NewCategoryPage() {
               <button
                 type="button"
                 onClick={() => setReview(null)}
-                className="rounded-lg border border-slate-300 px-4 py-2 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+                className={secondaryButton}
               >
                 {t('moderation.edit')}
               </button>
@@ -185,7 +186,7 @@ export default function NewCategoryPage() {
             <button
               type="submit"
               disabled={!valid || busy}
-              className="rounded-lg bg-slate-900 px-4 py-2 font-medium text-slate-100 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+              className={primaryButton}
             >
               {busy ? t('newCategory.creating') : t('newCategory.create')}
             </button>

@@ -34,11 +34,16 @@ body {
     'Segoe UI',
     Roboto,
     sans-serif;
-  background: radial-gradient(circle at top, #f8fafc, #e2e8f0 60%);
+  /* A soft violet glow behind the header, once - not tiled down the page. */
+  background-color: #f8fafc;
+  background-image: radial-gradient(900px 420px at 50% 0, #ede9fe, transparent 72%);
+  background-repeat: no-repeat;
+  background-size: 100% 520px;
 }
 
 .dark body {
-  background: radial-gradient(circle at top, #1e293b, #020617 60%);
+  background-color: #020617;
+  background-image: radial-gradient(900px 420px at 50% 0, rgba(76, 29, 149, 0.5), transparent 72%);
 }
 
 ::selection {
