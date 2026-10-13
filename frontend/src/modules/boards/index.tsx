@@ -39,7 +39,7 @@ const boardsModule: ModuleDefinition = {
   locales: {
     cs: {
       nav: { categories: 'Kategorie' },
-      common: { loading: 'Načítání…', loadMore: 'Načíst další', retry: 'Zkusit znovu' },
+      common: { loading: 'Načítání…', loadMore: 'Načíst další', retry: 'Zkusit znovu', cancel: 'Zrušit' },
       list: {
         title: 'Kategorie',
         create: 'Nová kategorie',
@@ -60,6 +60,7 @@ const boardsModule: ModuleDefinition = {
         loginToPost: 'Přihlaste se, abyste mohli přidat příspěvek a vyjádřit souznění.',
         empty: 'Zatím tu není žádný příspěvek. Buďte první.',
         error: 'Příspěvky se nepodařilo načíst.',
+        addPost: 'Přidat příspěvek',
       },
       post: {
         value: 'Hodnota',

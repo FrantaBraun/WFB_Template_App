@@ -125,7 +125,7 @@ export default function CategoriesList({ headingTag: Heading = 'h2' }: { heading
         <ul className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
           {items.map((category) => (
             <li key={category.id}>
-              <Link to={categoryPath(category.slug)} className="block py-4 hover:bg-slate-50 dark:hover:bg-slate-900">
+              <Link to={categoryPath(category.slug)} className="block px-2 py-4 hover:bg-slate-50 dark:hover:bg-slate-900">
                 <h3 className="font-bold">{category.title}</h3>
                 <p className="mt-1 line-clamp-2 whitespace-pre-line break-words text-sm text-slate-600 dark:text-slate-400">
                   {category.description}

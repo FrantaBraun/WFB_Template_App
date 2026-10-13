@@ -125,7 +125,7 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
     'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
 
   return (
-    <form onSubmit={submit} className="mb-8 space-y-3">
+    <form onSubmit={submit} className="mb-8 space-y-3" id="post-form">
       <h2 className="text-lg font-semibold">{t('form.heading')}</h2>
 
       <div>

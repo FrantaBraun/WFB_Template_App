@@ -27,8 +27,18 @@ export default function CategoryPage() {
   const [listKey, setListKey] = useState(0)
   // The post just published, while the offer to raise its value is open.
   const [fresh, setFresh] = useState<Post | null>(null)
+  const [showForm, setShowForm] = useState(false)
 
   usePageMeta({ title: category?.title, description: category?.description.slice(0, 200) })
+
+  useEffect(() => {
+    if (showForm && user) {
+      const postForm = document.getElementById('post-form');
+      if (postForm) postForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const postTitle = document.getElementById('post-title');
+      if (postTitle) postTitle.focus();
+    }
+  }, [showForm, user]);
 
   useEffect(() => {
     let cancelled = false
@@ -71,13 +81,45 @@ export default function CategoryPage() {
           {user && me?.blocked ? (
             <BlockedNotice reason={me.blocked_reason} />
           ) : user ? (
-            <PostForm
-              slug={category.slug}
-              onPosted={(post) => {
-                setFresh(post)
-                setListKey((key) => key + 1)
-              }}
-            />
+            showForm ? (
+              <>
+                <div className='text-right'>
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    className="mb-4 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                  >
+                    {'❌'}
+                  </button>
+                </div>
+                <PostForm
+                  slug={category.slug}
+                  onPosted={(post) => {
+                    setFresh(post)
+                    setListKey((key) => key + 1)
+                  }}
+                />
+                <div className='text-right'>
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    className="mb-4 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className='text-center'>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(true)}
+                  className="mb-8 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                >
+                  {t('category.addPost')}
+                </button>
+              </div>
+            )
           ) : (
             <p className="mb-8 rounded-lg border border-slate-200 p-4 text-sm dark:border-slate-800">
               <Link to="/login" className="font-medium underline underline-offset-4 hover:no-underline">
@@ -89,6 +131,17 @@ export default function CategoryPage() {
           {fresh && <BoostPanel post={fresh} intro={t('boost.published', { title: fresh.title })} onClose={() => setFresh(null)} />}
 
           <PostList key={`${category.slug}:${listKey}`} slug={category.slug} />
+          {!showForm && user && !me?.blocked && (
+            <div className='text-center'>
+              <button
+                type="button"
+                onClick={() => setShowForm(true)}
+                className="mt-8 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+              >
+                {t('category.addPost')}
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
