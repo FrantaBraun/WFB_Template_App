@@ -61,6 +61,7 @@ const boardsModule: ModuleDefinition = {
         empty: 'Zatím tu není žádný příspěvek. Buďte první.',
         error: 'Příspěvky se nepodařilo načíst.',
         addPost: 'Přidat příspěvek',
+        refreshInfo: 'Pořadí se samo obnovuje každou minutu · naposledy {{time}}',
       },
       post: {
         value: 'Hodnota',
@@ -336,6 +337,7 @@ const boardsModule: ModuleDefinition = {
         loginToPost: 'Sign in to add a post and to resonate.',
         empty: 'No posts here yet. Be the first.',
         error: 'Could not load the posts.',
+        refreshInfo: 'The order refreshes by itself every minute · last updated {{time}}',
       },
       post: {
         value: 'Value',
