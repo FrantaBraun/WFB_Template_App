@@ -195,6 +195,21 @@ class PaymentHistory(BaseModel):
     has_more: bool
 
 
+class PaymentsProblemOut(BaseModel):
+    """One reason payments are off, as a code the frontend words in the
+    reader's language. `missing` names the blank provider fields."""
+
+    code: Literal["gateway_module_disabled", "stripe_secret_key_missing", "stripe_webhook_secret_missing", "provider_incomplete"]
+    missing: list[str]
+
+
+class PaymentsStatusOut(BaseModel):
+    """For administrators: whether payments are on, and if not, every reason."""
+
+    enabled: bool
+    problems: list[PaymentsProblemOut]
+
+
 class AdminReceiptOut(ReceiptOut):
     """What an administrator sees of a document's delivery - including the
     address it was sent to and why a send failed."""

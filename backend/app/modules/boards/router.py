@@ -39,7 +39,7 @@ from app.models.user import User
 from app.modules.boards.admin_router import router as admin_router
 from app.modules.boards.config import BoardsConfig, get_config
 from app.modules.boards.deps import get_active_user, get_optional_user
-from app.modules.boards import documents, history, receipts
+from app.modules.boards import documents, history, payments_status, receipts
 from app.modules.boards.models import STATUS_HIDDEN, STATUS_PUBLISHED, Category, Post, Receipt, Resonance
 from app.modules.boards.payments import CURRENCY
 from app.modules.boards.moderation.ai import AiModerator, get_ai_moderator
@@ -247,10 +247,8 @@ async def my_receipt_document(
 def gateway_enabled(settings: Settings = Depends(get_settings)) -> bool:
     """Payments work only where the gateway module is switched on in
     modules.json and its Stripe keys are set - otherwise its endpoints answer
-    404 or 503."""
-    return "stripe_payment_gate" in load_enabled_module_keys() and bool(
-        settings.stripe_secret_key and settings.stripe_webhook_secret
-    )
+    404 or 503. (payments_status says which of these is missing.)"""
+    return not payments_status.gateway_problems(settings, load_enabled_module_keys())
 
 
 @router.get("/payments")

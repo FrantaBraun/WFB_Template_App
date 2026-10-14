@@ -2,6 +2,7 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from fastapi import APIRouter
@@ -23,3 +24,8 @@ class ModuleManifest:
     router: APIRouter | None = None
     prefix: str | None = None
     tags: list[str] = field(default_factory=list)
+    # Called once at application startup when the module is enabled (see
+    # app.modules.registry.run_startup_hooks) - for a check that should be
+    # said out loud in the console, such as a setting that quietly switches
+    # a feature off. Whatever it raises is logged and does not stop the startup.
+    on_startup: Callable[[], None] | None = None

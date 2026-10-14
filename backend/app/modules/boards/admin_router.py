@@ -26,7 +26,7 @@ from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.user import User
 from app.modules.boards.config import BoardsConfig, get_config
-from app.modules.boards import receipts
+from app.modules.boards import payments_status, receipts
 from app.modules.boards.models import (
     STATUS_BLOCKED,
     STATUS_HIDDEN,
@@ -49,11 +49,14 @@ from app.modules.boards.schemas import (
     BlockPostIn,
     BlockPostOut,
     MachineRules,
+    PaymentsProblemOut,
+    PaymentsStatusOut,
     RetryOut,
     RulesOut,
 )
 from app.modules.boards.service import make_machine_rules
 from app.modules.boards.views import admin_category_out, admin_post_out, admin_receipt_out, get_category
+from app.modules.registry import load_enabled_module_keys
 
 router = APIRouter(dependencies=[Depends(require_admin)])
 
@@ -261,6 +264,24 @@ async def restore_category(slug: str, db: AsyncSession = Depends(get_db)) -> Adm
     await db.commit()
     await db.refresh(category)
     return admin_category_out(category, await _published_posts(db, category))
+
+
+# --- Payments --------------------------------------------------------------------
+
+
+@router.get("/payments-status")
+async def payments_status_for_admins(
+    settings: Settings = Depends(get_settings), config: BoardsConfig = Depends(get_config)
+) -> PaymentsStatusOut:
+    """Whether payments are on - and, when they are not, every reason, so the
+    moderation page can say why no author is offered one (the public
+    GET /payments only says off). Reports whether a key is set, never its
+    value."""
+    found = payments_status.problems(settings, config, load_enabled_module_keys())
+    return PaymentsStatusOut(
+        enabled=not found,
+        problems=[PaymentsProblemOut(code=p.code, missing=list(p.missing)) for p in found],
+    )
 
 
 # --- Payment documents --------------------------------------------------------

@@ -18,6 +18,7 @@ from app.modules.registry import (
     get_enabled_modules,
     import_all_module_models,
     load_enabled_module_keys,
+    run_startup_hooks,
 )
 
 
@@ -130,3 +131,55 @@ def test_import_all_module_models_imports_only_modules_with_models(fixture_modul
 
     assert "app.modules.fixture_with_models.models" in sys.modules
     assert "app.modules.fixture_without_models.models" not in sys.modules
+
+
+# --- Startup hooks ------------------------------------------------------------
+
+
+def _write_hooked_module(tmp_path, name, *, hook_body="CALLS.append('called')"):
+    pkg_dir = tmp_path / name
+    pkg_dir.mkdir()
+    (pkg_dir / "__init__.py").write_text(
+        "from app.modules.base import ModuleManifest\n"
+        "CALLS = []\n"
+        f"def hook():\n    {hook_body}\n"
+        f"manifest = ModuleManifest(key={name!r}, on_startup=hook)\n"
+    )
+
+
+def test_an_enabled_modules_startup_hook_runs_once(fixture_modules_path):
+    import importlib
+
+    _write_hooked_module(fixture_modules_path, "hooked")
+
+    run_startup_hooks(["hooked"])
+
+    assert importlib.import_module("app.modules.hooked").CALLS == ["called"]
+
+
+def test_a_disabled_modules_startup_hook_does_not_run(fixture_modules_path):
+    import importlib
+
+    _write_hooked_module(fixture_modules_path, "hooked")
+
+    run_startup_hooks([])
+
+    assert importlib.import_module("app.modules.hooked").CALLS == []
+
+
+def test_a_module_without_a_hook_is_fine(fixture_modules_path):
+    _write_fixture_module(fixture_modules_path, "plain")
+
+    run_startup_hooks(["plain"])  # nothing to call, nothing to raise
+
+
+def test_a_failing_hook_is_logged_and_does_not_stop_the_others_or_the_startup(fixture_modules_path, caplog):
+    import importlib
+
+    _write_hooked_module(fixture_modules_path, "broken", hook_body="raise RuntimeError('boom')")
+    _write_hooked_module(fixture_modules_path, "fine")
+
+    run_startup_hooks(["broken", "fine"])  # must not raise
+
+    assert importlib.import_module("app.modules.fine").CALLS == ["called"]
+    assert any("broken" in r.getMessage() and r.exc_info for r in caplog.records)

@@ -110,10 +110,15 @@ class ProviderConfig(BaseModel):
     phone: str = ""
     web: str = ""
 
+    def missing_fields(self) -> list[str]:
+        """The names of the fields a document needs to identify its issuer that are still blank."""
+        required = {"name": self.name, "ico": self.ico, "address": self.address, "email": self.email}
+        return [field for field, value in required.items() if not value.strip()]
+
     @property
     def complete(self) -> bool:
         """The minimum a document needs to identify its issuer."""
-        return all((self.name.strip(), self.ico.strip(), self.address.strip(), self.email.strip()))
+        return not self.missing_fields()
 
 
 class InvoicingConfig(BaseModel):

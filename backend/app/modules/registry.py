@@ -88,6 +88,19 @@ def get_enabled_modules(enabled_keys: Iterable[str]) -> list[ModuleManifest]:
     return [manifest for manifest in discover_modules() if manifest.key in enabled_keys]
 
 
+def run_startup_hooks(enabled_keys: Iterable[str]) -> None:
+    """Call the `on_startup` hook of every enabled module that has one. A hook
+    that raises is logged and skipped: a module's own diagnostics must never
+    keep the application from starting."""
+    for manifest in get_enabled_modules(enabled_keys):
+        if manifest.on_startup is None:
+            continue
+        try:
+            manifest.on_startup()
+        except Exception:
+            logger.exception("Startup hook of module %r failed - continuing", manifest.key)
+
+
 def import_all_module_models() -> None:
     """Import <module>.models for every discovered module that has one.
 
