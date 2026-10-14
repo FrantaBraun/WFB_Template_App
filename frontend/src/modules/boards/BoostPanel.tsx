@@ -83,6 +83,7 @@ export default function BoostPanel({
             purpose={POST_BOOST}
             payload={{ post_id: post.id, amount_usd: dollars, language: i18n.resolvedLanguage ?? i18n.language }}
             digitalContent
+            className={`${primaryButton} self-start`}
           >
             {label}
           </PayButton>

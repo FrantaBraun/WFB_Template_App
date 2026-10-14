@@ -7,19 +7,25 @@
 import { useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { startCheckout } from '../stripe_payment_gate/checkout'
+import { LEGAL_PATHS } from '../stripe_payment_gate/LegalPages'
 import {
   API_BASE,
+  POST_BOOST,
   RULES_PATH,
   POST_BODY_MAX,
   POST_TITLE_MAX,
   ApiError,
   charCount,
   errorDetail,
+  formatUsd,
   postJson,
+  usePaymentsInfo,
   type Assessment,
   type Post,
 } from './api'
 import AssessmentPanel from './AssessmentPanel'
+import PostBoostFields, { parseBoost } from './PostBoostFields'
 import { card, primaryButton, secondaryButton } from './styles'
 
 const EMOJI = ['😀', '😂', '🙂', '😍', '🤔', '😢', '😡', '👍', '👎', '🙏', '💡', '❤️', '🔥', '🎉', '✨', '🤝']
@@ -45,20 +51,37 @@ export function Counter({ count, max }: { count: number; max: number }) {
  * published straight away only when there is nothing to report; otherwise
  * the verdict is shown with its reasons - a warning to edit, a risk to
  * confirm ("publish anyway"), or a refusal. Editing the text dismisses it.
+ *
+ * Where payments are on, the form can also take an amount to pay with the
+ * post (PostBoostFields): the post is checked and published first - the
+ * content check always comes before any payment - and the author is then
+ * sent straight to Stripe to pay for it. Publishing does not depend on the
+ * payment: if it is abandoned or cannot be started, the post stays
+ * published and its value can be raised later.
  */
 export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (post: Post) => void }) {
-  const { t } = useTranslation('boards')
+  const { t, i18n } = useTranslation('boards')
+  const { t: tGate } = useTranslation('stripe_payment_gate')
+  const payments = usePaymentsInfo()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; key: string } | null>(null)
   const [review, setReview] = useState<Assessment | null>(null)
+  // What to pay with the post, as typed (empty = nothing), and the consent to immediate performance that paying needs.
+  const [amount, setAmount] = useState('')
+  const [waiver, setWaiver] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const caretAfterInsert = useRef<number | null>(null)
 
   const titleLength = charCount(title)
   const bodyLength = charCount(body)
   const valid = titleLength > 0 && titleLength <= POST_TITLE_MAX && bodyLength > 0 && bodyLength <= POST_BODY_MAX
+  const boost = parseBoost(amount, payments)
+  // A payment needs a valid amount and the consent; without an amount the form is the plain one.
+  const canSubmit = valid && boost.kind !== 'invalid' && (boost.kind !== 'ok' || waiver)
+  const payLabel = boost.kind === 'ok' ? formatUsd(boost.dollars * 100, i18n.language) : ''
 
   function insertEmoji(emoji: string) {
     const field = bodyRef.current
@@ -81,11 +104,34 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
 
   async function publish(confirmRisk: boolean) {
     const post = await postJson<Post>(`${API_BASE}/categories/${slug}/posts`, { title, body, confirm_risk: confirmRisk })
+    const paying = boost.kind === 'ok' ? boost.dollars : null
     setTitle('')
     setBody('')
     setReview(null)
-    setMessage({ kind: 'ok', key: 'form.published' })
-    onPosted(post)
+    if (paying === null) {
+      setMessage({ kind: 'ok', key: 'form.published' })
+      onPosted(post)
+      return
+    }
+
+    // The post is out; now the payment. startCheckout never resolves when it works
+    // (the browser is on its way to Stripe), so this form stays busy until the page goes.
+    setMessage({ kind: 'ok', key: 'form.publishedPaying' })
+    setRedirecting(true)
+    try {
+      await startCheckout(
+        POST_BOOST,
+        { post_id: post.id, amount_usd: paying, language: i18n.resolvedLanguage ?? i18n.language },
+        ['terms', 'digital_content_waiver'],
+      )
+    } catch {
+      // Published all the same: say so, and let the author try again from the offer to raise its value.
+      setRedirecting(false)
+      setAmount('')
+      setWaiver(false)
+      setMessage({ kind: 'error', key: 'form.paymentNotStarted' })
+      onPosted(post)
+    }
   }
 
   function explain(err: unknown) {
@@ -113,7 +159,7 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
 
   function submit(event: FormEvent) {
     event.preventDefault()
-    if (!valid || busy) return
+    if (!canSubmit || busy) return
     setReview(null)
     run(async () => {
       const assessment = await postJson<Assessment>(`${API_BASE}/categories/${slug}/posts/check`, { title, body })
@@ -180,16 +226,36 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
         </div>
       </div>
 
+      {payments?.enabled && (
+        <PostBoostFields
+          info={payments}
+          amount={amount}
+          onAmount={(next) => {
+            setAmount(next)
+            setReview(null)
+          }}
+          waiver={waiver}
+          onWaiver={setWaiver}
+          disabled={busy}
+        />
+      )}
+
       {review && (
         <AssessmentPanel assessment={review} subject="post">
           {review.level !== 'blocked' && (
             <button
               type="button"
-              disabled={busy}
+              disabled={busy || !canSubmit}
               onClick={() => run(() => publish(review.level === 'risk'))}
               className={primaryButton}
             >
-              {busy ? t('form.publishing') : t('moderation.publishAnyway')}
+              {redirecting
+                ? tGate('button.redirecting')
+                : busy
+                  ? t('form.publishing')
+                  : boost.kind === 'ok'
+                    ? t('moderation.publishAndPayAnyway', { amount: payLabel })
+                    : t('moderation.publishAnyway')}
             </button>
           )}
           <button
@@ -206,20 +272,38 @@ export default function PostForm({ slug, onPosted }: { slug: string; onPosted: (
       )}
 
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        <Trans
-          t={t}
-          i18nKey="form.rulesNotice"
-          components={{ rules: <Link to={RULES_PATH} className="underline underline-offset-4 hover:no-underline" /> }}
-        />
+        {boost.kind === 'ok' ? (
+          // The submit button now also orders and pays: show the terms notice that goes with a payment button.
+          <Trans
+            t={tGate}
+            i18nKey="button.termsNotice"
+            components={{
+              terms: <Link to={LEGAL_PATHS.terms} className="underline underline-offset-4 hover:no-underline" />,
+              privacy: <Link to={LEGAL_PATHS.privacy} className="underline underline-offset-4 hover:no-underline" />,
+            }}
+          />
+        ) : (
+          <Trans
+            t={t}
+            i18nKey="form.rulesNotice"
+            components={{ rules: <Link to={RULES_PATH} className="underline underline-offset-4 hover:no-underline" /> }}
+          />
+        )}
       </p>
 
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
-          disabled={!valid || busy}
+          disabled={!canSubmit || busy}
           className={primaryButton}
         >
-          {busy ? t('form.checking') : t('form.publish')}
+          {redirecting
+            ? tGate('button.redirecting')
+            : busy
+              ? t('form.checking')
+              : boost.kind === 'ok'
+                ? t('form.publishAndPay', { amount: payLabel })
+                : t('form.publish')}
         </button>
         {message && (
           <span
