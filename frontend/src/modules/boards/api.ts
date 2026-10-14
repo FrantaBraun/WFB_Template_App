@@ -124,6 +124,18 @@ export interface PaymentHistory {
   has_more: boolean
 }
 
+/** One reason payments are off (GET /manage/payments-status); `missing` names the blank provider fields. */
+export interface PaymentsProblem {
+  code: 'gateway_module_disabled' | 'stripe_secret_key_missing' | 'stripe_webhook_secret_missing' | 'provider_incomplete'
+  missing: string[]
+}
+
+/** For administrators: whether payments are on, and every reason they are not. */
+export interface PaymentsStatus {
+  enabled: boolean
+  problems: PaymentsProblem[]
+}
+
 /** Whether authors can pay to raise a post's value on this deployment, and within what limits. */
 export interface PaymentsInfo {
   enabled: boolean

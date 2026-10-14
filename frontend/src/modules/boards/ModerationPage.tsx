@@ -14,6 +14,7 @@ import ModerationAccounts from './ModerationAccounts'
 import ModerationCategories from './ModerationCategories'
 import ModerationPosts from './ModerationPosts'
 import ModerationRules from './ModerationRules'
+import PaymentsStatusNotice from './PaymentsStatusNotice'
 
 type Tab = 'posts' | 'categories' | 'rules' | 'accounts'
 const TABS: Tab[] = ['posts', 'categories', 'rules', 'accounts']
@@ -62,6 +63,7 @@ export default function ModerationPage() {
         <p>{t('admin.forbidden')}</p>
       ) : (
         <>
+          <PaymentsStatusNotice />
           <div role="tablist" className="mb-6 flex gap-4 border-b border-slate-200 dark:border-slate-800">
             {TABS.map((name) => (
               <button

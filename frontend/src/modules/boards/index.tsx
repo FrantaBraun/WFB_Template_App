@@ -345,6 +345,20 @@ const boardsModule: ModuleDefinition = {
           rebuilt: 'Pravidla byla vytvořena znovu.',
           invalid: 'Zkontrolujte pravidla – klíčová slova nesmí být prázdná a váha musí být mezi 0,1 a 10.',
         },
+        payments: {
+          title: 'Platby jsou vypnuté',
+          explain: 'Autoři teď nemohou za příspěvky platit a nabídka platby se nikomu nezobrazuje. Důvody:',
+          problem: {
+            gateway_module_disabled:
+              'Platební brána není zapnutá: přidejte „stripe_payment_gate“ do backend/modules.json a do frontend/public/modules.json.',
+            stripe_secret_key_missing: 'V backend/.env chybí STRIPE_SECRET_KEY.',
+            stripe_webhook_secret_missing: 'V backend/.env chybí STRIPE_WEBHOOK_SECRET.',
+            provider_incomplete:
+              'V backend/modules/boards.json (invoicing.provider) nejsou vyplněné údaje poskytovatele: chybí {{fields}}. Stejné údaje patří i do frontend/public/legal.json (provider).',
+          },
+          field: { name: 'název', ico: 'IČO', address: 'adresa', email: 'e-mail' },
+          restart: 'Po změně nastavení backend restartujte – načítá se jen při startu.',
+        },
         accounts: {
           explain: 'Účty zablokované pro opakovaná porušení pravidel. Odblokováním účet začne s čistým štítem; odstraněné příspěvky se samy nevrátí, ale můžete je obnovit na záložce Příspěvky (stav Odstraněné).',
           empty: 'Žádné zablokované účty.',
@@ -646,6 +660,20 @@ const boardsModule: ModuleDefinition = {
           saved: 'The rules were saved.',
           rebuilt: 'The rules were rebuilt.',
           invalid: 'Check the rules - keywords cannot be empty and a weight must be between 0.1 and 10.',
+        },
+        payments: {
+          title: 'Payments are off',
+          explain: 'Authors cannot pay for posts right now, and no payment option is shown to anybody. Why:',
+          problem: {
+            gateway_module_disabled:
+              'The payment gateway is not enabled: add “stripe_payment_gate” to backend/modules.json and to frontend/public/modules.json.',
+            stripe_secret_key_missing: 'STRIPE_SECRET_KEY is missing in backend/.env.',
+            stripe_webhook_secret_missing: 'STRIPE_WEBHOOK_SECRET is missing in backend/.env.',
+            provider_incomplete:
+              'The provider’s details are incomplete in backend/modules/boards.json (invoicing.provider): missing {{fields}}. The same details belong in frontend/public/legal.json (provider).',
+          },
+          field: { name: 'name', ico: 'company ID (IČO)', address: 'address', email: 'email' },
+          restart: 'Restart the backend after changing the settings - they are read only at startup.',
         },
         accounts: {
           explain: 'Accounts blocked for repeated rule violations. Unblocking gives an account a clean slate; removed posts do not come back by themselves, but you can restore them on the Posts tab (state Removed).',
