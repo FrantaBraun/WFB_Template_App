@@ -87,6 +87,7 @@ class Post(Base):
     __tablename__ = "module_boards_posts"
     __table_args__ = (
         CheckConstraint("paid_cents >= 0", name="ck_module_boards_posts_paid_cents_nonneg"),
+        CheckConstraint("floor_lift >= 0", name="ck_module_boards_posts_floor_lift_nonneg"),
         CheckConstraint("resonance_count >= 0", name="ck_module_boards_posts_resonance_count_nonneg"),
     )
 
@@ -99,6 +100,13 @@ class Post(Base):
     body: Mapped[str] = mapped_column(String(POST_BODY_MAX), nullable=False)
     paid_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
     resonance_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
+    # Points the zero floor has forgiven. A post's value is its points minus its
+    # age, never below zero; a post that has sunk to the floor and then gets a
+    # resonance or a payment must show that credit in full, not have it eaten by
+    # the age it already "lost" below zero. So when a credit arrives, the
+    # shortfall is added here first (service.lift_for_credit), and the value is
+    # max(0, points + floor_lift - age). Only credits change it - never the clock.
+    floor_lift: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     status: Mapped[str] = mapped_column(

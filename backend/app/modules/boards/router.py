@@ -60,7 +60,7 @@ from app.modules.boards.schemas import (
     PostPage,
     ReceiptOut,
 )
-from app.modules.boards.service import make_machine_rules, rank_expression, unique_slug
+from app.modules.boards.service import lift_for_credit, make_machine_rules, rank_expression, unique_slug
 from app.modules.boards.views import (
     assessment_out,
     category_out,
@@ -467,7 +467,15 @@ async def add_resonance(
     if inserted is None:
         raise HTTPException(status_code=409, detail="You have already resonated with this post")
 
-    await db.execute(update(Post).where(Post.id == post.id).values(resonance_count=Post.resonance_count + 1))
+    # One UPDATE: the floor's shortfall is measured against the row as it was, then the resonance is added.
+    await db.execute(
+        update(Post)
+        .where(Post.id == post.id)
+        .values(
+            resonance_count=Post.resonance_count + 1,
+            floor_lift=Post.floor_lift + lift_for_credit(config, datetime.now(timezone.utc)),
+        )
+    )
     await db.commit()
     await db.refresh(post)
     return post_out(post, config, resonated=True, mine=post.author_id == user.id)

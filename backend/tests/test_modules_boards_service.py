@@ -61,8 +61,8 @@ def test_slugify_truncates_without_a_trailing_hyphen():
 # --- post value ---------------------------------------------------------------
 
 
-def _value(paid_cents=0, resonances=0, age=timedelta(0), config=CONFIG):
-    return post_value(paid_cents, resonances, NOW - age, NOW, config)
+def _value(paid_cents=0, resonances=0, age=timedelta(0), config=CONFIG, lift=0):
+    return post_value(paid_cents, resonances, NOW - age, NOW, config, lift)
 
 
 def test_a_new_unpaid_post_is_worth_nothing():
@@ -109,7 +109,8 @@ def test_the_value_is_never_below_zero():
     assert _value(paid_cents=100, age=timedelta(days=11)) == 0  # 10 points paid - 11 days
 
 
-def test_the_value_leaves_zero_only_once_the_points_outweigh_the_age():
+def test_without_a_lift_the_value_leaves_zero_only_once_the_points_outweigh_the_age():
+    """The plain formula, for a post the floor has never had to lift (see the lift tests below)."""
     age = timedelta(days=10)
     assert _value(resonances=9, age=age) == 0
     assert _value(resonances=10, age=age) == 0  # exactly cancelled
@@ -120,6 +121,26 @@ def test_the_value_leaves_zero_only_once_the_points_outweigh_the_age():
 def test_the_floor_is_zero_whatever_the_factors_are():
     config = BoardsConfig(points_per_usd=1, points_per_resonance=1, points_per_day=5)
     assert _value(paid_cents=100, resonances=3, age=timedelta(days=9), config=config) == 0
+
+
+def test_a_lift_makes_up_what_the_post_had_sunk_below_zero():
+    """A post 30 days old with 5 resonances is 25 below zero; a lift of 25 brings it to exactly 0..."""
+    assert _value(resonances=5, age=timedelta(days=30)) == 0
+    assert _value(resonances=5, age=timedelta(days=30), lift=25) == 0
+    # ... so one more resonance shows as 1, not as "still 0".
+    assert _value(resonances=6, age=timedelta(days=30), lift=25) == 1
+
+
+def test_a_lifted_post_goes_on_ageing_from_where_it_was_lifted():
+    """The lift is not a pause: a day later the same post is worth a point less."""
+    lifted = dict(resonances=6, lift=25)
+    assert _value(age=timedelta(days=30), **lifted) == 1
+    assert _value(age=timedelta(days=31), **lifted) == 0
+    assert _value(age=timedelta(days=29), **lifted) == 2
+
+
+def test_a_lift_on_a_post_that_is_above_zero_just_adds():
+    assert _value(resonances=50, age=timedelta(days=10), lift=7) == 47
 
 
 def test_a_clock_skewed_future_post_is_not_negative_age():
@@ -213,6 +234,7 @@ async def test_the_sql_ordering_never_contradicts_the_shown_values(db_session, u
                 body="b",
                 paid_cents=rng.choice([0, 0, 5, 19, 100, 250, 1234]),
                 resonance_count=rng.randint(0, 40),
+                floor_lift=rng.choice([0, 0, 0, 5, 30, 90]),
                 created_at=now - timedelta(minutes=rng.randint(0, 60 * 24 * 90)),
             )
         )
@@ -226,8 +248,9 @@ async def test_the_sql_ordering_never_contradicts_the_shown_values(db_session, u
     assert len(posts) == 60
 
     probe = datetime.now(timezone.utc)
-    shown = [post_value(p.paid_cents, p.resonance_count, p.created_at, probe, CONFIG) for p in posts]
+    shown = [post_value(p.paid_cents, p.resonance_count, p.created_at, probe, CONFIG, p.floor_lift) for p in posts]
     assert shown == sorted(shown, reverse=True)
+    assert 0 in shown and max(shown) > 0  # the spread covers both the floor and the climbers
 
 
 async def test_the_ordering_follows_the_configured_factors(db_session, user):

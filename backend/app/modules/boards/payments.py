@@ -30,6 +30,7 @@ issuer would be worthless, and the money would already be taken.
 
 import logging
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,6 +40,7 @@ from app.models.user import User
 from app.modules.boards import documents, receipts
 from app.modules.boards.config import get_config
 from app.modules.boards.models import STATUS_HIDDEN, STATUS_PUBLISHED, Category, Post
+from app.modules.boards.service import lift_for_credit
 from app.modules.stripe_payment_gate.models import StripePayment
 from app.modules.stripe_payment_gate.purposes import PaymentPurpose, PaymentQuote, PaymentRejected, register_purpose
 
@@ -113,8 +115,15 @@ async def apply_boost(db: AsyncSession, payment: StripePayment) -> None:
         # Stripe retry the webhook for ever, so say so loudly and move on.
         logger.error("Boost payment %s is in %r, not %r - not applied", payment.id, payment.currency, CURRENCY)
         return
+    # One UPDATE: the floor's shortfall is measured against the row as it was, so the payment shows in
+    # full on a post that had sunk to zero; then the amount is added.
     result = await db.execute(
-        update(Post).where(Post.id == uuid.UUID(payment.reference)).values(paid_cents=Post.paid_cents + payment.amount)
+        update(Post)
+        .where(Post.id == uuid.UUID(payment.reference))
+        .values(
+            paid_cents=Post.paid_cents + payment.amount,
+            floor_lift=Post.floor_lift + lift_for_credit(config, datetime.now(timezone.utc)),
+        )
     )
     if result.rowcount == 0:
         logger.error("Boost payment %s refers to post %s, which does not exist", payment.id, payment.reference)

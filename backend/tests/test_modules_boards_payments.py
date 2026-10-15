@@ -380,6 +380,70 @@ async def test_dollars_become_points_in_the_value(db_session, alice):
     assert post_value(post.paid_cents, post.resonance_count, post.created_at, now, BoardsConfig()) - before == 50
 
 
+def _shown(post, now=None):
+    return post_value(
+        post.paid_cents, post.resonance_count, post.created_at, now or datetime.now(timezone.utc), BoardsConfig(), post.floor_lift
+    )
+
+
+async def test_a_payment_on_an_old_post_shows_in_full(db_session, alice):
+    """Sixty days old and worth nothing: $5 makes it 50 - not 'minus ten, so still 0'."""
+    created = datetime.now(timezone.utc) - timedelta(days=60, hours=1)
+    post = await _post(db_session, alice, await _category(db_session, alice), created_at=created)
+
+    await apply_boost(db_session, await _payment(db_session, post, 500))
+    await db_session.refresh(post)
+
+    assert _shown(post) == 50
+    assert post.floor_lift == 60
+
+
+async def test_a_payment_on_an_old_post_that_already_had_some_points_shows_in_full(db_session, alice):
+    created = datetime.now(timezone.utc) - timedelta(days=60, hours=1)
+    post = await _post(db_session, alice, await _category(db_session, alice), created_at=created, resonance_count=5)
+
+    await apply_boost(db_session, await _payment(db_session, post, 500))
+    await db_session.refresh(post)
+
+    assert _shown(post) == 50  # 5 resonances - 60 days was -55; the payment lifts that, then adds 50
+    assert post.floor_lift == 55
+
+
+async def test_a_payment_on_an_old_post_that_was_paid_for_before_shows_in_full(db_session, alice):
+    """$1 earlier is 10 points against 60 days: 50 below zero. Another $1 is worth its 10, not 'still 0'."""
+    created = datetime.now(timezone.utc) - timedelta(days=60, hours=1)
+    post = await _post(db_session, alice, await _category(db_session, alice), created_at=created, paid_cents=100)
+
+    await apply_boost(db_session, await _payment(db_session, post, 100))
+    await db_session.refresh(post)
+
+    assert _shown(post) == 10
+    assert post.floor_lift == 50
+
+
+async def test_a_payment_on_a_post_above_zero_just_adds_and_lifts_nothing(db_session, alice):
+    created = datetime.now(timezone.utc) - timedelta(days=10, hours=1)
+    post = await _post(db_session, alice, await _category(db_session, alice), created_at=created, resonance_count=100)
+
+    await apply_boost(db_session, await _payment(db_session, post, 200))
+    await db_session.refresh(post)
+
+    assert _shown(post) == 110  # 100 + 20 - 10
+    assert post.floor_lift == 0
+
+
+async def test_later_payments_on_a_revived_post_keep_adding_in_full(db_session, alice):
+    created = datetime.now(timezone.utc) - timedelta(days=60, hours=1)
+    post = await _post(db_session, alice, await _category(db_session, alice), created_at=created)
+
+    await apply_boost(db_session, await _payment(db_session, post, 500))
+    await apply_boost(db_session, await _payment(db_session, post, 300))
+    await db_session.refresh(post)
+
+    assert _shown(post) == 80
+    assert post.floor_lift == 60  # lifted once; the second payment found the post above zero
+
+
 @pytest.mark.parametrize("status", ["blocked", "removed"])
 async def test_a_payment_that_lands_after_a_block_is_still_recorded(db_session, alice, status):
     """The money has been taken either way; nothing is refunded."""

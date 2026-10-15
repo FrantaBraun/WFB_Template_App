@@ -43,7 +43,14 @@ def category_out(category: Category, post_count: int) -> CategoryOut:
 
 
 def _value(post: Post, config: BoardsConfig, now: datetime | None) -> int:
-    return post_value(post.paid_cents, post.resonance_count, post.created_at, now or datetime.now(timezone.utc), config)
+    return post_value(
+        post.paid_cents,
+        post.resonance_count,
+        post.created_at,
+        now or datetime.now(timezone.utc),
+        config,
+        post.floor_lift,
+    )
 
 
 def post_out(

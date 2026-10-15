@@ -11,6 +11,14 @@ and never below zero: a post whose age has eaten everything it earned shows 0,
 not a negative number. It is computed on read, never stored - the age term
 changes every day.
 
+The zero floor applies to the *process*, not only to the number shown: a post
+that has sunk to 0 does not keep a hidden debt for the next resonance or
+payment to pay off - the credit shows in full ("1 resonance on an old post
+makes it 1"). That is what Post.floor_lift is for: every credit first adds
+whatever the post is below zero by (lift_for_credit), then adds the credit, so
+the value is max(0, points + floor_lift - age). The lift only ever changes with
+a credit, so the value is still a pure function of the row and the clock.
+
 Ordering by value looks like it would need the age in the query, but it
 doesn't: with `now` the same for every post, value_i = base_i - d * (now -
 created_i) is `now`-independent apart from a shift common to all posts, so
@@ -28,9 +36,8 @@ The floor at zero does not disturb that: max(0, x) never reverses an order, it
 only makes more posts equal. The ordering key itself is *not* floored, so posts
 that all show 0 stay ordered by how much they have actually earned against
 their age - the one with more resonances above the one with fewer - instead of
-falling into the arbitrary order of a tie. (It also means a resonance on a post
-that is still below zero moves it up among the zeros without changing the
-number shown.)
+falling into the arbitrary order of a tie. floor_lift is part of the key like
+the points are: it only changes with a credit, so the key stays time-invariant.
 """
 
 import logging
@@ -38,7 +45,7 @@ import re
 import unicodedata
 from datetime import datetime
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import DateTime, Integer, cast, func, literal, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.boards.config import BoardsConfig, ModerationConfig
@@ -90,15 +97,24 @@ def age_in_days(created_at: datetime, now: datetime) -> int:
     return max(0, (now - created_at).days)
 
 
-def post_value(paid_cents: int, resonance_count: int, created_at: datetime, now: datetime, config: BoardsConfig) -> int:
+def post_value(
+    paid_cents: int,
+    resonance_count: int,
+    created_at: datetime,
+    now: datetime,
+    config: BoardsConfig,
+    floor_lift: int = 0,
+) -> int:
     """The post's current value in points, never below zero: an old post that
-    nobody paid for or agreed with is worth 0, not a negative number. The
-    points it did earn still count - they offset its age first - so the value
-    leaves zero only once they outweigh it."""
+    nobody paid for or agreed with is worth 0, not a negative number.
+    `floor_lift` is the points the floor has already forgiven (Post.floor_lift),
+    so a credit that came after the post sank to zero is not eaten by the age
+    it lost below zero."""
     paid_points = paid_cents * config.points_per_usd // 100
     value = (
         paid_points
         + resonance_count * config.points_per_resonance
+        + floor_lift
         - age_in_days(created_at, now) * config.points_per_day
     )
     return max(0, value)
@@ -111,7 +127,28 @@ def rank_expression(config: BoardsConfig):
     paid_points = Post.paid_cents * config.points_per_usd // 100
     resonance_points = Post.resonance_count * config.points_per_resonance
     created_days = func.extract("epoch", Post.created_at) / _SECONDS_PER_DAY
-    return paid_points + resonance_points + config.points_per_day * created_days
+    return paid_points + resonance_points + Post.floor_lift + config.points_per_day * created_days
+
+
+def lift_for_credit(config: BoardsConfig, now: datetime):
+    """SQL expression: how many points the zero floor must forgive before a
+    credit (a resonance, a payment) is added to a post, so that a post that has
+    sunk below zero starts from exactly 0 and the credit shows in full. Zero for
+    a post that is still above it.
+
+    For the SET of the very UPDATE that adds the credit - `floor_lift =
+    floor_lift + lift_for_credit(...)` next to the new resonance_count or
+    paid_cents - because an UPDATE's right-hand sides all see the row as it was
+    *before*: the shortfall is measured without the credit, and two credits
+    arriving together each get theirs, atomically.
+    """
+    paid_points = Post.paid_cents * config.points_per_usd // 100
+    resonance_points = Post.resonance_count * config.points_per_resonance
+    age_days = func.greatest(
+        0, func.floor(func.extract("epoch", literal(now, DateTime(timezone=True)) - Post.created_at) / _SECONDS_PER_DAY)
+    )
+    shortfall = config.points_per_day * age_days - paid_points - resonance_points - Post.floor_lift
+    return cast(func.greatest(0, shortfall), Integer)
 
 
 async def make_machine_rules(
