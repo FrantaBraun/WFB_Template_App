@@ -377,7 +377,8 @@ async def test_line_breaks_are_normalized_and_counted_once(client, alice, db_ses
 
 async def test_posts_are_public_and_ordered_by_value(client, alice, db_session):
     """Values: paid $10 = 100; 60 resonances a day old = 59; $10 paid 60
-    days ago = 40; brand new = 0; unloved for 5 days = -5."""
+    days ago = 40; brand new = 0; unloved for 5 days = 0 (it would be -5, but
+    a value is never below zero)."""
     category = await _seed_category(db_session, alice)
     await _seed_post(db_session, alice, category, "stale", created_at=_ago(5))
     await _seed_post(db_session, alice, category, "fresh")
@@ -394,20 +395,20 @@ async def test_posts_are_public_and_ordered_by_value(client, alice, db_session):
         ("resonant", 59),
         ("old-paid", 40),
         ("fresh", 0),
-        ("stale", -5),
+        ("stale", 0),
     ]
     assert page["has_more"] is False
     assert all(set(p) == POST_KEYS for p in page["items"])
     _no_trace_of(alice, resp)
 
 
-async def test_an_unpaid_unresonated_post_is_worth_less_each_day(client, alice, db_session):
+async def test_a_post_is_worth_less_each_day(client, alice, db_session):
     category = await _seed_category(db_session, alice)
-    await _seed_post(db_session, alice, category, "three-days", created_at=_ago(3))
+    await _seed_post(db_session, alice, category, "three-days", resonance_count=10, created_at=_ago(3))
 
     value = (await client.get(f"{BASE}/categories/general/posts")).json()["items"][0]["value"]
 
-    assert value == -3
+    assert value == 7  # 10 resonances - 3 days
 
 
 async def test_only_posts_of_that_category_are_listed(client, alice, db_session):
@@ -438,6 +439,38 @@ async def test_posts_page_by_page_size_without_gaps_or_repeats(client, alice, db
 async def test_a_negative_offset_is_refused(client, alice, db_session):
     await _seed_category(db_session, alice)
     assert (await client.get(f"{BASE}/categories/general/posts", params={"offset": -1})).status_code == 422
+
+
+async def test_no_value_shown_is_ever_negative(client, alice, db_session, make_access_token):
+    """An old, unloved post is worth 0 wherever its value is shown: the public
+    board, the author's own list and the administrators' list."""
+    category = await _seed_category(db_session, alice)
+    await _seed_post(db_session, alice, category, "forgotten", created_at=_ago(40))
+    admin_sub = uuid.uuid4()
+    db_session.add(User(auth_sub=admin_sub, is_admin=True))
+    await db_session.commit()
+    admin = {"Authorization": f"Bearer {make_access_token(sub=str(admin_sub))}"}
+
+    board = (await client.get(f"{BASE}/categories/general/posts")).json()["items"]
+    mine = (await client.get(f"{BASE}/me/posts", headers=alice.headers)).json()["items"]
+    managed = (await client.get(f"{BASE}/manage/posts", headers=admin)).json()["items"]
+
+    assert [p["value"] for p in board] == [0]
+    assert [p["value"] for p in mine] == [0]
+    assert [p["value"] for p in managed] == [0]
+
+
+async def test_posts_that_all_show_zero_stay_in_the_order_of_what_they_earned(client, alice, db_session):
+    """Flooring the shown value does not flatten the board: of two posts that both show 0
+    the one with more resonances stays above, however many days old they are."""
+    category = await _seed_category(db_session, alice)
+    await _seed_post(db_session, alice, category, "unloved", created_at=_ago(50))
+    await _seed_post(db_session, alice, category, "some-love", resonance_count=20, created_at=_ago(50))
+    await _seed_post(db_session, alice, category, "most-love", resonance_count=40, created_at=_ago(50))
+
+    items = (await client.get(f"{BASE}/categories/general/posts")).json()["items"]
+
+    assert [(p["title"], p["value"]) for p in items] == [("most-love", 0), ("some-love", 0), ("unloved", 0)]
 
 
 async def test_a_new_post_lands_among_the_others_by_its_value(client, alice, db_session):

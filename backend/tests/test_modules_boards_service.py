@@ -84,12 +84,12 @@ def test_one_resonance_is_one_point():
 
 
 def test_one_day_of_age_costs_one_point():
-    assert _value(age=timedelta(days=3)) == -3
+    assert _value(resonances=10, age=timedelta(days=3)) == 7
 
 
 def test_age_counts_whole_days_only():
-    assert _value(age=timedelta(days=2, hours=23, minutes=59)) == -2
-    assert _value(age=timedelta(hours=23)) == 0
+    assert _value(resonances=10, age=timedelta(days=2, hours=23, minutes=59)) == 8
+    assert _value(resonances=10, age=timedelta(hours=23)) == 10
 
 
 def test_the_parts_add_up():
@@ -102,6 +102,26 @@ def test_payments_accumulate_into_the_value():
     assert _value(paid_cents=300 + 200) - _value(paid_cents=300) == 20
 
 
+def test_the_value_is_never_below_zero():
+    assert _value(age=timedelta(days=3)) == 0  # an unpaid, unresonated post, three days on
+    assert _value(age=timedelta(days=400)) == 0
+    assert _value(resonances=2, age=timedelta(days=30)) == 0  # what it earned is eaten, not more
+    assert _value(paid_cents=100, age=timedelta(days=11)) == 0  # 10 points paid - 11 days
+
+
+def test_the_value_leaves_zero_only_once_the_points_outweigh_the_age():
+    age = timedelta(days=10)
+    assert _value(resonances=9, age=age) == 0
+    assert _value(resonances=10, age=age) == 0  # exactly cancelled
+    assert _value(resonances=11, age=age) == 1
+    assert _value(paid_cents=200, age=age) == 10  # $2 = 20 points, - 10 days
+
+
+def test_the_floor_is_zero_whatever_the_factors_are():
+    config = BoardsConfig(points_per_usd=1, points_per_resonance=1, points_per_day=5)
+    assert _value(paid_cents=100, resonances=3, age=timedelta(days=9), config=config) == 0
+
+
 def test_a_clock_skewed_future_post_is_not_negative_age():
     assert age_in_days(NOW + timedelta(hours=5), NOW) == 0
     assert _value(age=timedelta(hours=-5)) == 0
@@ -110,6 +130,7 @@ def test_a_clock_skewed_future_post_is_not_negative_age():
 def test_factors_come_from_the_config():
     config = BoardsConfig(points_per_usd=20, points_per_resonance=3, points_per_day=2)
     assert _value(paid_cents=100, resonances=2, age=timedelta(days=4, hours=1), config=config) == 20 + 6 - 8
+    assert _value(age=timedelta(days=4, hours=1), config=config) == 0  # -8 floored
 
 
 # --- unique slugs (database) --------------------------------------------------

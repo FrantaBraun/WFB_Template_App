@@ -6,8 +6,10 @@
 post value formula (with the SQL ordering key that matches it).
 
 Post value = paid USD * points_per_usd + resonances * points_per_resonance
-- whole days of age * points_per_day (all three factors in BoardsConfig).
-It is computed on read, never stored - the age term changes every day.
+- whole days of age * points_per_day (all three factors in BoardsConfig),
+and never below zero: a post whose age has eaten everything it earned shows 0,
+not a negative number. It is computed on read, never stored - the age term
+changes every day.
 
 Ordering by value looks like it would need the age in the query, but it
 doesn't: with `now` the same for every post, value_i = base_i - d * (now -
@@ -21,6 +23,14 @@ shift common to all posts) only by the fractional part of its age - under
 one point, and always in the same direction - and the order never
 contradicts the shown values. Only posts with *equal* shown values are
 ordered by something else: that fractional part, stable but arbitrary.
+
+The floor at zero does not disturb that: max(0, x) never reverses an order, it
+only makes more posts equal. The ordering key itself is *not* floored, so posts
+that all show 0 stay ordered by how much they have actually earned against
+their age - the one with more resonances above the one with fewer - instead of
+falling into the arbitrary order of a tie. (It also means a resonance on a post
+that is still below zero moves it up among the zeros without changing the
+number shown.)
 """
 
 import logging
@@ -81,19 +91,23 @@ def age_in_days(created_at: datetime, now: datetime) -> int:
 
 
 def post_value(paid_cents: int, resonance_count: int, created_at: datetime, now: datetime, config: BoardsConfig) -> int:
-    """The post's current value in points - may go negative for an old post
-    nobody paid for or agreed with."""
+    """The post's current value in points, never below zero: an old post that
+    nobody paid for or agreed with is worth 0, not a negative number. The
+    points it did earn still count - they offset its age first - so the value
+    leaves zero only once they outweigh it."""
     paid_points = paid_cents * config.points_per_usd // 100
-    return (
+    value = (
         paid_points
         + resonance_count * config.points_per_resonance
         - age_in_days(created_at, now) * config.points_per_day
     )
+    return max(0, value)
 
 
 def rank_expression(config: BoardsConfig):
     """SQL ordering key, highest first = highest post_value first (see the
-    module docstring for why it needs no `now`)."""
+    module docstring for why it needs no `now`, and why it is left unfloored
+    although post_value is not)."""
     paid_points = Post.paid_cents * config.points_per_usd // 100
     resonance_points = Post.resonance_count * config.points_per_resonance
     created_days = func.extract("epoch", Post.created_at) / _SECONDS_PER_DAY
