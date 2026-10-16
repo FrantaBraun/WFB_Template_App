@@ -336,6 +336,65 @@ async def test_get_version_spec_mismatched_document_returns_404(db_session, make
     assert resp.status_code == 404
 
 
+async def test_get_version_spec_anonymous_private_returns_404(db_session, api_docs_settings):
+    # What a bare <a href> / new browser tab sends: no Authorization header.
+    # The spec viewer exists because the frontend used to open the spec that
+    # way and every non-public document answered its own team's members with
+    # this 404 - the spec has to be fetched with the bearer token instead.
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, is_public=False)
+    version = await _seed_version(db_session, doc, api_docs_settings.uploads_dir)
+
+    resp = await _request(
+        db_session, "GET", f"/api/api-docs/{doc.id}/versions/{version.id}/spec", settings=api_docs_settings
+    )
+
+    assert resp.status_code == 404
+    assert resp.json() == {"detail": "Document not found"}
+
+
+async def test_get_version_spec_anonymous_public_returns_raw_bytes(db_session, api_docs_settings):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, is_public=True)
+    version = await _seed_version(db_session, doc, api_docs_settings.uploads_dir, version="3.1.0")
+
+    resp = await _request(
+        db_session, "GET", f"/api/api-docs/{doc.id}/versions/{version.id}/spec", settings=api_docs_settings
+    )
+
+    assert resp.status_code == 200
+    assert resp.content == _spec_bytes("3.1.0")
+
+
+async def test_get_version_spec_content_type_follows_stored_format(db_session, make_access_token, api_docs_settings):
+    # The viewer decides between JSON.parse and a YAML parser, and picks the
+    # download's file extension, from this header alone.
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner)
+    token = make_access_token(sub=str(owner.auth_sub))
+    yaml_raw = b"openapi: 3.0.0\ninfo:\n  title: Example API\n  version: 2.0.0\n"
+    version = await process_new_spec(
+        doc,
+        yaml_raw,
+        source="initial",
+        db=db_session,
+        uploads_dir=api_docs_settings.uploads_dir,
+        max_size_bytes=10_000_000,
+    )
+    assert version is not None and version.format == "yaml"
+
+    resp = await _request(
+        db_session, "GET", f"/api/api-docs/{doc.id}/versions/{version.id}/spec", token=token, settings=api_docs_settings
+    )
+
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("application/yaml")
+    assert resp.content == yaml_raw
+
+
 # --- POST /api/api-docs (create by URL) ---------------------------------------------
 
 
