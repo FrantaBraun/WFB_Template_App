@@ -1,5 +1,10 @@
 {
-    "unreleased": [
+  "unreleased": [],
+  "releases": [
+    {
+      "version": "1.0.0",
+      "release_date": "2026-10-16",
+      "changes": [
         "A manual check of an API documentation now ends with a dialog saying whether the check succeeded or failed (with the reason when it failed) and whether a new version was found, with the new and the previous version",
         "Fix the header bell's unread badge not showing the notification a manual check just created until the page was reloaded: the bell, and the new-version banner on the documentation page, now update right after a check or an upload finds a new version",
         "Add a search row to the API documentation, collection and integration lists: it filters by title and description (words in any order, ignoring case and diacritics) and applies to whichever tab, Public or Mine, is selected",
@@ -31,6 +36,7 @@
         "Add a pluggable feature-module system: self-contained modules under src/modules/ are auto-discovered and toggled on/off per application via public/modules.json, contributing their own routes, nav links, and translations",
         "Add light/dark theme toggle in the header, with the preference synced to the signed-in user's profile (user_data.darkMode) and a dedicated Appearance section on the Account page",
         "Add /release-news page showing backend and frontend release history side by side, grouped by compatible major.minor version"
-    ],
-    "releases": []
+      ]
+    }
+  ]
 }

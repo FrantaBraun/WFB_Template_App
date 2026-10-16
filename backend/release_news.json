@@ -1,5 +1,10 @@
 {
-    "unreleased": [
+  "unreleased": [],
+  "releases": [
+    {
+      "version": "1.0.0",
+      "release_date": "2026-10-16",
+      "changes": [
         "A manual recheck or version upload now reports what it did: the response says whether a new version was found (new_version_found) and which version it replaced (previous_version). A failed check whose error has no message (e.g. a timeout) now reports the error type instead of an empty reason",
         "The API document, collection and integration lists accept a free-text search (q): every word has to appear in the title/name or the notes/description, ignoring case and diacritics (\"zakaznik\" finds \"Zákaznický\"), so the public and the team lists can be searched without loading everything",
         "Events in the event calendar module can now only be managed by this application's administrators (the is_admin flag on the local user account) - the auth service's user role no longer grants it, since that role applies to every application",
@@ -25,6 +30,7 @@
         "Add a contact-form module (app/modules/kontaktni_formular): sends the message to CONTACT_MAIL plus a confirmation copy to the sender, signed with the sender's real name when they're signed in",
         "Add a pluggable feature-module system: self-contained modules under app/modules/ are auto-discovered and toggled on/off per application via ENABLED_MODULES, with no code changes to shared routing or migrations",
         "Add GET /api/public/release-news endpoint, exposing release_news.json for the frontend's release news page"
-    ],
-    "releases": []
+      ]
+    }
+  ]
 }
