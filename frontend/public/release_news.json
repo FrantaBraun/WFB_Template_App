@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add a search row to the API documentation, collection and integration lists: it filters by title and description (words in any order, ignoring case and diacritics) and applies to whichever tab, Public or Mine, is selected",
         "Fix the header on phones when signed in: the app name wrapped and its small tag slid under the notification bell. The header is now more compact on small screens, the name truncates (and gives way to the logo alone on the narrowest phones), and the tag only shows from tablet width up",
         "Fix a documentation version's specification failing with \"Document not found\" for non-public documents: it is now opened through the signed-in session instead of a bare link. Each version in the history now has Docs (Swagger UI), ReDoc and Download buttons - the first two open a viewer page for that version, and Download saves the file exactly as it was uploaded",
         "Add an event calendar module (src/modules/event_calendar): an \"Events\" nav link to a list of the next 10 events (thumbnail, title, short description) with \"Load more\", a sidebar calendar marking event and pinned-event days, a year/month archive opening a month's full listing, event pages at /events/<slug>, and an editors' area with the full WYSIWYG editor",

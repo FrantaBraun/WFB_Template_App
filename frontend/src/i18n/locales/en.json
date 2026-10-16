@@ -18,7 +18,12 @@
     "integrations": "Integrations",
     "changeLanguage": "Change language",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "search": {
+      "placeholder": "Search title and description…",
+      "clear": "Clear search",
+      "noMatches": "Nothing matches “{{query}}”."
+    }
   },
   "home": {
     "pageTitle": "API Hub",
@@ -291,6 +296,9 @@
     "noTeamsMessage": "You need a team before you can register API documentation.",
     "noTeamsLink": "Create or join a team",
     "signInPrompt": "Sign in to see documentation owned by your teams.",
+    "search": {
+      "label": "Search API documentation"
+    },
     "tabs": {
       "public": "Public",
       "mine": "My Docs"
@@ -425,6 +433,9 @@
     "noTeamsMessage": "You need a team before you can create a collection.",
     "noTeamsLink": "Create or join a team",
     "signInPrompt": "Sign in to see collections owned by your teams.",
+    "search": {
+      "label": "Search collections"
+    },
     "tabs": {
       "public": "Public",
       "mine": "My Collections"
@@ -485,6 +496,9 @@
     "newButton": "New",
     "noTeamsMessage": "You need a team before you can create an integration.",
     "noTeamsLink": "Create or join a team",
+    "search": {
+      "label": "Search integrations"
+    },
     "list": {
       "empty": "No integrations here yet.",
       "loadError": "Failed to load your integrations.",

@@ -8,8 +8,10 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import ListSearch from '../components/ListSearch'
 import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
+import useSearchableList from '../hooks/useSearchableList'
 
 interface CollectionSummaryData {
   id: string
@@ -30,7 +32,15 @@ interface TeamSummaryData {
 
 type Tab = 'public' | 'mine'
 
-function CollectionList({ collections, emptyText }: { collections: CollectionSummaryData[]; emptyText: string }) {
+function CollectionList({
+  collections,
+  emptyText,
+  pending,
+}: {
+  collections: CollectionSummaryData[]
+  emptyText: string
+  pending: boolean
+}) {
   const { t } = useTranslation()
 
   if (collections.length === 0) {
@@ -38,7 +48,12 @@ function CollectionList({ collections, emptyText }: { collections: CollectionSum
   }
 
   return (
-    <div className="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
+    <div
+      aria-busy={pending}
+      className={`divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white transition-opacity dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900 ${
+        pending ? 'opacity-60' : ''
+      }`}
+    >
       {collections.map((collection) => (
         <Link
           key={collection.id}
@@ -69,6 +84,9 @@ function CollectionList({ collections, emptyText }: { collections: CollectionSum
  * inline panel toggled by the "New" button and, on success, stays on this
  * page with the new collection appended to My Collections (same
  * create-and-stay pattern as Teams.tsx's own create form).
+ *
+ * The search row sits above the tab strip and filters whichever tab is
+ * selected (same as ApiDocs.tsx).
  */
 export default function Collections() {
   const { t } = useTranslation()
@@ -76,12 +94,10 @@ export default function Collections() {
   const { user } = useAuth()
 
   const [tab, setTab] = useState<Tab>('public')
+  const [query, setQuery] = useState('')
 
-  const [publicCollections, setPublicCollections] = useState<CollectionSummaryData[] | null>(null)
-  const [publicError, setPublicError] = useState<string | null>(null)
-
-  const [myCollections, setMyCollections] = useState<CollectionSummaryData[] | null>(null)
-  const [myError, setMyError] = useState<string | null>(null)
+  const publicList = useSearchableList<CollectionSummaryData>('/api/public/collections', query)
+  const myList = useSearchableList<CollectionSummaryData>(user ? '/api/collections' : null, query)
 
   const [teams, setTeams] = useState<TeamSummaryData[] | null>(null)
 
@@ -93,18 +109,7 @@ export default function Collections() {
   const [createError, setCreateError] = useState<string | null>(null)
 
   useEffect(() => {
-    apiFetch('/api/public/collections')
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then(setPublicCollections)
-      .catch(() => setPublicError(t('collections.list.loadError')))
-  }, [t])
-
-  useEffect(() => {
     if (!user) return
-    apiFetch('/api/collections')
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then(setMyCollections)
-      .catch(() => setMyError(t('collections.list.loadError')))
     apiFetch('/api/teams')
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: TeamSummaryData[]) => {
@@ -112,7 +117,10 @@ export default function Collections() {
         if (data.length > 0) setCreateTeamId(data[0].id)
       })
       .catch(() => setTeams([]))
-  }, [user, t])
+  }, [user])
+
+  const emptyText = (answeredQuery: string) =>
+    answeredQuery ? t('common.search.noMatches', { query: answeredQuery }) : t('collections.list.empty')
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
@@ -129,7 +137,9 @@ export default function Collections() {
         throw new Error(typeof body.detail === 'string' ? body.detail : t('collections.create.error'))
       }
       const created: CollectionSummaryData = await resp.json()
-      setMyCollections((prev) => [...(prev ?? []), created].sort((a, b) => a.name.localeCompare(b.name)))
+      myList.update((items) => [...items, created].sort((a, b) => a.name.localeCompare(b.name)))
+      // The new collection may not match an active search - show the full list.
+      setQuery('')
       setCreateName('')
       setCreateDescription('')
       setShowCreateForm(false)
@@ -241,38 +251,48 @@ export default function Collections() {
         </form>
       )}
 
-      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800">
-        <button
-          type="button"
-          onClick={() => setTab('public')}
-          className={`px-3 py-2 text-sm font-medium ${
-            tab === 'public'
-              ? 'border-b-2 border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100'
-              : 'text-slate-500 dark:text-slate-400'
-          }`}
-        >
-          {t('collections.tabs.public')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('mine')}
-          className={`px-3 py-2 text-sm font-medium ${
-            tab === 'mine'
-              ? 'border-b-2 border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100'
-              : 'text-slate-500 dark:text-slate-400'
-          }`}
-        >
-          {t('collections.tabs.mine')}
-        </button>
+      <div className="flex flex-col gap-3">
+        <ListSearch value={query} onChange={setQuery} label={t('collections.search.label')} />
+
+        <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800">
+          <button
+            type="button"
+            onClick={() => setTab('public')}
+            className={`px-3 py-2 text-sm font-medium ${
+              tab === 'public'
+                ? 'border-b-2 border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            {t('collections.tabs.public')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('mine')}
+            className={`px-3 py-2 text-sm font-medium ${
+              tab === 'mine'
+                ? 'border-b-2 border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            {t('collections.tabs.mine')}
+          </button>
+        </div>
       </div>
 
       {tab === 'public' && (
         <>
-          {publicError && <p className="text-sm text-red-600 dark:text-red-400">{publicError}</p>}
-          {publicCollections === null && !publicError && (
+          {publicList.failed && <p className="text-sm text-red-600 dark:text-red-400">{t('collections.list.loadError')}</p>}
+          {publicList.items === null && !publicList.failed && (
             <p className="text-sm text-slate-600 dark:text-slate-400">{t('common.loading')}</p>
           )}
-          {publicCollections && <CollectionList collections={publicCollections} emptyText={t('collections.list.empty')} />}
+          {publicList.items && (
+            <CollectionList
+              collections={publicList.items}
+              pending={publicList.pending}
+              emptyText={emptyText(publicList.answeredQuery)}
+            />
+          )}
         </>
       )}
 
@@ -286,11 +306,13 @@ export default function Collections() {
               </Link>
             </p>
           )}
-          {user && myError && <p className="text-sm text-red-600 dark:text-red-400">{myError}</p>}
-          {user && myCollections === null && !myError && (
+          {user && myList.failed && <p className="text-sm text-red-600 dark:text-red-400">{t('collections.list.loadError')}</p>}
+          {user && myList.items === null && !myList.failed && (
             <p className="text-sm text-slate-600 dark:text-slate-400">{t('common.loading')}</p>
           )}
-          {user && myCollections && <CollectionList collections={myCollections} emptyText={t('collections.list.empty')} />}
+          {user && myList.items && (
+            <CollectionList collections={myList.items} pending={myList.pending} emptyText={emptyText(myList.answeredQuery)} />
+          )}
         </>
       )}
     </div>

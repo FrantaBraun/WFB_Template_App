@@ -18,7 +18,12 @@
     "integrations": "Integrace",
     "changeLanguage": "Změnit jazyk",
     "openMenu": "Otevřít nabídku",
-    "closeMenu": "Zavřít nabídku"
+    "closeMenu": "Zavřít nabídku",
+    "search": {
+      "placeholder": "Hledat v názvu a popisu…",
+      "clear": "Vymazat hledání",
+      "noMatches": "Hledanému výrazu „{{query}}“ nic neodpovídá."
+    }
   },
   "home": {
     "pageTitle": "API Hub",
@@ -291,6 +296,9 @@
     "noTeamsMessage": "Pro registraci API dokumentace potřebujete tým.",
     "noTeamsLink": "Vytvořit nebo se připojit k týmu",
     "signInPrompt": "Přihlaste se, abyste viděli dokumentaci vlastněnou vašimi týmy.",
+    "search": {
+      "label": "Hledat v API dokumentaci"
+    },
     "tabs": {
       "public": "Veřejné",
       "mine": "Moje dokumentace"
@@ -425,6 +433,9 @@
     "noTeamsMessage": "Pro vytvoření kolekce potřebujete tým.",
     "noTeamsLink": "Vytvořit nebo se připojit k týmu",
     "signInPrompt": "Přihlaste se, abyste viděli kolekce vlastněné vašimi týmy.",
+    "search": {
+      "label": "Hledat v kolekcích"
+    },
     "tabs": {
       "public": "Veřejné",
       "mine": "Moje kolekce"
@@ -485,6 +496,9 @@
     "newButton": "Nová",
     "noTeamsMessage": "Pro vytvoření integrace potřebujete tým.",
     "noTeamsLink": "Vytvořit nebo se připojit k týmu",
+    "search": {
+      "label": "Hledat v integracích"
+    },
     "list": {
       "empty": "Zatím tu nejsou žádné integrace.",
       "loadError": "Nepodařilo se načíst vaše integrace.",

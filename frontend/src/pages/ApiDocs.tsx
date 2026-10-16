@@ -8,8 +8,10 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import ListSearch from '../components/ListSearch'
 import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
+import useSearchableList from '../hooks/useSearchableList'
 
 interface ApiDocumentSummaryData {
   id: string
@@ -32,7 +34,7 @@ interface TeamSummaryData {
 
 type Tab = 'public' | 'mine'
 
-function DocList({ docs, emptyText }: { docs: ApiDocumentSummaryData[]; emptyText: string }) {
+function DocList({ docs, emptyText, pending }: { docs: ApiDocumentSummaryData[]; emptyText: string; pending: boolean }) {
   const { t } = useTranslation()
 
   if (docs.length === 0) {
@@ -40,7 +42,12 @@ function DocList({ docs, emptyText }: { docs: ApiDocumentSummaryData[]; emptyTex
   }
 
   return (
-    <div className="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
+    <div
+      aria-busy={pending}
+      className={`divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white transition-opacity dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900 ${
+        pending ? 'opacity-60' : ''
+      }`}
+    >
       {docs.map((doc) => (
         <Link
           key={doc.id}
@@ -72,6 +79,10 @@ function DocList({ docs, emptyText }: { docs: ApiDocumentSummaryData[]; emptyTex
  * "New" action needs both a session AND at least one team, per Teams.tsx's
  * own "no auto-provisioned personal team" rule, so it fetches GET
  * /api/teams itself rather than assuming one exists.
+ *
+ * The search row sits above the tab strip and filters whichever tab is
+ * selected - both lists are searched with the same text, so switching tabs
+ * keeps the search and shows its results straight away.
  */
 export default function ApiDocs() {
   const { t } = useTranslation()
@@ -79,33 +90,23 @@ export default function ApiDocs() {
   const { user } = useAuth()
 
   const [tab, setTab] = useState<Tab>('public')
+  const [query, setQuery] = useState('')
 
-  const [publicDocs, setPublicDocs] = useState<ApiDocumentSummaryData[] | null>(null)
-  const [publicError, setPublicError] = useState<string | null>(null)
-
-  const [myDocs, setMyDocs] = useState<ApiDocumentSummaryData[] | null>(null)
-  const [myDocsError, setMyDocsError] = useState<string | null>(null)
+  const publicList = useSearchableList<ApiDocumentSummaryData>('/api/public/api-docs', query)
+  const myList = useSearchableList<ApiDocumentSummaryData>(user ? '/api/api-docs' : null, query)
 
   const [teams, setTeams] = useState<TeamSummaryData[] | null>(null)
 
   useEffect(() => {
-    apiFetch('/api/public/api-docs')
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then(setPublicDocs)
-      .catch(() => setPublicError(t('apiDocs.list.loadError')))
-  }, [t])
-
-  useEffect(() => {
     if (!user) return
-    apiFetch('/api/api-docs')
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then(setMyDocs)
-      .catch(() => setMyDocsError(t('apiDocs.list.loadError')))
     apiFetch('/api/teams')
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then(setTeams)
       .catch(() => setTeams([]))
-  }, [user, t])
+  }, [user])
+
+  const emptyText = (answeredQuery: string) =>
+    answeredQuery ? t('common.search.noMatches', { query: answeredQuery }) : t('apiDocs.list.empty')
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-16 text-slate-900 dark:text-slate-100">
@@ -130,36 +131,44 @@ export default function ApiDocs() {
         </div>
       )}
 
-      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800">
-        <button
-          type="button"
-          onClick={() => setTab('public')}
-          className={`px-3 py-2 text-sm font-medium ${
-            tab === 'public'
-              ? 'border-b-2 border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100'
-              : 'text-slate-500 dark:text-slate-400'
-          }`}
-        >
-          {t('apiDocs.tabs.public')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('mine')}
-          className={`px-3 py-2 text-sm font-medium ${
-            tab === 'mine'
-              ? 'border-b-2 border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100'
-              : 'text-slate-500 dark:text-slate-400'
-          }`}
-        >
-          {t('apiDocs.tabs.mine')}
-        </button>
+      <div className="flex flex-col gap-3">
+        <ListSearch value={query} onChange={setQuery} label={t('apiDocs.search.label')} />
+
+        <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800">
+          <button
+            type="button"
+            onClick={() => setTab('public')}
+            className={`px-3 py-2 text-sm font-medium ${
+              tab === 'public'
+                ? 'border-b-2 border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            {t('apiDocs.tabs.public')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('mine')}
+            className={`px-3 py-2 text-sm font-medium ${
+              tab === 'mine'
+                ? 'border-b-2 border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            {t('apiDocs.tabs.mine')}
+          </button>
+        </div>
       </div>
 
       {tab === 'public' && (
         <>
-          {publicError && <p className="text-sm text-red-600 dark:text-red-400">{publicError}</p>}
-          {publicDocs === null && !publicError && <p className="text-sm text-slate-600 dark:text-slate-400">{t('common.loading')}</p>}
-          {publicDocs && <DocList docs={publicDocs} emptyText={t('apiDocs.list.empty')} />}
+          {publicList.failed && <p className="text-sm text-red-600 dark:text-red-400">{t('apiDocs.list.loadError')}</p>}
+          {publicList.items === null && !publicList.failed && (
+            <p className="text-sm text-slate-600 dark:text-slate-400">{t('common.loading')}</p>
+          )}
+          {publicList.items && (
+            <DocList docs={publicList.items} pending={publicList.pending} emptyText={emptyText(publicList.answeredQuery)} />
+          )}
         </>
       )}
 
@@ -173,9 +182,13 @@ export default function ApiDocs() {
               </Link>
             </p>
           )}
-          {user && myDocsError && <p className="text-sm text-red-600 dark:text-red-400">{myDocsError}</p>}
-          {user && myDocs === null && !myDocsError && <p className="text-sm text-slate-600 dark:text-slate-400">{t('common.loading')}</p>}
-          {user && myDocs && <DocList docs={myDocs} emptyText={t('apiDocs.list.empty')} />}
+          {user && myList.failed && <p className="text-sm text-red-600 dark:text-red-400">{t('apiDocs.list.loadError')}</p>}
+          {user && myList.items === null && !myList.failed && (
+            <p className="text-sm text-slate-600 dark:text-slate-400">{t('common.loading')}</p>
+          )}
+          {user && myList.items && (
+            <DocList docs={myList.items} pending={myList.pending} emptyText={emptyText(myList.answeredQuery)} />
+          )}
         </>
       )}
     </div>

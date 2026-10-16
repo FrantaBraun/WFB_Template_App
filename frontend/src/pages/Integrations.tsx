@@ -8,8 +8,10 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import ListSearch from '../components/ListSearch'
 import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
+import useSearchableList from '../hooks/useSearchableList'
 
 interface IntegrationSummaryData {
   id: string
@@ -44,7 +46,8 @@ interface TeamSummaryData {
  * CLAUDE.md), so this follows Teams.tsx's redirect-to-/login guard instead
  * of a public/mine tab split. Integration creation has no dedicated route -
  * the inline toggled create form mirrors Collections.tsx's own
- * create-and-stay panel, not ApiDocs.tsx's separate /new page.
+ * create-and-stay panel, not ApiDocs.tsx's separate /new page. With no tabs,
+ * the search row sits directly above the list.
  */
 export default function Integrations() {
   const { t } = useTranslation()
@@ -52,8 +55,8 @@ export default function Integrations() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
-  const [integrations, setIntegrations] = useState<IntegrationSummaryData[] | null>(null)
-  const [listError, setListError] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const list = useSearchableList<IntegrationSummaryData>(user ? '/api/integrations' : null, query)
 
   const [teams, setTeams] = useState<TeamSummaryData[] | null>(null)
 
@@ -72,10 +75,6 @@ export default function Integrations() {
 
   useEffect(() => {
     if (!user) return
-    apiFetch('/api/integrations')
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then(setIntegrations)
-      .catch(() => setListError(t('integrations.list.loadError')))
     apiFetch('/api/teams')
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: TeamSummaryData[]) => {
@@ -83,7 +82,7 @@ export default function Integrations() {
         if (data.length > 0) setCreateTeamId(data[0].id)
       })
       .catch(() => setTeams([]))
-  }, [user, t])
+  }, [user])
 
   if (authLoading || !user) {
     return (
@@ -116,7 +115,9 @@ export default function Integrations() {
         document_count: created.direct_document_count,
         created_at: created.created_at,
       }
-      setIntegrations((prev) => [...(prev ?? []), summary].sort((a, b) => a.name.localeCompare(b.name)))
+      list.update((items) => [...items, summary].sort((a, b) => a.name.localeCompare(b.name)))
+      // The new integration may not match an active search - show the full list.
+      setQuery('')
       setCreateName('')
       setCreateDescription('')
       setShowCreateForm(false)
@@ -227,14 +228,25 @@ export default function Integrations() {
         </form>
       )}
 
-      {listError && <p className="text-sm text-red-600 dark:text-red-400">{listError}</p>}
-      {integrations === null && !listError && <p className="text-sm text-slate-600 dark:text-slate-400">{t('common.loading')}</p>}
-      {integrations && integrations.length === 0 && (
-        <p className="text-sm text-slate-600 dark:text-slate-400">{t('integrations.list.empty')}</p>
+      <ListSearch value={query} onChange={setQuery} label={t('integrations.search.label')} />
+
+      {list.failed && <p className="text-sm text-red-600 dark:text-red-400">{t('integrations.list.loadError')}</p>}
+      {list.items === null && !list.failed && <p className="text-sm text-slate-600 dark:text-slate-400">{t('common.loading')}</p>}
+      {list.items && list.items.length === 0 && (
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          {list.answeredQuery
+            ? t('common.search.noMatches', { query: list.answeredQuery })
+            : t('integrations.list.empty')}
+        </p>
       )}
-      {integrations && integrations.length > 0 && (
-        <div className="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
-          {integrations.map((integration) => (
+      {list.items && list.items.length > 0 && (
+        <div
+          aria-busy={list.pending}
+          className={`divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white transition-opacity dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900 ${
+            list.pending ? 'opacity-60' : ''
+          }`}
+        >
+          {list.items.map((integration) => (
             <Link
               key={integration.id}
               to={`/integrations/${integration.id}`}
