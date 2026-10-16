@@ -85,6 +85,19 @@ class ApiDocumentDetail(BaseModel):
     is_subscribed: bool | None
 
 
+class ApiDocumentCheckResult(ApiDocumentDetail):
+    """Response of POST /{id}/recheck and POST /{id}/upload-version: the
+    document as ApiDocumentDetail, plus what this particular call did - so the
+    UI can say so instead of leaving the user to compare versions by eye.
+    new_version_found is true only when this call archived the old current
+    version and created a new one (an unchanged info.version is false, and a
+    failed check never gets here - it is an HTTP error). previous_version is
+    the current version's string before the call, null if there was none yet."""
+
+    new_version_found: bool
+    previous_version: str | None
+
+
 class ApiDocumentVersionOut(BaseModel):
     """GET /api/api-docs/{id}/versions list item - carries archived_at
     (unlike ApiDocumentCurrentVersion above) so the frontend can tell current

@@ -5,12 +5,13 @@
 import uuid
 
 import httpx
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.api_docs.schemas import (
+    ApiDocumentCheckResult,
     ApiDocumentCreate,
     ApiDocumentCurrentVersion,
     ApiDocumentDetail,
@@ -28,6 +29,7 @@ from app.models.user import User
 from app.services.api_document_versions import fetch_and_process, get_current_version, process_new_spec
 from app.services.openapi_spec import SpecValidationError
 from app.services.spec_storage import delete_document_files, read_spec_file
+from app.services.text_search import matches_all_terms
 
 router = APIRouter()
 
@@ -142,7 +144,21 @@ async def _fetch_and_process(
     try:
         return await fetch_and_process(doc, source=source, db=db, settings=settings)
     except (httpx.HTTPError, SpecValidationError) as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        # httpx timeouts stringify to "" - the type name is better than nothing.
+        raise HTTPException(status_code=422, detail=str(exc) or type(exc).__name__) from exc
+
+
+async def _build_check_result(
+    db: AsyncSession,
+    doc: ApiDocument,
+    current_user: User,
+    previous_version: str | None,
+    new_version: ApiDocumentVersion | None,
+) -> ApiDocumentCheckResult:
+    detail = await _build_detail(db, doc, can_edit=True, current_user=current_user)
+    return ApiDocumentCheckResult(
+        **detail.model_dump(), new_version_found=new_version is not None, previous_version=previous_version
+    )
 
 
 @router.post("", status_code=201)
@@ -231,9 +247,11 @@ async def upload_document(
 @router.get("")
 async def list_documents(
     team_id: uuid.UUID | None = None,
+    q: str | None = Query(default=None, max_length=200),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[ApiDocumentSummary]:
+    """q: free-text search over title and notes - see app/services/text_search.py."""
     current_version_subq = (
         select(ApiDocumentVersion.documentation_id, ApiDocumentVersion.version)
         .where(ApiDocumentVersion.archived_at.is_(None))
@@ -248,6 +266,9 @@ async def list_documents(
     )
     if team_id is not None:
         stmt = stmt.where(ApiDocument.team_id == team_id)
+    search = matches_all_terms(q, ApiDocument.title, ApiDocument.notes)
+    if search is not None:
+        stmt = stmt.where(search)
 
     rows = (await db.execute(stmt)).all()
     return [_to_summary(doc, version) for doc, version in rows]
@@ -311,14 +332,17 @@ async def recheck_document(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
-) -> ApiDocumentDetail:
+) -> ApiDocumentCheckResult:
     doc = await _require_member_document(db, document_id, current_user)
     if not doc.source_url:
         raise HTTPException(status_code=400, detail="This document has no source_url to recheck")
 
-    await _fetch_and_process(doc, source="manual_recheck", db=db, settings=settings)
+    # Read as a plain string up front: processing archives (and expires) the row.
+    current = await get_current_version(db, doc.id)
+    previous_version = current.version if current is not None else None
+    new_version = await _fetch_and_process(doc, source="manual_recheck", db=db, settings=settings)
 
-    return await _build_detail(db, doc, can_edit=True, current_user=current_user)
+    return await _build_check_result(db, doc, current_user, previous_version, new_version)
 
 
 @router.post("/{document_id}/upload-version")
@@ -328,12 +352,14 @@ async def upload_document_version(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
-) -> ApiDocumentDetail:
+) -> ApiDocumentCheckResult:
     doc = await _require_member_document(db, document_id, current_user)
     raw = await file.read()
 
+    current = await get_current_version(db, doc.id)
+    previous_version = current.version if current is not None else None
     try:
-        await process_new_spec(
+        new_version = await process_new_spec(
             doc,
             raw,
             source="manual_upload",
@@ -344,7 +370,7 @@ async def upload_document_version(
     except SpecValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    return await _build_detail(db, doc, can_edit=True, current_user=current_user)
+    return await _build_check_result(db, doc, current_user, previous_version, new_version)
 
 
 @router.post("/{document_id}/subscribe", status_code=204)

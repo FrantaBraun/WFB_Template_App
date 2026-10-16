@@ -107,7 +107,7 @@ async def process_new_spec(
         await notify_new_version(doc, new_version, db)
         return new_version
     except Exception as exc:
-        doc.last_check_error = str(exc)
+        doc.last_check_error = str(exc) or type(exc).__name__
         await db.commit()
         raise
 
@@ -134,7 +134,8 @@ async def fetch_and_process(
     try:
         raw = await fetch_spec_from_url(doc.source_url, settings.spec_fetch_timeout_seconds)
     except httpx.HTTPError as exc:
-        doc.last_check_error = str(exc)
+        # httpx timeouts stringify to "" - the type name is better than nothing.
+        doc.last_check_error = str(exc) or type(exc).__name__
         await db.commit()
         raise
 

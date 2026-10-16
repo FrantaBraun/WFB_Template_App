@@ -2,23 +2,27 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.collections.schemas import CollectionSummary
 from app.database import get_db
 from app.models.collection import Collection, CollectionDocument
+from app.services.text_search import matches_all_terms
 
 router = APIRouter()
 
 
 @router.get("/collections")
-async def list_public_collections(db: AsyncSession = Depends(get_db)) -> list[CollectionSummary]:
+async def list_public_collections(
+    q: str | None = Query(default=None, max_length=200), db: AsyncSession = Depends(get_db)
+) -> list[CollectionSummary]:
     """is_public=true collections only, no team scoping - same summary shape
     as GET /api/collections. Mirrors app/api/public/api_docs.py's pattern of
     no auth dependency at all (not even get_current_user_optional): this
-    route behaves identically for every caller, signed in or not."""
+    route behaves identically for every caller, signed in or not. q is the
+    same name/description free-text search as GET /api/collections's."""
     document_count_subq = (
         select(CollectionDocument.collection_id, func.count(CollectionDocument.id).label("document_count"))
         .group_by(CollectionDocument.collection_id)
@@ -30,6 +34,9 @@ async def list_public_collections(db: AsyncSession = Depends(get_db)) -> list[Co
         .where(Collection.is_public.is_(True))
         .order_by(Collection.name.asc())
     )
+    search = matches_all_terms(q, Collection.name, Collection.description)
+    if search is not None:
+        stmt = stmt.where(search)
     rows = (await db.execute(stmt)).all()
     return [
         CollectionSummary(

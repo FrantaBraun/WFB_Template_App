@@ -4,7 +4,7 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,6 +33,7 @@ from app.models.integration import Integration, IntegrationCollection, Integrati
 from app.models.knowledge_base import KnowledgeBasePage
 from app.models.team import TeamMembership
 from app.models.user import User
+from app.services.text_search import matches_all_terms
 
 router = APIRouter()
 
@@ -132,9 +133,11 @@ async def create_integration(
 @router.get("")
 async def list_integrations(
     team_id: uuid.UUID | None = None,
+    q: str | None = Query(default=None, max_length=200),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[IntegrationSummary]:
+    """q: free-text search over name and description - see app/services/text_search.py."""
     collection_count_subq = (
         select(
             IntegrationCollection.integration_id,
@@ -165,6 +168,9 @@ async def list_integrations(
     )
     if team_id is not None:
         stmt = stmt.where(Integration.team_id == team_id)
+    search = matches_all_terms(q, Integration.name, Integration.description)
+    if search is not None:
+        stmt = stmt.where(search)
 
     rows = (await db.execute(stmt)).all()
     return [

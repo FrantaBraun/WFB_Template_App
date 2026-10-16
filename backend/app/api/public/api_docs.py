@@ -2,23 +2,27 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.api_docs.schemas import ApiDocumentSummary
 from app.database import get_db
 from app.models.api_document import ApiDocument, ApiDocumentVersion
+from app.services.text_search import matches_all_terms
 
 router = APIRouter()
 
 
 @router.get("/api-docs")
-async def list_public_documents(db: AsyncSession = Depends(get_db)) -> list[ApiDocumentSummary]:
+async def list_public_documents(
+    q: str | None = Query(default=None, max_length=200), db: AsyncSession = Depends(get_db)
+) -> list[ApiDocumentSummary]:
     """is_public=true documents only, no team scoping - same summary shape
     as GET /api/api-docs. Mirrors app/api/public/version.py's pattern of no
     auth dependency at all (not even get_current_user_optional): this route
-    behaves identically for every caller, signed in or not."""
+    behaves identically for every caller, signed in or not. q is the same
+    title/notes free-text search as GET /api/api-docs's."""
     current_version_subq = (
         select(ApiDocumentVersion.documentation_id, ApiDocumentVersion.version)
         .where(ApiDocumentVersion.archived_at.is_(None))
@@ -30,6 +34,9 @@ async def list_public_documents(db: AsyncSession = Depends(get_db)) -> list[ApiD
         .where(ApiDocument.is_public.is_(True))
         .order_by(ApiDocument.title.asc())
     )
+    search = matches_all_terms(q, ApiDocument.title, ApiDocument.notes)
+    if search is not None:
+        stmt = stmt.where(search)
     rows = (await db.execute(stmt)).all()
     return [
         ApiDocumentSummary(

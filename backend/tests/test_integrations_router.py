@@ -243,6 +243,29 @@ async def test_list_integrations_orders_by_name(db_session, make_access_token):
     assert names == ["Alpha", "Zeta"]
 
 
+async def test_list_integrations_search_matches_name_and_description_ignoring_case_and_diacritics(
+    db_session, make_access_token
+):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    other_owner = await _make_user(db_session, email="other@example.com")
+    other_team = await _make_team_with_owner(db_session, other_owner, name="Other Team")
+    await _make_integration(db_session, team, owner, name="Objednávky")
+    await _make_integration(db_session, team, owner, name="Sklad", description="Napojení na účetnictví")
+    await _make_integration(db_session, other_team, other_owner, name="Objednávky cizí")
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    async def names(query: str) -> list[str]:
+        resp = await _request(db_session, "GET", f"/api/integrations?q={query}", token=token)
+        assert resp.status_code == 200
+        return [item["name"] for item in resp.json()]
+
+    assert await names("OBJEDNAVKY") == ["Objednávky"]  # the other team's one is not visible at all
+    assert await names("ucetnictvi") == ["Sklad"]
+    assert await names("sklad%20napojeni") == ["Sklad"]
+    assert await names("objednavky%20ucetnictvi") == []
+
+
 def test_list_integrations_requires_auth(client):
     resp = client.get("/api/integrations")
     assert resp.status_code in (401, 403)

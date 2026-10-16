@@ -681,7 +681,10 @@ async def test_recheck_unchanged_version_is_noop(db_session, make_access_token, 
     )
 
     assert resp.status_code == 200
-    assert resp.json()["current_version"]["version"] == "1.0.0"
+    body = resp.json()
+    assert body["current_version"]["version"] == "1.0.0"
+    assert body["new_version_found"] is False
+    assert body["previous_version"] == "1.0.0"
     all_versions = (
         (await db_session.execute(select(ApiDocumentVersion).where(ApiDocumentVersion.documentation_id == doc.id)))
         .scalars()
@@ -709,6 +712,8 @@ async def test_recheck_changed_version_archives_old_creates_new(db_session, make
     body = resp.json()
     assert body["current_version"]["version"] == "2.0.0"
     assert body["current_version"]["source"] == "manual_recheck"
+    assert body["new_version_found"] is True
+    assert body["previous_version"] == "1.0.0"
 
     all_versions = (
         (await db_session.execute(select(ApiDocumentVersion).where(ApiDocumentVersion.documentation_id == doc.id)))
@@ -719,6 +724,65 @@ async def test_recheck_changed_version_archives_old_creates_new(db_session, make
     archived = [v for v in all_versions if v.archived_at is not None]
     assert len(archived) == 1
     assert archived[0].version == "1.0.0"
+
+
+@respx.mock
+async def test_recheck_first_version_has_no_previous_version(db_session, make_access_token, api_docs_settings):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, source_url="https://example.com/openapi.json")
+    token = make_access_token(sub=str(owner.auth_sub))
+    respx.get("https://example.com/openapi.json").mock(
+        return_value=httpx.Response(200, content=_spec_bytes("1.0.0"))
+    )
+
+    resp = await _request(
+        db_session, "POST", f"/api/api-docs/{doc.id}/recheck", token=token, settings=api_docs_settings
+    )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["new_version_found"] is True
+    assert body["previous_version"] is None
+
+
+@respx.mock
+async def test_recheck_http_error_returns_422_and_records_error(db_session, make_access_token, api_docs_settings):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, source_url="https://example.com/openapi.json")
+    await _seed_version(db_session, doc, api_docs_settings.uploads_dir, version="1.0.0")
+    token = make_access_token(sub=str(owner.auth_sub))
+    respx.get("https://example.com/openapi.json").mock(return_value=httpx.Response(404))
+
+    resp = await _request(
+        db_session, "POST", f"/api/api-docs/{doc.id}/recheck", token=token, settings=api_docs_settings
+    )
+
+    assert resp.status_code == 422
+    assert "404" in resp.json()["detail"]
+    await db_session.refresh(doc)
+    assert doc.last_check_error is not None
+
+
+@respx.mock
+async def test_recheck_failure_without_a_message_reports_the_error_type(db_session, make_access_token, api_docs_settings):
+    # httpx timeouts stringify to "" - the caller (and the stored
+    # last_check_error) must still say what went wrong.
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, source_url="https://example.com/openapi.json")
+    token = make_access_token(sub=str(owner.auth_sub))
+    respx.get("https://example.com/openapi.json").mock(side_effect=httpx.ReadTimeout(""))
+
+    resp = await _request(
+        db_session, "POST", f"/api/api-docs/{doc.id}/recheck", token=token, settings=api_docs_settings
+    )
+
+    assert resp.status_code == 422
+    assert resp.json()["detail"] == "ReadTimeout"
+    await db_session.refresh(doc)
+    assert doc.last_check_error == "ReadTimeout"
 
 
 async def test_recheck_no_source_url_returns_400(db_session, make_access_token):
@@ -768,6 +832,33 @@ async def test_upload_version_creates_new_version_regardless_of_original_source(
     body = resp.json()
     assert body["current_version"]["version"] == "2.0.0"
     assert body["current_version"]["source"] == "manual_upload"
+    assert body["new_version_found"] is True
+    assert body["previous_version"] == "1.0.0"
+
+
+async def test_upload_version_with_the_current_version_is_not_a_new_version(
+    db_session, make_access_token, api_docs_settings
+):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    doc = await _make_document(db_session, team, owner, source_url=None, recheck_period="manual")
+    await _seed_version(db_session, doc, api_docs_settings.uploads_dir, version="1.0.0")
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(
+        db_session,
+        "POST",
+        f"/api/api-docs/{doc.id}/upload-version",
+        token=token,
+        settings=api_docs_settings,
+        files={"file": ("openapi.json", _spec_bytes("1.0.0"), "application/json")},
+    )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["new_version_found"] is False
+    assert body["previous_version"] == "1.0.0"
+    assert body["current_version"]["source"] == "initial"
 
 
 async def test_upload_version_non_member_returns_404(db_session, make_access_token):
@@ -1101,6 +1192,64 @@ async def test_list_documents_includes_current_version_string(db_session, make_a
     assert body[0]["current_version"] == "3.1.4"
 
 
+async def test_list_documents_search_matches_title_and_notes_ignoring_case_and_diacritics(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    await _make_document(db_session, team, owner, title="Zákaznický portál")
+    await _make_document(db_session, team, owner, title="Billing", notes="Fakturační rozhraní")
+    await _make_document(db_session, team, owner, title="Other")
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    async def titles(query: str) -> list[str]:
+        resp = await _request(db_session, "GET", f"/api/api-docs?q={query}", token=token)
+        assert resp.status_code == 200
+        return [item["title"] for item in resp.json()]
+
+    assert await titles("ZAKAZNICKY") == ["Zákaznický portál"]
+    assert await titles("fakturacni") == ["Billing"]
+    # every word has to match, but each may match in a different field
+    assert await titles("billing%20rozhrani") == ["Billing"]
+    # ...and not in different documents
+    assert await titles("portal%20rozhrani") == []
+    assert await titles("nothing-like-this") == []
+
+
+async def test_list_documents_blank_search_returns_everything(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    await _make_document(db_session, team, owner, title="Doc A")
+    await _make_document(db_session, team, owner, title="Doc B")
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "GET", "/api/api-docs?q=%20%20", token=token)
+
+    assert resp.status_code == 200
+    assert [item["title"] for item in resp.json()] == ["Doc A", "Doc B"]
+
+
+async def test_list_documents_search_is_scoped_to_the_callers_teams(db_session, make_access_token):
+    owner_a = await _make_user(db_session, email="a@example.com")
+    owner_b = await _make_user(db_session, email="b@example.com")
+    team_a = await _make_team_with_owner(db_session, owner_a, name="Team A")
+    team_b = await _make_team_with_owner(db_session, owner_b, name="Team B")
+    await _make_document(db_session, team_a, owner_a, title="Shared word in A")
+    await _make_document(db_session, team_b, owner_b, title="Shared word in B")
+    token_a = make_access_token(sub=str(owner_a.auth_sub))
+
+    resp = await _request(db_session, "GET", "/api/api-docs?q=shared", token=token_a)
+
+    assert [item["title"] for item in resp.json()] == ["Shared word in A"]
+
+
+async def test_list_documents_search_rejects_an_overlong_query(db_session, make_access_token):
+    owner = await _make_user(db_session)
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    resp = await _request(db_session, "GET", f"/api/api-docs?q={'x' * 201}", token=token)
+
+    assert resp.status_code == 422
+
+
 def test_list_documents_requires_auth(client):
     resp = client.get("/api/api-docs")
     assert resp.status_code in (401, 403)
@@ -1130,6 +1279,24 @@ async def test_public_listing_only_includes_public_docs_no_team_scoping(db_sessi
     assert matches[0]["team_id"] == str(team_a.id)
     assert matches[0]["current_version"] == "1.0.0"
     assert not any(item["id"] == str(private_doc.id) for item in body)
+
+
+async def test_public_listing_search_filters_by_title_and_notes_and_never_leaks_private_docs(db_session):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    marker = uuid.uuid4().hex  # unique, so other rows in the DB can't match
+    by_title = await _make_document(db_session, team, owner, title=f"Přehled {marker}", is_public=True)
+    by_notes = await _make_document(db_session, team, owner, title="Plain", notes=f"Popis {marker}", is_public=True)
+    private = await _make_document(db_session, team, owner, title=f"Private {marker}", is_public=False)
+
+    resp = await _request(db_session, "GET", f"/api/public/api-docs?q={marker}")  # no token at all
+
+    assert resp.status_code == 200
+    assert {item["id"] for item in resp.json()} == {str(by_title.id), str(by_notes.id)}
+    assert str(private.id) not in {item["id"] for item in resp.json()}
+
+    resp = await _request(db_session, "GET", f"/api/public/api-docs?q=PREHLED%20{marker}")
+    assert [item["id"] for item in resp.json()] == [str(by_title.id)]
 
 
 # --- GET /{id} is_subscribed ---------------------------------------------------------

@@ -412,6 +412,45 @@ async def test_list_collections_includes_document_count(db_session, make_access_
     assert body[0]["document_count"] == 2
 
 
+async def test_list_collections_search_matches_name_and_description_ignoring_case_and_diacritics(
+    db_session, make_access_token
+):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    await _make_collection(db_session, team, owner, name="Platební brány")
+    await _make_collection(db_session, team, owner, name="Mikroslužby", description="Interní API týmu Čapek")
+    await _make_collection(db_session, team, owner, name="Ostatní")
+    token = make_access_token(sub=str(owner.auth_sub))
+
+    async def names(query: str) -> list[str]:
+        resp = await _request(db_session, "GET", f"/api/collections?q={query}", token=token)
+        assert resp.status_code == 200
+        return [item["name"] for item in resp.json()]
+
+    assert await names("PLATEBNI") == ["Platební brány"]
+    assert await names("capek") == ["Mikroslužby"]
+    assert await names("mikrosluzby%20tymu") == ["Mikroslužby"]
+    assert await names("brany%20capek") == []
+    assert await names("%20") == ["Mikroslužby", "Ostatní", "Platební brány"]
+
+
+async def test_public_collection_listing_search_filters_by_name_and_description(db_session):
+    owner = await _make_user(db_session)
+    team = await _make_team_with_owner(db_session, owner)
+    marker = uuid.uuid4().hex  # unique, so other rows in the DB can't match
+    by_name = await _make_collection(db_session, team, owner, name=f"Veřejná {marker}", is_public=True)
+    by_description = await _make_collection(
+        db_session, team, owner, name="Plain", description=f"Popis {marker}", is_public=True
+    )
+    private = await _make_collection(db_session, team, owner, name=f"Private {marker}", is_public=False)
+
+    resp = await _request(db_session, "GET", f"/api/public/collections?q={marker}")  # no token at all
+
+    assert resp.status_code == 200
+    assert {item["id"] for item in resp.json()} == {str(by_name.id), str(by_description.id)}
+    assert str(private.id) not in {item["id"] for item in resp.json()}
+
+
 def test_list_collections_requires_auth(client):
     resp = client.get("/api/collections")
     assert resp.status_code in (401, 403)

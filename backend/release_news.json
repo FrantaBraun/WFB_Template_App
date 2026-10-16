@@ -1,5 +1,7 @@
 {
     "unreleased": [
+        "A manual recheck or version upload now reports what it did: the response says whether a new version was found (new_version_found) and which version it replaced (previous_version). A failed check whose error has no message (e.g. a timeout) now reports the error type instead of an empty reason",
+        "The API document, collection and integration lists accept a free-text search (q): every word has to appear in the title/name or the notes/description, ignoring case and diacritics (\"zakaznik\" finds \"Zákaznický\"), so the public and the team lists can be searched without loading everything",
         "Events in the event calendar module can now only be managed by this application's administrators (the is_admin flag on the local user account) - the auth service's user role no longer grants it, since that role applies to every application",
         "Add is_admin flag to the local user account, with a require_admin dependency for gating admin-only routes",
         "Add an event calendar module (app/modules/event_calendar): events with their own pages, display windows, pinning and thumbnails; public endpoints for the upcoming list (paged by 10), a month view, a year/month archive, a home-page dashboard and search; editor endpoints with sanitized WYSIWYG content and image upload, with editors chosen by auth-service role or an application's own check",

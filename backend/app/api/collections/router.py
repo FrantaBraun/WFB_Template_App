@@ -4,7 +4,7 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,6 +27,7 @@ from app.models.knowledge_base import KnowledgeBasePage
 from app.models.notification import Subscription
 from app.models.team import TeamMembership
 from app.models.user import User
+from app.services.text_search import matches_all_terms
 
 router = APIRouter()
 
@@ -138,9 +139,11 @@ async def create_collection(
 @router.get("")
 async def list_collections(
     team_id: uuid.UUID | None = None,
+    q: str | None = Query(default=None, max_length=200),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[CollectionSummary]:
+    """q: free-text search over name and description - see app/services/text_search.py."""
     document_count_subq = (
         select(CollectionDocument.collection_id, func.count(CollectionDocument.id).label("document_count"))
         .group_by(CollectionDocument.collection_id)
@@ -155,6 +158,9 @@ async def list_collections(
     )
     if team_id is not None:
         stmt = stmt.where(Collection.team_id == team_id)
+    search = matches_all_terms(q, Collection.name, Collection.description)
+    if search is not None:
+        stmt = stmt.where(search)
 
     rows = (await db.execute(stmt)).all()
     return [_to_summary(collection, count) for collection, count in rows]
