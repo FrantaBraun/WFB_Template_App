@@ -19,6 +19,7 @@
     "changeLanguage": "Změnit jazyk",
     "openMenu": "Otevřít nabídku",
     "closeMenu": "Zavřít nabídku",
+    "close": "Zavřít",
     "search": {
       "placeholder": "Hledat v názvu a popisu…",
       "clear": "Vymazat hledání",
@@ -373,7 +374,6 @@
         "success": "Uloženo.",
         "error": "Uložení změn se nezdařilo."
       },
-      "recheckError": "Kontrola se nezdařila.",
       "uploadVersionError": "Nahrání se nezdařilo.",
       "versionsCard": {
         "title": "Historie verzí",
@@ -390,6 +390,19 @@
       "deleteButton": "Smazat dokumentaci",
       "confirmDelete": "Smazat tuto dokumentaci? Tuto akci nelze vrátit zpět.",
       "deleteError": "Smazání dokumentace se nezdařilo."
+    },
+    "checkDialog": {
+      "successTitle": "Kontrola proběhla úspěšně",
+      "failureTitle": "Kontrola se nezdařila",
+      "newVersionFound": "Byla nalezena nová verze API dokumentace.",
+      "newVersionLabel": "Nová verze",
+      "previousVersionLabel": "Předchozí verze",
+      "noNewVersion": "Nová verze nebyla nalezena.",
+      "currentVersionUnchanged": "Aktuální verze zůstává {{version}}.",
+      "failureLead": "Nepodařilo se zjistit, zda existuje nová verze.",
+      "reasonLabel": "Důvod",
+      "unknownReason": "Server je nedostupný nebo vrátil neočekávanou odpověď.",
+      "failureHint": "Poslední známá verze zůstává beze změny."
     },
     "viewer": {
       "pageTitle": "Zobrazení specifikace",

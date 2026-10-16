@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { apiFetch } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { useOnNotificationsRefresh } from '../utils/notificationsRefresh'
 
 interface NotificationItemData {
   id: string
@@ -29,17 +30,29 @@ interface NotificationListData {
  * anonymous visitor is never even asked - same "don't render, don't crash"
  * rule ApiDocDetail.tsx's subscribe button follows for the same reason.
  * Dismissing only hides the banner for this page view; it never calls
- * /read or /read-all itself, which stay the bell dropdown's job.
+ * /read or /read-all itself, which stay the bell dropdown's job. A refresh
+ * request (utils/notificationsRefresh.ts - a manual check on this very page
+ * found a new version) refetches at once and shows the banner again even if
+ * it was dismissed, since there is news.
  */
 export default function VersionBanner({ documentationId }: { documentationId: string }) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [items, setItems] = useState<NotificationItemData[]>([])
   const [dismissed, setDismissed] = useState(false)
+  const [refreshCount, setRefreshCount] = useState(0)
+
+  useOnNotificationsRefresh(() => {
+    setDismissed(false)
+    setRefreshCount((count) => count + 1)
+  })
 
   useEffect(() => {
     setDismissed(false)
     setItems([])
+  }, [documentationId, user])
+
+  useEffect(() => {
     if (!user) return
     let cancelled = false
     apiFetch(`/api/notifications?documentation_id=${documentationId}&unread=true`)
@@ -51,7 +64,7 @@ export default function VersionBanner({ documentationId }: { documentationId: st
     return () => {
       cancelled = true
     }
-  }, [documentationId, user])
+  }, [documentationId, user, refreshCount])
 
   if (dismissed || items.length === 0) return null
 

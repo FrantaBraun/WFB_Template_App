@@ -1,5 +1,7 @@
 {
     "unreleased": [
+        "A manual check of an API documentation now ends with a dialog saying whether the check succeeded or failed (with the reason when it failed) and whether a new version was found, with the new and the previous version",
+        "Fix the header bell's unread badge not showing the notification a manual check just created until the page was reloaded: the bell, and the new-version banner on the documentation page, now update right after a check or an upload finds a new version",
         "Add a search row to the API documentation, collection and integration lists: it filters by title and description (words in any order, ignoring case and diacritics) and applies to whichever tab, Public or Mine, is selected",
         "Fix the header on phones when signed in: the app name wrapped and its small tag slid under the notification bell. The header is now more compact on small screens, the name truncates (and gives way to the logo alone on the narrowest phones), and the tag only shows from tablet width up",
         "Fix a documentation version's specification failing with \"Document not found\" for non-public documents: it is now opened through the signed-in session instead of a bare link. Each version in the history now has Docs (Swagger UI), ReDoc and Download buttons - the first two open a viewer page for that version, and Download saves the file exactly as it was uploaded",

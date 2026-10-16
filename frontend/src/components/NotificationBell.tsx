@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import { useOnNotificationsRefresh } from '../utils/notificationsRefresh'
 
 interface NotificationItemData {
   id: string
@@ -56,22 +57,31 @@ function BellIcon({ className }: { className?: string }) {
 
 /**
  * Header bell: fetches the caller's notifications on mount and every
- * POLL_INTERVAL_MS thereafter, showing unread_count as a badge. Only ever
- * mounted while signed in (see Layout.tsx's Nav), so it needs no auth guard
- * of its own. Opening the dropdown marks everything read in one shot -
- * closing and reopening never repeats that call, only the closed->open
- * transition itself does (checked in handleBellClick, not via an effect).
+ * POLL_INTERVAL_MS thereafter, showing unread_count as a badge, and again
+ * whenever something asks for it right away (utils/notificationsRefresh.ts -
+ * e.g. a manual check that just found a new version, so the badge doesn't wait
+ * for the next poll). Only ever mounted while signed in (see Layout.tsx's
+ * Nav), so it needs no auth guard of its own. Opening the dropdown marks
+ * everything read in one shot - closing and reopening never repeats that
+ * call, only the closed->open transition itself does (checked in
+ * handleBellClick, not via an effect).
  */
 export default function NotificationBell() {
   const { t, i18n } = useTranslation()
   const [data, setData] = useState<NotificationListData | null>(null)
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const latestRequestRef = useRef(0)
 
   function fetchNotifications() {
+    // The poll, a refresh request and the post-read-all refetch can overlap;
+    // only the most recently started request may update the badge.
+    const requestId = ++latestRequestRef.current
     apiFetch('/api/notifications')
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((result: NotificationListData) => setData(result))
+      .then((result: NotificationListData) => {
+        if (requestId === latestRequestRef.current) setData(result)
+      })
       .catch(() => {})
   }
 
@@ -80,6 +90,8 @@ export default function NotificationBell() {
     const intervalId = setInterval(fetchNotifications, POLL_INTERVAL_MS)
     return () => clearInterval(intervalId)
   }, [])
+
+  useOnNotificationsRefresh(fetchNotifications)
 
   useEffect(() => {
     if (!open) return

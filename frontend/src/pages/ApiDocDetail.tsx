@@ -4,12 +4,14 @@
  * Freely available as a template for building custom applications.
  */
 
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch, apiUpload } from '../api/client'
+import ResultDialog from '../components/ResultDialog'
 import VersionBanner from '../components/VersionBanner'
 import usePageMeta from '../hooks/usePageMeta'
+import { requestNotificationsRefresh } from '../utils/notificationsRefresh'
 import { downloadVersionSpec } from '../utils/versionSpec'
 
 interface ApiDocumentCurrentVersionData {
@@ -38,6 +40,12 @@ interface ApiDocumentDetailData {
   is_subscribed: boolean | null
 }
 
+/** What POST .../recheck and .../upload-version answer: the document plus what the check found. */
+interface ApiDocumentCheckResultData extends ApiDocumentDetailData {
+  new_version_found: boolean
+  previous_version: string | null
+}
+
 interface ApiDocumentVersionOutData {
   id: string
   version: string
@@ -51,6 +59,11 @@ type RecheckPeriod = 'manual' | 'daily' | 'weekly' | 'monthly'
 const RECHECK_PERIODS: RecheckPeriod[] = ['manual', 'daily', 'weekly', 'monthly']
 type Message = { type: 'success' | 'error'; text: string } | null
 
+/** `version` is the document's current version once the check has finished - the new one when `newVersionFound`. */
+type CheckDialogState =
+  | { kind: 'success'; newVersionFound: boolean; version: string | null; previousVersion: string | null }
+  | { kind: 'failure'; reason: string | null }
+
 function formatDateTime(iso: string, locale: string): string {
   return new Date(iso).toLocaleString(locale, {
     year: 'numeric',
@@ -59,6 +72,53 @@ function formatDateTime(iso: string, locale: string): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+/** Separates the plain document from the check outcome the recheck/upload endpoints add to it. */
+function splitCheckResult({ new_version_found, previous_version, ...detail }: ApiDocumentCheckResultData) {
+  return { detail, newVersionFound: new_version_found, previousVersion: previous_version }
+}
+
+function CheckResultBody({ result }: { result: CheckDialogState }) {
+  const { t } = useTranslation()
+  const emphasis = 'font-medium text-slate-900 dark:text-slate-100'
+
+  if (result.kind === 'failure') {
+    return (
+      <>
+        <p className={emphasis}>{t('apiDocs.checkDialog.failureLead')}</p>
+        <p className="whitespace-pre-line">
+          {t('apiDocs.checkDialog.reasonLabel')}: {result.reason ?? t('apiDocs.checkDialog.unknownReason')}
+        </p>
+        <p>{t('apiDocs.checkDialog.failureHint')}</p>
+      </>
+    )
+  }
+
+  if (!result.newVersionFound) {
+    return (
+      <>
+        <p className={emphasis}>{t('apiDocs.checkDialog.noNewVersion')}</p>
+        {result.version && <p>{t('apiDocs.checkDialog.currentVersionUnchanged', { version: result.version })}</p>}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <p className={emphasis}>{t('apiDocs.checkDialog.newVersionFound')}</p>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+        <dt>{t('apiDocs.checkDialog.newVersionLabel')}</dt>
+        <dd className={emphasis}>{result.version}</dd>
+        {result.previousVersion && (
+          <>
+            <dt>{t('apiDocs.checkDialog.previousVersionLabel')}</dt>
+            <dd>{result.previousVersion}</dd>
+          </>
+        )}
+      </dl>
+    </>
+  )
 }
 
 /**
@@ -95,7 +155,8 @@ export default function ApiDocDetail() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const [rechecking, setRechecking] = useState(false)
-  const [recheckError, setRecheckError] = useState<string | null>(null)
+  const [checkDialog, setCheckDialog] = useState<CheckDialogState | null>(null)
+  const recheckButtonRef = useRef<HTMLButtonElement>(null)
 
   const [versionFile, setVersionFile] = useState<File | null>(null)
   const [uploadingVersion, setUploadingVersion] = useState(false)
@@ -196,23 +257,45 @@ export default function ApiDocDetail() {
     }
   }
 
+  async function refreshDoc() {
+    if (!id) return
+    const resp = await apiFetch(`/api/api-docs/${id}`)
+    if (resp.ok) setDoc(await resp.json())
+  }
+
   async function handleRecheck() {
     if (!id) return
     setRechecking(true)
-    setRecheckError(null)
     try {
       const resp = await apiFetch(`/api/api-docs/${id}/recheck`, { method: 'POST' })
       if (!resp.ok) {
         const body = await resp.json().catch(() => ({}))
-        throw new Error(typeof body.detail === 'string' ? body.detail : t('apiDocs.detail.recheckError'))
+        setCheckDialog({ kind: 'failure', reason: typeof body.detail === 'string' ? body.detail : null })
+        // A failed check is recorded on the document (last_check_error, last_checked_at) - show that too.
+        refreshDoc().catch(() => {})
+        return
       }
-      setDoc(await resp.json())
-      await refreshVersions()
-    } catch (err) {
-      setRecheckError(err instanceof Error ? err.message : t('apiDocs.detail.recheckError'))
+      const { detail, newVersionFound, previousVersion } = splitCheckResult(await resp.json())
+      setDoc(detail)
+      // The notification this created (for the user too, as a team member) must reach the header bell now.
+      if (newVersionFound) requestNotificationsRefresh()
+      refreshVersions().catch(() => {})
+      setCheckDialog({
+        kind: 'success',
+        newVersionFound,
+        version: detail.current_version?.version ?? null,
+        previousVersion,
+      })
+    } catch {
+      setCheckDialog({ kind: 'failure', reason: null })
     } finally {
       setRechecking(false)
     }
+  }
+
+  function closeCheckDialog() {
+    setCheckDialog(null)
+    recheckButtonRef.current?.focus()
   }
 
   async function handleUploadVersion(e: FormEvent) {
@@ -228,7 +311,9 @@ export default function ApiDocDetail() {
         const body = await resp.json().catch(() => ({}))
         throw new Error(typeof body.detail === 'string' ? body.detail : t('apiDocs.detail.uploadVersionError'))
       }
-      setDoc(await resp.json())
+      const { detail, newVersionFound } = splitCheckResult(await resp.json())
+      setDoc(detail)
+      if (newVersionFound) requestNotificationsRefresh()
       setVersionFile(null)
       await refreshVersions()
     } catch (err) {
@@ -432,6 +517,7 @@ export default function ApiDocDetail() {
 
             <div className="flex flex-wrap items-center gap-3">
               <button
+                ref={recheckButtonRef}
                 type="button"
                 onClick={handleRecheck}
                 disabled={rechecking || !doc.source_url}
@@ -443,7 +529,6 @@ export default function ApiDocDetail() {
                 <span className="text-xs text-slate-500 dark:text-slate-400">{t('apiDocs.detail.actionsCard.recheckDisabledHint')}</span>
               )}
             </div>
-            {recheckError && <p className="text-sm text-red-600 dark:text-red-400">{recheckError}</p>}
 
             <form
               onSubmit={handleUploadVersion}
@@ -652,6 +737,16 @@ export default function ApiDocDetail() {
         )}
         {downloadError && <p className="text-sm text-red-600 dark:text-red-400">{downloadError}</p>}
       </div>
+
+      {checkDialog && (
+        <ResultDialog
+          tone={checkDialog.kind === 'success' ? 'success' : 'error'}
+          title={t(checkDialog.kind === 'success' ? 'apiDocs.checkDialog.successTitle' : 'apiDocs.checkDialog.failureTitle')}
+          onClose={closeCheckDialog}
+        >
+          <CheckResultBody result={checkDialog} />
+        </ResultDialog>
+      )}
     </div>
   )
 }

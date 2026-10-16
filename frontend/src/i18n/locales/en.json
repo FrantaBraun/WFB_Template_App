@@ -19,6 +19,7 @@
     "changeLanguage": "Change language",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
+    "close": "Close",
     "search": {
       "placeholder": "Search title and description…",
       "clear": "Clear search",
@@ -373,7 +374,6 @@
         "success": "Saved.",
         "error": "Failed to save changes."
       },
-      "recheckError": "Recheck failed.",
       "uploadVersionError": "Upload failed.",
       "versionsCard": {
         "title": "Version history",
@@ -390,6 +390,19 @@
       "deleteButton": "Delete documentation",
       "confirmDelete": "Delete this documentation? This cannot be undone.",
       "deleteError": "Failed to delete this documentation."
+    },
+    "checkDialog": {
+      "successTitle": "Check completed successfully",
+      "failureTitle": "Check failed",
+      "newVersionFound": "A new version of the API documentation was found.",
+      "newVersionLabel": "New version",
+      "previousVersionLabel": "Previous version",
+      "noNewVersion": "No new version was found.",
+      "currentVersionUnchanged": "The current version is still {{version}}.",
+      "failureLead": "Could not find out whether there is a new version.",
+      "reasonLabel": "Reason",
+      "unknownReason": "The server is unavailable or returned an unexpected response.",
+      "failureHint": "The last known version has not changed."
     },
     "viewer": {
       "pageTitle": "Specification viewer",
