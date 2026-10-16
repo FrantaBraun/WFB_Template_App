@@ -1,0 +1,11 @@
+/**
+ * Part of the With FBraun project template.
+ * Author: František Braun <frantisek.braun95@gmail.com>
+ * Freely available as a template for building custom applications.
+ */
+
+/* Read-only archive: with "Try it out" off there is nothing to authorize, so
+   hide the spec's Authorize button (the servers dropdown beside it stays). */
+.swagger-viewer .swagger-ui .auth-wrapper {
+  display: none;
+}

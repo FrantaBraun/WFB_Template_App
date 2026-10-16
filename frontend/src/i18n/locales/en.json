@@ -371,11 +371,35 @@
         "title": "Version history",
         "empty": "No versions yet.",
         "current": "current",
-        "viewSpec": "View spec"
+        "viewDocs": "Docs",
+        "viewDocsTitle": "View the specification as Docs (Swagger UI)",
+        "viewRedoc": "ReDoc",
+        "viewRedocTitle": "View the specification in ReDoc",
+        "download": "Download",
+        "downloadTitle": "Download the specification file exactly as it was uploaded",
+        "downloadError": "Failed to download the specification."
       },
       "deleteButton": "Delete documentation",
       "confirmDelete": "Delete this documentation? This cannot be undone.",
       "deleteError": "Failed to delete this documentation."
+    },
+    "viewer": {
+      "pageTitle": "Specification viewer",
+      "back": "← Back to documentation",
+      "untitled": "Untitled",
+      "viewerLabel": "View as",
+      "docs": "Docs",
+      "redoc": "ReDoc",
+      "download": "Download",
+      "downloadTitle": "Download the specification file exactly as it was uploaded",
+      "loading": "Loading specification…",
+      "loadingViewer": "Loading viewer…",
+      "renderError": "The specification couldn't be rendered. Try the other view, or download the file.",
+      "error": {
+        "notFound": "The specification wasn't found, or you don't have access to it.",
+        "invalid": "The specification file couldn't be parsed.",
+        "failed": "Failed to load the specification."
+      }
     }
   },
   "notifications": {

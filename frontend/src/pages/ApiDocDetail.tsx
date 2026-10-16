@@ -7,9 +7,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { apiFetch, apiUpload, getApiUrl } from '../api/client'
+import { apiFetch, apiUpload } from '../api/client'
 import VersionBanner from '../components/VersionBanner'
 import usePageMeta from '../hooks/usePageMeta'
+import { downloadVersionSpec } from '../utils/versionSpec'
 
 interface ApiDocumentCurrentVersionData {
   id: string
@@ -102,6 +103,9 @@ export default function ApiDocDetail() {
 
   const [subscribing, setSubscribing] = useState(false)
   const [subscribeError, setSubscribeError] = useState<string | null>(null)
+
+  const [downloadingVersionId, setDownloadingVersionId] = useState<string | null>(null)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
 
   usePageMeta({ title: doc?.title ?? t('apiDocs.detail.pageTitleFallback') })
 
@@ -248,6 +252,19 @@ export default function ApiDocDetail() {
       setSubscribeError(err instanceof Error ? err.message : t('notifications.subscribe.error'))
     } finally {
       setSubscribing(false)
+    }
+  }
+
+  async function handleDownloadVersion(version: ApiDocumentVersionOutData) {
+    if (!doc) return
+    setDownloadingVersionId(version.id)
+    setDownloadError(null)
+    try {
+      await downloadVersionSpec(doc.id, version.id, `${doc.title} ${version.version}`)
+    } catch {
+      setDownloadError(t('apiDocs.detail.versionsCard.downloadError'))
+    } finally {
+      setDownloadingVersionId(null)
     }
   }
 
@@ -588,7 +605,7 @@ export default function ApiDocDetail() {
         {versions && versions.length > 0 && (
           <ul className="divide-y divide-slate-200 dark:divide-slate-800">
             {versions.map((version) => (
-              <li key={version.id} className="flex items-center justify-between gap-4 py-3 text-sm">
+              <li key={version.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
                 <div>
                   <p className="font-medium text-slate-900 dark:text-slate-100">
                     {version.version}
@@ -604,18 +621,36 @@ export default function ApiDocDetail() {
                     {t(`apiDocs.versionSources.${version.source}`, { defaultValue: version.source })}
                   </p>
                 </div>
-                <a
-                  href={`${getApiUrl()}/api/api-docs/${doc.id}/versions/${version.id}/spec`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 dark:border-slate-700 dark:text-slate-300"
-                >
-                  {t('apiDocs.detail.versionsCard.viewSpec')}
-                </a>
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <Link
+                    to={`/api-docs/${doc.id}/versions/${version.id}/view?viewer=docs`}
+                    title={t('apiDocs.detail.versionsCard.viewDocsTitle')}
+                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
+                    {t('apiDocs.detail.versionsCard.viewDocs')}
+                  </Link>
+                  <Link
+                    to={`/api-docs/${doc.id}/versions/${version.id}/view?viewer=redoc`}
+                    title={t('apiDocs.detail.versionsCard.viewRedocTitle')}
+                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
+                    {t('apiDocs.detail.versionsCard.viewRedoc')}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadVersion(version)}
+                    disabled={downloadingVersionId === version.id}
+                    title={t('apiDocs.detail.versionsCard.downloadTitle')}
+                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
+                    {downloadingVersionId === version.id ? t('common.loading') : t('apiDocs.detail.versionsCard.download')}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         )}
+        {downloadError && <p className="text-sm text-red-600 dark:text-red-400">{downloadError}</p>}
       </div>
     </div>
   )

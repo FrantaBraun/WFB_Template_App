@@ -6,6 +6,8 @@
 
 // Top-level route table: wraps every page in the shared Layout (nav + chrome)
 // and declares the app's client-side routes.
+import { lazy, Suspense } from "react"
+import { useTranslation } from "react-i18next"
 import { Route, Routes } from "react-router-dom"
 import HomePage from "./pages/HomePage"
 import Layout from "./components/Layout"
@@ -33,6 +35,14 @@ import KnowledgeBasePageView from "./pages/KnowledgeBasePageView"
 import KnowledgeBasePageEdit from "./pages/KnowledgeBasePageEdit"
 import { useEnabledModules } from "./modules/registry"
 
+// Pulls in the YAML parser and, on demand, the Swagger UI / ReDoc bundles - none
+// of which the rest of the app needs.
+const VersionSpecViewer = lazy(() => import("./pages/VersionSpecViewer"))
+
+function PageLoading() {
+  const { t } = useTranslation()
+  return <p className="px-6 py-10 text-sm text-slate-600 dark:text-slate-400">{t('common.loading')}</p>
+}
 
 function App() {
   const modules = useEnabledModules()
@@ -49,6 +59,14 @@ function App() {
       <Route path="/api-docs" element={<ApiDocs />} />
       <Route path="/api-docs/new" element={<NewApiDoc />} />
       <Route path="/api-docs/:id" element={<ApiDocDetail />} />
+      <Route
+        path="/api-docs/:id/versions/:versionId/view"
+        element={
+          <Suspense fallback={<PageLoading />}>
+            <VersionSpecViewer />
+          </Suspense>
+        }
+      />
       <Route path="/collections" element={<Collections />} />
       <Route path="/collections/:id" element={<CollectionDetail />} />
       <Route path="/collections/:id/kb" element={<CollectionKnowledgeBase />} />

@@ -371,11 +371,35 @@
         "title": "Historie verzí",
         "empty": "Zatím žádné verze.",
         "current": "aktuální",
-        "viewSpec": "Zobrazit specifikaci"
+        "viewDocs": "Docs",
+        "viewDocsTitle": "Zobrazit specifikaci v přehledu Docs (Swagger UI)",
+        "viewRedoc": "ReDoc",
+        "viewRedocTitle": "Zobrazit specifikaci v přehledu ReDoc",
+        "download": "Stáhnout",
+        "downloadTitle": "Stáhnout soubor se specifikací přesně tak, jak byl nahrán",
+        "downloadError": "Stažení specifikace se nezdařilo."
       },
       "deleteButton": "Smazat dokumentaci",
       "confirmDelete": "Smazat tuto dokumentaci? Tuto akci nelze vrátit zpět.",
       "deleteError": "Smazání dokumentace se nezdařilo."
+    },
+    "viewer": {
+      "pageTitle": "Zobrazení specifikace",
+      "back": "← Zpět na dokumentaci",
+      "untitled": "Bez názvu",
+      "viewerLabel": "Způsob zobrazení",
+      "docs": "Docs",
+      "redoc": "ReDoc",
+      "download": "Stáhnout",
+      "downloadTitle": "Stáhnout soubor se specifikací přesně tak, jak byl nahrán",
+      "loading": "Načítání specifikace…",
+      "loadingViewer": "Načítání zobrazení…",
+      "renderError": "Specifikaci se nepodařilo vykreslit. Zkuste druhý způsob zobrazení, nebo soubor stáhněte.",
+      "error": {
+        "notFound": "Specifikace nebyla nalezena, nebo k ní nemáte přístup.",
+        "invalid": "Soubor se specifikací se nepodařilo zpracovat.",
+        "failed": "Načtení specifikace se nezdařilo."
+      }
     }
   },
   "notifications": {
