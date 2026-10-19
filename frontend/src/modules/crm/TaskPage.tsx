@@ -94,7 +94,7 @@ function TaskDetailView({ taskId }: { taskId: string }) {
 export default function TaskPage() {
   const { t } = useTranslation('crm')
   const { taskId } = useParams<{ taskId: string }>()
-  usePageMeta({ title: t('tasks.title') })
+  usePageMeta({ title: t('tasks.title'), noindex: true })
   return (
     <CrmGate>
       <TaskDetailView key={taskId} taskId={taskId ?? ''} />

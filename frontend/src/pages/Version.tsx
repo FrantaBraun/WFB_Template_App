@@ -86,7 +86,7 @@ function VersionCard({ title, state }: { title: string; state: FetchState }) {
  */
 export default function Version() {
   const { t } = useTranslation()
-  usePageMeta({ title: t('version.pageTitle'), description: t('version.pageDescription') })
+  usePageMeta({ title: t('version.pageTitle'), description: t('version.pageDescription'), noindex: true })
 
   const backend = useVersionFetch(`${getApiUrl()}/api/public/version`)
   const frontend = useVersionFetch('/version.json')

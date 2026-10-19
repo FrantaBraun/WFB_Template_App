@@ -131,7 +131,7 @@ function ReleaseColumn({ title, releases }: { title: string; releases: ReleaseEn
  */
 export default function ReleaseNews() {
   const { t } = useTranslation()
-  usePageMeta({ title: t('releaseNews.pageTitle'), description: t('releaseNews.pageDescription') })
+  usePageMeta({ title: t('releaseNews.pageTitle'), description: t('releaseNews.pageDescription'), noindex: true })
 
   const backend = useReleaseNewsFetch(`${getApiUrl()}/api/public/release-news`)
   const frontend = useReleaseNewsFetch('/release_news.json')

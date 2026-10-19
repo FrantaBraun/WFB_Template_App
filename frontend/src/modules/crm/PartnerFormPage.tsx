@@ -132,7 +132,7 @@ function PartnerForm({ partnerId }: { partnerId: string | undefined }) {
 export default function PartnerFormPage() {
   const { t } = useTranslation('crm')
   const { partnerId } = useParams<{ partnerId: string }>()
-  usePageMeta({ title: t(partnerId ? 'partner.form.editTitle' : 'partner.form.newTitle') })
+  usePageMeta({ title: t(partnerId ? 'partner.form.editTitle' : 'partner.form.newTitle'), noindex: true })
   return (
     <CrmGate>
       <PartnerForm key={partnerId ?? 'new'} partnerId={partnerId} />

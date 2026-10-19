@@ -1,4 +1,7 @@
 {
+  "meta": {
+    "description": "Zveřejněte myšlenku na nástěnce podle svého výběru. Příspěvky stoupají s ohlasem, který získají, a s věkem klesají."
+  },
   "common": {
     "save": "Uložit",
     "saving": "Ukládání…",

@@ -19,7 +19,7 @@ export const POST_BOOST = 'post_boost'
 // Pages other modules provide, linked from here: the terms and rules
 // (stripe_payment_gate's legal pages) and the contact form (kontaktni_formular).
 export const RULES_PATH = '/obchodni-podminky'
-export const CONTACT_PATH = '/kontakt'
+export const CONTACT_PATH = '/contact'
 
 // The backend's text limits (app/modules/boards/models.py), in characters.
 export const CATEGORY_TITLE_MAX = 120

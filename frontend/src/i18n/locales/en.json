@@ -1,4 +1,7 @@
 {
+  "meta": {
+    "description": "Publish a thought on a board of your choice. Posts rise with the resonance they earn and sink with age."
+  },
   "common": {
     "save": "Save",
     "saving": "Saving…",

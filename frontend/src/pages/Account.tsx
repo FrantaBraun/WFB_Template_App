@@ -59,7 +59,7 @@ function blankToNull(form: Record<string, string>): Record<string, string | null
  */
 export default function Account() {
   const { t } = useTranslation()
-  usePageMeta({ title: t('account.pageTitle'), description: t('account.pageDescription') })
+  usePageMeta({ title: t('account.pageTitle'), description: t('account.pageDescription'), noindex: true })
   const { user, loading: authLoading } = useAuth()
   const { darkMode, profileDarkMode, setProfileDarkMode } = useTheme()
   const navigate = useNavigate()

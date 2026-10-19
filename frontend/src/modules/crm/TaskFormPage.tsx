@@ -168,7 +168,7 @@ function TaskForm({ partnerId, taskId }: { partnerId: string | undefined; taskId
 export default function TaskFormPage() {
   const { t } = useTranslation('crm')
   const { partnerId, taskId } = useParams<{ partnerId: string; taskId: string }>()
-  usePageMeta({ title: t(taskId ? 'task.form.editTitle' : 'task.form.newTitle') })
+  usePageMeta({ title: t(taskId ? 'task.form.editTitle' : 'task.form.newTitle'), noindex: true })
   return (
     <CrmGate>
       <TaskForm key={taskId ?? partnerId} partnerId={partnerId} taskId={taskId} />
