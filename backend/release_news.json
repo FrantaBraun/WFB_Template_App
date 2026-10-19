@@ -1,5 +1,7 @@
 {
-  "unreleased": [],
+  "unreleased": [
+    "Add a CRM module (app/modules/crm), for administrators only: partners with contact and company details, their tasks (status, price, dates), and invoice PDFs uploaded against a task - checked to really be PDFs and capped at 10 MB, stored privately under uploads/crm/ and served only to administrators through an authenticated download"
+  ],
   "releases": [
     {
       "version": "1.0.0",
