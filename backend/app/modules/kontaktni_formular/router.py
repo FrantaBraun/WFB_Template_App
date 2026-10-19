@@ -3,14 +3,15 @@
 # Freely available as a template for building custom applications.
 
 import logging
+from urllib.parse import urlsplit
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import Settings, get_settings
 from app.modules.kontaktni_formular.config import ContactFormConfig, get_contact_form_config
-from app.modules.kontaktni_formular.schemas import ContactFormRequest
+from app.modules.kontaktni_formular.schemas import ContactDetails, ContactFormRequest, ContactInfoResponse
 from app.security.jwt import get_current_user_claims
 from app.services.auth_client import auth_client
 from app.services.email import send_email
@@ -42,6 +43,46 @@ async def _resolve_sender_name(claims: dict, access_token: str) -> str:
     user = result.get("user") or result
     full_name = f"{user.get('first_name') or ''} {user.get('last_name') or ''}".strip()
     return full_name or fallback
+
+
+def _public_url(name: str, value: str) -> str | None:
+    """`value` if it is an absolute http(s) URL, else None - the page puts
+    these in an href, so e.g. a javascript: URL must never get that far. A
+    non-empty value that is dropped is logged, otherwise a typo in .env
+    would just make the link vanish without a word."""
+    value = value.strip()
+    if not value:
+        return None
+    parts = urlsplit(value)
+    if parts.scheme in ("http", "https") and parts.netloc:
+        return value
+    logger.warning("%s is not an http(s) URL and is left out of the contact page", name)
+    return None
+
+
+@router.get("/info", response_model=ContactInfoResponse)
+async def contact_info(
+    language: str | None = Query(default=None, max_length=35),
+    settings: Settings = Depends(get_settings),
+    config: ContactFormConfig = Depends(get_contact_form_config),
+) -> ContactInfoResponse:
+    """What the contact page shows around the form: the per-language texts
+    from the module config and the public details from Settings. Public by
+    design (it is a public page), so it exposes only these fields - never
+    any other setting - and the delivery address only when the config's
+    show_email is on."""
+    texts = config.page_texts_for(language)
+    return ContactInfoResponse(
+        title=texts.title,
+        intro=texts.intro,
+        aside=texts.aside,
+        details=ContactDetails(
+            email=(settings.contact_mail.strip() or None) if config.show_email else None,
+            address=settings.contact_address.strip() or None,
+            github_url=_public_url("CONTACT_GITHUB_URL", settings.contact_github_url),
+            linkedin_url=_public_url("CONTACT_LINKEDIN_URL", settings.contact_linkedin_url),
+        ),
+    )
 
 
 @router.post("/submit", status_code=204)

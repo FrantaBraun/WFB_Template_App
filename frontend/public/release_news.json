@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "The contact page can now show an introduction, contact details (email, address, GitHub, LinkedIn) and a note next to the form, all set per deployment; the page moved to /contact (/kontakt redirects there). With nothing configured it is still just the form",
         "Add a CRM module (src/modules/crm), shown to administrators only: a header icon opens the partner list with search, each partner's page with their tasks, and each task's page where invoice PDFs are uploaded, downloaded and deleted - in Czech and English",
         "Fix the header on phones when signed in: the app name wrapped and its small tag slid under the notification bell. The header is now more compact on small screens, the name truncates (and gives way to the logo alone on the narrowest phones), and the tag only shows from tablet width up",
         "Add an event calendar module (src/modules/event_calendar): an \"Events\" nav link to a list of the next 10 events (thumbnail, title, short description) with \"Load more\", a sidebar calendar marking event and pinned-event days, a year/month archive opening a month's full listing, event pages at /events/<slug>, and an editors' area with the full WYSIWYG editor",
