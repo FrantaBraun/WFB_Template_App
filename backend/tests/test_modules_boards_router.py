@@ -70,9 +70,9 @@ class Person:
 
 @pytest.fixture()
 def make_person(db_session, make_access_token):
-    async def _make() -> Person:
+    async def _make(**fields) -> Person:
         sub = uuid.uuid4()
-        user = User(auth_sub=sub)
+        user = User(auth_sub=sub, **fields)
         db_session.add(user)
         await db_session.commit()
         return Person(user, make_access_token(sub=str(sub)))
@@ -88,6 +88,12 @@ async def alice(make_person) -> Person:
 @pytest.fixture()
 async def bob(make_person) -> Person:
     return await make_person()
+
+
+@pytest.fixture()
+async def admin(make_person) -> Person:
+    """Only an administrator can create a category."""
+    return await make_person(is_admin=True)
 
 
 async def _seed_category(db_session, person: Person, slug: str = "general", title: str | None = None) -> Category:
@@ -127,9 +133,9 @@ async def test_creating_a_category_needs_a_login(client):
     assert resp.status_code == 401
 
 
-async def test_creating_a_category_generates_the_slug_and_hides_the_creator(client, alice):
+async def test_creating_a_category_generates_the_slug_and_hides_the_creator(client, admin):
     resp = await client.post(
-        f"{BASE}/categories", json={"title": "Rezervace Salónu", "description": "Co sem patří"}, headers=alice.headers
+        f"{BASE}/categories", json={"title": "Rezervace Salónu", "description": "Co sem patří"}, headers=admin.headers
     )
 
     assert resp.status_code == 201
@@ -139,29 +145,29 @@ async def test_creating_a_category_generates_the_slug_and_hides_the_creator(clie
     assert body["title"] == "Rezervace Salónu"
     assert body["description"] == "Co sem patří"
     assert body["post_count"] == 0
-    _no_trace_of(alice, resp)
+    _no_trace_of(admin, resp)
 
 
-async def test_the_same_title_gets_a_numbered_slug(client, alice, bob):
+async def test_the_same_title_gets_a_numbered_slug(client, admin):
     slugs = []
-    for person in (alice, bob, alice):
+    for _ in range(3):
         resp = await client.post(
-            f"{BASE}/categories", json={"title": "Ideas", "description": "d"}, headers=person.headers
+            f"{BASE}/categories", json={"title": "Ideas", "description": "d"}, headers=admin.headers
         )
         slugs.append(resp.json()["slug"])
 
     assert slugs == ["ideas", "ideas-2", "ideas-3"]
 
 
-async def test_a_category_cannot_take_the_slug_of_the_new_category_page(client, alice):
-    resp = await client.post(f"{BASE}/categories", json={"title": "New", "description": "d"}, headers=alice.headers)
+async def test_a_category_cannot_take_the_slug_of_the_new_category_page(client, admin):
+    resp = await client.post(f"{BASE}/categories", json={"title": "New", "description": "d"}, headers=admin.headers)
     assert resp.json()["slug"] == "new-2"
 
 
-async def test_the_slug_is_retried_when_another_request_took_it_first(client, alice, db_session, monkeypatch):
+async def test_the_slug_is_retried_when_another_request_took_it_first(client, admin, db_session, monkeypatch):
     """unique_slug() can hand two simultaneous requests the same slug; the
     unique index rejects the second and the endpoint picks again."""
-    await _seed_category(db_session, alice, slug="race")
+    await _seed_category(db_session, admin, slug="race")
     answers = iter(["race"])  # a stale answer first, then the real thing
 
     async def stale_then_real(db, title):
@@ -169,21 +175,21 @@ async def test_the_slug_is_retried_when_another_request_took_it_first(client, al
 
     monkeypatch.setattr(router_module, "unique_slug", stale_then_real)
 
-    resp = await client.post(f"{BASE}/categories", json={"title": "Race", "description": "d"}, headers=alice.headers)
+    resp = await client.post(f"{BASE}/categories", json={"title": "Race", "description": "d"}, headers=admin.headers)
 
     assert resp.status_code == 201
     assert resp.json()["slug"] == "race-2"
 
 
-async def test_giving_up_on_a_slug_after_repeated_collisions_is_a_409(client, alice, db_session, monkeypatch):
-    await _seed_category(db_session, alice, slug="taken")
+async def test_giving_up_on_a_slug_after_repeated_collisions_is_a_409(client, admin, db_session, monkeypatch):
+    await _seed_category(db_session, admin, slug="taken")
 
     async def always_taken(db, title):
         return "taken"
 
     monkeypatch.setattr(router_module, "unique_slug", always_taken)
 
-    resp = await client.post(f"{BASE}/categories", json={"title": "Taken", "description": "d"}, headers=alice.headers)
+    resp = await client.post(f"{BASE}/categories", json={"title": "Taken", "description": "d"}, headers=admin.headers)
 
     assert resp.status_code == 409
     assert (await db_session.scalar(select(func.count()).select_from(Category))) == 1
@@ -205,34 +211,90 @@ async def test_giving_up_on_a_slug_after_repeated_collisions_is_a_409(client, al
         {"title": 5, "description": "d"},
     ],
 )
-async def test_an_invalid_category_is_refused(client, alice, db_session, payload):
-    resp = await client.post(f"{BASE}/categories", json=payload, headers=alice.headers)
+async def test_an_invalid_category_is_refused(client, admin, db_session, payload):
+    resp = await client.post(f"{BASE}/categories", json=payload, headers=admin.headers)
 
     assert resp.status_code == 422
     assert (await db_session.scalar(select(func.count()).select_from(Category))) == 0
 
 
-async def test_category_text_limits_are_in_characters_not_bytes(client, alice):
+async def test_category_text_limits_are_in_characters_not_bytes(client, admin):
     """4096 characters of description and 120 of title are fine even when
     each character is an emoji (4 bytes in UTF-8, 2 UTF-16 units in JS)."""
     resp = await client.post(
-        f"{BASE}/categories", json={"title": "😀" * 120, "description": "🧠" * 4096}, headers=alice.headers
+        f"{BASE}/categories", json={"title": "😀" * 120, "description": "🧠" * 4096}, headers=admin.headers
     )
     assert resp.status_code == 201
     assert resp.json()["slug"] == "category"
 
     too_long = await client.post(
-        f"{BASE}/categories", json={"title": "ok", "description": "🧠" * 4097}, headers=alice.headers
+        f"{BASE}/categories", json={"title": "ok", "description": "🧠" * 4097}, headers=admin.headers
     )
     assert too_long.status_code == 422
 
 
-async def test_category_text_is_trimmed(client, alice):
+async def test_category_text_is_trimmed(client, admin):
     resp = await client.post(
-        f"{BASE}/categories", json={"title": "  Padded  ", "description": "\n  desc \n"}, headers=alice.headers
+        f"{BASE}/categories", json={"title": "  Padded  ", "description": "\n  desc \n"}, headers=admin.headers
     )
     assert resp.json()["title"] == "Padded"
     assert resp.json()["description"] == "desc"
+
+
+# --- Who may create a category ------------------------------------------------
+
+
+async def test_an_ordinary_user_cannot_create_a_category(client, alice, db_session):
+    resp = await client.post(f"{BASE}/categories", json={"title": "Mine", "description": "d"}, headers=alice.headers)
+
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == {"code": "admin_required"}
+    assert (await db_session.scalar(select(func.count()).select_from(Category))) == 0
+
+
+async def test_an_ordinary_user_cannot_check_a_draft_category_either(client, alice):
+    resp = await client.post(f"{BASE}/categories/check", json={"title": "Mine", "description": "d"}, headers=alice.headers)
+
+    assert (resp.status_code, resp.json()["detail"]) == (403, {"code": "admin_required"})
+
+
+async def test_the_auth_services_admin_role_does_not_make_a_category_creator(client, make_access_token, db_session):
+    """Administrators are the local User.is_admin flag; the role on the token belongs to every app on the auth service."""
+    sub = uuid.uuid4()
+    db_session.add(User(auth_sub=sub))
+    await db_session.commit()
+    headers = {"Authorization": f"Bearer {make_access_token(sub=str(sub), role_name='admin')}"}
+
+    resp = await client.post(f"{BASE}/categories", json={"title": "Mine", "description": "d"}, headers=headers)
+
+    assert resp.status_code == 403
+
+
+async def test_an_administrator_creates_a_category_and_the_check_works_for_them(client, admin):
+    draft = {"title": "Philosophy", "description": "Thoughts"}
+
+    checked = await client.post(f"{BASE}/categories/check", json=draft, headers=admin.headers)
+    created = await client.post(f"{BASE}/categories", json=draft, headers=admin.headers)
+
+    assert checked.status_code == 200
+    assert (created.status_code, created.json()["slug"]) == (201, "philosophy")
+
+
+async def test_a_blocked_administrator_is_still_blocked(client, make_person):
+    blocked_admin = await make_person(is_admin=True, is_blocked=True, blocked_reason="repeated_violations")
+
+    resp = await client.post(f"{BASE}/categories", json={"title": "T", "description": "d"}, headers=blocked_admin.headers)
+
+    assert (resp.status_code, resp.json()["detail"]["code"]) == (403, "account_blocked")
+
+
+async def test_an_ordinary_user_can_still_post_into_a_category_an_administrator_made(client, alice, admin):
+    made = await client.post(f"{BASE}/categories", json={"title": "Open to all", "description": "d"}, headers=admin.headers)
+    slug = made.json()["slug"]
+
+    posted = await client.post(f"{BASE}/categories/{slug}/posts", json={"title": "T", "body": "B"}, headers=alice.headers)
+
+    assert posted.status_code == 201
 
 
 # --- Reading categories -------------------------------------------------------

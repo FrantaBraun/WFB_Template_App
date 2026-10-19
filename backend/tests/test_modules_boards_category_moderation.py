@@ -237,7 +237,7 @@ async def test_the_address_of_a_blocked_category_stays_taken(client, alice, bob,
     await _block(client, admin)
 
     created = await client.post(
-        f"{BASE}/categories", json={"title": "General", "description": "A new start"}, headers=bob.headers
+        f"{BASE}/categories", json={"title": "General", "description": "A new start"}, headers=admin.headers
     )
 
     assert created.json()["slug"] == "general-2"

@@ -329,11 +329,11 @@ async def test_clearing_the_rules_switches_the_topic_check_off(client, alice, ad
 # --- Machine rules and the check on a new category ----------------------------
 
 
-async def test_a_new_category_gets_algorithmic_machine_rules(client, alice, db_session):
+async def test_a_new_category_gets_algorithmic_machine_rules(client, admin, db_session):
     resp = await client.post(
         f"{BASE}/categories",
         json={"title": "Philosophy of everyday life", "description": "Habits, choices, meaning and time."},
-        headers=alice.headers,
+        headers=admin.headers,
     )
 
     assert resp.status_code == 201
@@ -345,7 +345,7 @@ async def test_a_new_category_gets_algorithmic_machine_rules(client, alice, db_s
     assert category.violation_score == 0
 
 
-async def test_the_new_rules_then_govern_posts_in_that_category(client, alice, db_session):
+async def test_the_new_rules_then_govern_posts_in_that_category(client, alice, admin, db_session):
     await client.post(
         f"{BASE}/categories",
         json={
@@ -353,59 +353,60 @@ async def test_the_new_rules_then_govern_posts_in_that_category(client, alice, d
             "description": "Short thoughts on how we live, decide and doubt. Reflections about habits, choices, "
             "meaning, happiness, friendship and time.",
         },
-        headers=alice.headers,
+        headers=admin.headers,
     )
 
     assert (await _publish(client, alice, "philosophy-of-everyday-life", body=ON_TOPIC)).status_code == 201
     assert (await _publish(client, alice, "philosophy-of-everyday-life", body=OFF_TOPIC)).status_code == 422
 
 
-async def test_a_category_is_checked_like_a_post_but_without_a_topic(client, alice):
+async def test_a_category_is_checked_like_a_post_but_without_a_topic(client, admin):
     clean = await client.post(
-        f"{BASE}/categories/check", json={"title": "Everyday life", "description": "Short thoughts"}, headers=alice.headers
+        f"{BASE}/categories/check", json={"title": "Everyday life", "description": "Short thoughts"}, headers=admin.headers
     )
     rude = await client.post(
-        f"{BASE}/categories/check", json={"title": "Shit board", "description": WARN_TEXT}, headers=alice.headers
+        f"{BASE}/categories/check", json={"title": "Shit board", "description": WARN_TEXT}, headers=admin.headers
     )
 
     assert clean.json() == {"level": "ok", "violation": {"percent": 0, "level": "ok"}, "topic": None, "findings": []}
     assert rude.json()["level"] == "risk" and rude.json()["topic"] is None
 
 
-async def test_checking_a_category_needs_a_login_and_writes_nothing(client, alice, db_session):
+async def test_checking_a_category_needs_a_login_and_writes_nothing(client, alice, admin, db_session):
     anonymous = await client.post(f"{BASE}/categories/check", json={"title": "T", "description": "D"})
-    await client.post(f"{BASE}/categories/check", json={"title": "T", "description": "D"}, headers=alice.headers)
+    ordinary = await client.post(f"{BASE}/categories/check", json={"title": "T", "description": "D"}, headers=alice.headers)
+    allowed = await client.post(f"{BASE}/categories/check", json={"title": "T", "description": "D"}, headers=admin.headers)
 
-    assert anonymous.status_code == 401
+    assert (anonymous.status_code, ordinary.status_code, allowed.status_code) == (401, 403, 200)
     assert await _count(db_session, Category) == 0
 
 
-async def test_a_violating_category_is_not_created(client, alice, db_session):
+async def test_a_violating_category_is_not_created(client, admin, db_session):
     payload = {"title": "Kill yourself club", "description": "For people to kill yourself"}
 
-    resp = await client.post(f"{BASE}/categories", json=payload, headers=alice.headers)
+    resp = await client.post(f"{BASE}/categories", json=payload, headers=admin.headers)
 
     assert resp.status_code == 422
     assert resp.json()["detail"]["assessment"]["findings"][0]["code"] == "threat"
     assert await _count(db_session, Category) == 0
 
 
-async def test_a_risky_category_needs_confirmation_and_keeps_its_score(client, alice, db_session):
+async def test_a_risky_category_needs_confirmation_and_keeps_its_score(client, admin, db_session):
     payload = {"title": "Bullshit and shit", "description": "Just a board"}
 
-    first = await client.post(f"{BASE}/categories", json=payload, headers=alice.headers)
-    confirmed = await client.post(f"{BASE}/categories", json={**payload, "confirm_risk": True}, headers=alice.headers)
+    first = await client.post(f"{BASE}/categories", json=payload, headers=admin.headers)
+    confirmed = await client.post(f"{BASE}/categories", json={**payload, "confirm_risk": True}, headers=admin.headers)
 
     assert (first.status_code, confirmed.status_code) == (409, 201)
     assert first.json()["detail"]["code"] == "confirmation_required"
     assert (await db_session.scalars(select(Category))).one().violation_score == 58
 
 
-async def test_ai_machine_rules_replace_the_algorithmic_ones_when_enabled(client, alice, db_session, ai):
+async def test_ai_machine_rules_replace_the_algorithmic_ones_when_enabled(client, admin, db_session, ai):
     _use_config(ai_review_enabled=True)
     ai.rules = {"keywords": [{"term": "Wisdom", "weight": 2.5}], "notes": "About practical wisdom"}
 
-    await client.post(f"{BASE}/categories", json={"title": "Thinking", "description": "Thoughts"}, headers=alice.headers)
+    await client.post(f"{BASE}/categories", json={"title": "Thinking", "description": "Thoughts"}, headers=admin.headers)
 
     category = (await db_session.scalars(select(Category))).one()
     assert category.machine_rules_source == "ai"
@@ -414,21 +415,21 @@ async def test_ai_machine_rules_replace_the_algorithmic_ones_when_enabled(client
 
 
 @pytest.mark.parametrize("bad_rules", [{"keywords": "none"}, {"keywords": [{"term": "x", "weight": 99}]}, {"nonsense": 1}])
-async def test_unusable_ai_machine_rules_leave_the_algorithmic_ones(client, alice, db_session, ai, bad_rules):
+async def test_unusable_ai_machine_rules_leave_the_algorithmic_ones(client, admin, db_session, ai, bad_rules):
     _use_config(ai_review_enabled=True)
     ai.rules = bad_rules
 
     resp = await client.post(
-        f"{BASE}/categories", json={"title": "Thinking", "description": "Thoughts"}, headers=alice.headers
+        f"{BASE}/categories", json={"title": "Thinking", "description": "Thoughts"}, headers=admin.headers
     )
 
     assert resp.status_code == 201
     assert (await db_session.scalars(select(Category))).one().machine_rules_source == "algorithm"
 
 
-async def test_ai_rules_are_not_asked_for_while_ai_review_is_off(client, alice, ai):
+async def test_ai_rules_are_not_asked_for_while_ai_review_is_off(client, admin, ai):
     ai.rules = {"keywords": [{"term": "Wisdom", "weight": 1}], "notes": ""}
-    await client.post(f"{BASE}/categories", json={"title": "Thinking", "description": "Thoughts"}, headers=alice.headers)
+    await client.post(f"{BASE}/categories", json={"title": "Thinking", "description": "Thoughts"}, headers=admin.headers)
     assert not ai.rules_requests
 
 

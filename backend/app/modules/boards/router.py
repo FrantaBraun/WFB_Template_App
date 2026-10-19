@@ -4,8 +4,9 @@
 
 """Categories (boards), their posts and resonances.
 
-Reading is public; creating a category or a post and resonating need a
-signed-in user whose account is not blocked. Nothing here ever returns who
+Reading is public; posting and resonating need a signed-in user whose
+account is not blocked. Creating a category is for administrators only (any
+user may post into any category, but cannot make one). Nothing here ever returns who
 wrote a post or created a category, or who resonated (see schemas.PostOut) -
 those ids are stored for moderation only.
 
@@ -38,7 +39,7 @@ from app.database import get_db
 from app.models.user import User
 from app.modules.boards.admin_router import router as admin_router
 from app.modules.boards.config import BoardsConfig, get_config
-from app.modules.boards.deps import get_active_user, get_optional_user
+from app.modules.boards.deps import get_active_admin, get_active_user, get_optional_user
 from app.modules.boards import documents, history, payments_status, receipts
 from app.modules.boards.models import STATUS_HIDDEN, STATUS_PUBLISHED, Category, Post, Receipt, Resonance
 from app.modules.boards.payments import CURRENCY
@@ -299,18 +300,19 @@ async def list_categories(
 @router.post("/categories/check")
 async def check_category(
     body: CategoryCreate,
-    user: User = Depends(get_active_user),
+    user: User = Depends(get_active_admin),
     config: BoardsConfig = Depends(get_config),
     ai: AiModerator = Depends(get_ai_moderator),
 ) -> AssessmentOut:
-    """The verdict on a draft category, without creating it."""
+    """The verdict on a draft category, without creating it. Administrators only,
+    like creating one."""
     return assessment_out(await assess_category(title=body.title, description=body.description, config=config.moderation, ai=ai))
 
 
 @router.post("/categories", status_code=201)
 async def create_category(
     body: CategoryCreate,
-    user: User = Depends(get_active_user),
+    user: User = Depends(get_active_admin),
     db: AsyncSession = Depends(get_db),
     config: BoardsConfig = Depends(get_config),
     ai: AiModerator = Depends(get_ai_moderator),

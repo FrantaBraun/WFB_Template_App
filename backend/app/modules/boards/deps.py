@@ -35,10 +35,20 @@ async def get_optional_user(
 async def get_active_user(user: User = Depends(get_current_user)) -> User:
     """The signed-in user, unless this application has blocked their account
     - then 403 with {"code": "account_blocked", "reason"}, so the frontend
-    can say why. For everything that writes: posting, creating a category,
-    resonating, checking a draft."""
+    can say why. For everything that writes: posting, resonating, checking a
+    draft."""
     if user.is_blocked:
         raise HTTPException(
             status_code=403, detail={"code": "account_blocked", "reason": user.blocked_reason}
         )
+    return user
+
+
+async def get_active_admin(user: User = Depends(get_active_user)) -> User:
+    """An administrator (the local User.is_admin flag, never the auth role)
+    whose account is not blocked - for creating a category, which ordinary
+    users cannot do. A blocked account is told so first, whoever it is; a
+    signed-in user who is no administrator gets 403 {"code": "admin_required"}."""
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail={"code": "admin_required"})
     return user
