@@ -18,7 +18,7 @@ import usePageMeta from '../hooks/usePageMeta'
  */
 export default function OAuthCallback() {
   const { t } = useTranslation()
-  usePageMeta({ title: t('oauthCallback.pageTitle') })
+  usePageMeta({ title: t('oauthCallback.pageTitle'), noindex: true })
   const navigate = useNavigate()
   const { loadUser } = useAuth()
   const [error, setError] = useState<string | null>(null)
