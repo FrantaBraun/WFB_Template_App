@@ -162,19 +162,20 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
 
   return (
     <header className="border-b border-ink/10 dark:border-ink-dark/10">
-      <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3 text-sm text-ink-soft dark:text-ink-soft-dark">
-        <Link to="/" className="flex items-center gap-3 text-ink hover:opacity-80 dark:text-ink-dark">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal text-white">
-            <BookIcon className="h-6 w-6" />
+      <div className="mx-auto flex max-w-4xl items-center justify-between gap-1 px-3 py-3 text-sm text-ink-soft dark:text-ink-soft-dark sm:gap-2 sm:px-6">
+        <Link to="/" aria-label={t('nav.brand')} className="flex min-w-0 items-center gap-2 text-ink hover:opacity-80 dark:text-ink-dark sm:gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal text-white sm:h-11 sm:w-11">
+            <BookIcon className="h-5 w-5 sm:h-6 sm:w-6" />
           </span>
-          <span className="font-display font-bold leading-tight">{t('nav.brand')}</span>
+          {/* On phones the icon cluster keeps its size, so the name truncates (and drops out below 360px). */}
+          <span className="hidden min-w-0 truncate font-display font-bold leading-tight min-[360px]:block">{t('nav.brand')}</span>
         </Link>
 
         <nav className="hidden items-center gap-4 md:flex">
           {navLinks}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
           {utilityControls}
           <button type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={t(mobileMenuOpen ? 'common.closeMenu' : 'common.openMenu')} aria-expanded={mobileMenuOpen}
             className="inline-flex items-center justify-center rounded-lg p-2 text-ink-soft hover:bg-ink/10 dark:text-ink-soft-dark dark:hover:bg-ink-dark/15 md:hidden">
@@ -184,7 +185,7 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
       </div>
 
       {mobileMenuOpen && (
-        <div ref={mobileMenuRef} className="border-t border-ink/10 px-6 py-3 dark:border-ink-dark/10 md:hidden">
+        <div ref={mobileMenuRef} className="border-t border-ink/10 px-3 py-3 dark:border-ink-dark/10 sm:px-6 md:hidden">
           <nav className="flex flex-col items-start gap-3 text-sm text-ink-soft dark:text-ink-soft-dark">
             {navLinks}
           </nav>
