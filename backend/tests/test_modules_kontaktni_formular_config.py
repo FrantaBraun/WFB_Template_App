@@ -12,7 +12,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from app.modules.kontaktni_formular.config import CONFIG_FILE, ContactFormConfig, load_contact_form_config
+from app.modules.kontaktni_formular.config import CONFIG_FILE, ContactFormConfig, PageTexts, load_contact_form_config
 
 
 def _config(**overrides) -> dict:
@@ -120,3 +120,50 @@ def test_render_fills_every_placeholder_and_keeps_literal_braces():
 
     assert subject == "Re: Dotaz"
     assert body == "Jana <jana@example.com> {literal}\nText {not a placeholder}"
+
+
+def test_page_texts_and_show_email_default_to_nothing():
+    config = ContactFormConfig.model_validate(_config())
+
+    assert config.show_email is False
+    assert config.page == {}
+    assert config.page_texts_for("cs") == PageTexts()
+
+
+def test_page_texts_match_language_or_fall_back_to_default_language():
+    config = ContactFormConfig.model_validate(
+        _config(page={"cs": {"title": "Kontakt"}, "en": {"title": "Contact", "intro": "Hello", "aside": "Mon-Fri"}})
+    )
+
+    assert config.page_texts_for("en").title == "Contact"
+    assert config.page_texts_for("en-GB").intro == "Hello"
+    assert config.page_texts_for("EN_us").aside == "Mon-Fri"
+    # a language without texts gets the default language's, not an error
+    assert config.page_texts_for("de").title == "Kontakt"
+    assert config.page_texts_for(None).title == "Kontakt"
+
+
+def test_page_texts_are_empty_when_the_default_language_has_none():
+    config = ContactFormConfig.model_validate(_config(page={"en": {"title": "Contact"}}))
+
+    assert config.page_texts_for("de") == PageTexts()
+
+
+def test_page_language_codes_are_normalized():
+    config = ContactFormConfig.model_validate(_config(page={"pt_BR": {"title": "Contato"}}))
+
+    assert set(config.page) == {"pt-br"}
+    assert config.page_texts_for("pt-BR").title == "Contato"
+
+
+def test_unknown_page_key_is_rejected():
+    with pytest.raises(ValidationError):
+        ContactFormConfig.model_validate(_config(page={"cs": {"heading": "Kontakt"}}))
+
+
+@pytest.mark.parametrize(("field", "limit"), [("title", 120), ("intro", 2000), ("aside", 1000)])
+def test_page_text_length_is_limited(field, limit):
+    ContactFormConfig.model_validate(_config(page={"cs": {field: "x" * limit}}))
+
+    with pytest.raises(ValidationError):
+        ContactFormConfig.model_validate(_config(page={"cs": {field: "x" * (limit + 1)}}))
