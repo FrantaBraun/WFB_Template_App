@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "The build now writes robots.txt and a sitemap.xml of the public pages from VITE_APP_URL (left out, with a warning, when it is not set), adds a share image to index.html, and index.html carries a description and Open Graph tags for crawlers and link previews that do not run JavaScript",
         "Add the public pages of the freelancer site: a new home page, Services, Pricing and financing (with sample prices, marked as such on the page), About me, and the Privacy, Terms and Cookies pages written for this site, all in Czech and English; the home page also describes the site for search engines (schema.org)",
         "Add a Contact page to this site: a heading and introduction, the email, address, GitHub and LinkedIn details next to the form, and a note, in Czech and English",
         "Page titles and descriptions no longer say \"Authenticate WFB\": every page now takes the application's name (nav.brand) and a default description (meta.description) from its translations, and also sets a canonical URL, Open Graph and Twitter tags and the page language. Sign-in, account, administration and diagnostic pages ask search engines not to index them",
