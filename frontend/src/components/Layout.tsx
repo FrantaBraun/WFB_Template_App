@@ -105,18 +105,19 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
 
   return (
     <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-      <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3 text-sm text-slate-600 dark:text-slate-300">
-        <Link to="/" className="tracking-tight text-stone-800 hover:text-stone-600 dark:text-stone-200 dark:hover:text-stone-300 flex">
-          <img src="/logo.png" alt="" className="mx-1 bg-slate-200 rounded" width={40} />
-          <span className='font-extrabold'>{t('nav.brand')}</span>
-          <span className='ms-1 text-stone-500 dark:text-stone-400 text-xs pt-4' style={{marginLeft: "-15px"}}>WFB</span>
+      <div className="mx-auto flex max-w-4xl items-center justify-between gap-1 px-3 py-3 text-sm text-slate-600 dark:text-slate-300 sm:gap-2 sm:px-6">
+        <Link to="/" aria-label={t('nav.brand')} className="tracking-tight text-stone-800 hover:text-stone-600 dark:text-stone-200 dark:hover:text-stone-300 flex min-w-0">
+          <img src="/logo.png" alt="" className="mx-1 shrink-0 bg-slate-200 rounded max-sm:w-8" width={40} />
+          {/* On phones the icon cluster keeps its size, so the name truncates (and drops out below 360px) and the WFB tag hides. */}
+          <span className='hidden min-w-0 self-center truncate font-extrabold min-[360px]:block sm:self-auto'>{t('nav.brand')}</span>
+          <span className='ms-1 hidden text-stone-500 dark:text-stone-400 text-xs pt-4 sm:block' style={{marginLeft: "-15px"}}>WFB</span>
         </Link>
 
         <nav className="hidden items-center gap-4 md:flex">
           {navLinks}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
           {utilityControls}
           <button type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={t(mobileMenuOpen ? 'common.closeMenu' : 'common.openMenu')} aria-expanded={mobileMenuOpen}
             className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden">
@@ -126,7 +127,7 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
       </div>
 
       {mobileMenuOpen && (
-        <div ref={mobileMenuRef} className="border-t border-slate-200 bg-white px-6 py-3 dark:border-slate-800 dark:bg-slate-950 md:hidden">
+        <div ref={mobileMenuRef} className="border-t border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950 sm:px-6 md:hidden">
           <nav className="flex flex-col items-start gap-3">
             {navLinks}
           </nav>
