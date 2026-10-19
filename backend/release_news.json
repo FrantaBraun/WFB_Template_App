@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add the freelancer module with GET /api/modules/freelancer/provider, which gives the legal pages the provider's details from PROVIDER_* in .env (name, company ID, address, registration, email, phone, effective date) and says whether the minimum is filled in",
         "Switch on the contact-form module for this site, with its page heading, introduction and note, the address that receives messages shown as a contact detail, and the confirmation email written in the first person",
         "Contact-form module: GET /api/modules/kontaktni_formular/info serves a per-language page heading, introduction and note (the new `page` block of backend/modules/kontaktni_formular.json) plus public contact details - address, GitHub and LinkedIn links from CONTACT_ADDRESS / CONTACT_GITHUB_URL / CONTACT_LINKEDIN_URL in .env, and the delivery address only when `show_email` is on. Nothing is shown until it is configured",
         "Switch on the CRM module for this site: its partner, task and invoice endpoints are mounted under /api/modules/crm and open to administrators only",
