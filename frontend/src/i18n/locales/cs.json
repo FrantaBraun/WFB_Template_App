@@ -1,4 +1,7 @@
 {
+  "meta": {
+    "description": "Slavíčkovy knihohrátky – příspěvky a kalendář akcí."
+  },
   "common": {
     "save": "Uložit",
     "saving": "Ukládání…",

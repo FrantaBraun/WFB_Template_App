@@ -283,3 +283,116 @@ def test_missing_contact_mail_fails_loudly(client):
             )
     finally:
         _contact_app.dependency_overrides.pop(get_settings, None)
+
+
+# --- GET /info: what the page shows around the form -------------------------
+
+
+def _info_settings(**overrides) -> Settings:
+    # the contact details are pinned empty so a developer's own backend/.env
+    # (Settings reads it) can't leak into the "nothing configured" cases
+    values = {"contact_mail": "prijem@example.com", "contact_address": "", "contact_github_url": "", "contact_linkedin_url": ""}
+    return Settings(**{**values, **overrides})
+
+
+@pytest.fixture()
+def use_info_settings():
+    """Overrides Settings for one test; cleaned up unconditionally."""
+
+    def _use(**overrides) -> None:
+        _contact_app.dependency_overrides[get_settings] = lambda: _info_settings(**overrides)
+
+    yield _use
+    _contact_app.dependency_overrides.pop(get_settings, None)
+
+
+def _use_config(**overrides) -> None:
+    _contact_app.dependency_overrides[get_contact_form_config] = lambda: _contact_config(**overrides)
+
+
+def test_info_is_empty_by_default(client, use_info_settings):
+    use_info_settings()
+
+    resp = client.get("/api/modules/kontaktni_formular/info")
+
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "title": "",
+        "intro": "",
+        "aside": "",
+        "details": {"email": None, "address": None, "github_url": None, "linkedin_url": None},
+    }
+
+
+def test_info_shows_the_configured_details(client, use_info_settings):
+    use_info_settings(
+        contact_address="  Hlavni 1\n110 00 Praha  ",
+        contact_github_url="https://github.com/example",
+        contact_linkedin_url="https://www.linkedin.com/in/example",
+    )
+
+    details = client.get("/api/modules/kontaktni_formular/info").json()["details"]
+
+    assert details == {
+        "email": None,
+        "address": "Hlavni 1\n110 00 Praha",
+        "github_url": "https://github.com/example",
+        "linkedin_url": "https://www.linkedin.com/in/example",
+    }
+
+
+def test_info_shows_the_delivery_address_only_when_show_email_is_on(client, use_info_settings):
+    use_info_settings()
+    assert client.get("/api/modules/kontaktni_formular/info").json()["details"]["email"] is None
+
+    _use_config(show_email=True)
+    assert client.get("/api/modules/kontaktni_formular/info").json()["details"]["email"] == "prijem@example.com"
+
+
+@pytest.mark.parametrize(
+    "url",
+    ["javascript:alert(1)", "ftp://example.com/x", "github.com/example", "https://", "//example.com", "data:text/html,x"],
+)
+def test_info_leaves_out_links_that_are_not_http_urls(client, use_info_settings, url, caplog):
+    use_info_settings(contact_github_url=url, contact_linkedin_url=url)
+
+    with caplog.at_level("WARNING"):
+        details = client.get("/api/modules/kontaktni_formular/info").json()["details"]
+
+    assert details["github_url"] is None
+    assert details["linkedin_url"] is None
+    assert "CONTACT_GITHUB_URL is not an http(s) URL" in caplog.text
+
+
+def test_info_returns_the_texts_for_the_requested_language(client, use_info_settings):
+    use_info_settings()
+    _use_config(
+        page={
+            "cs": {"title": "Kontakt", "intro": "Napiste mi.", "aside": "Po-Pa"},
+            "en": {"title": "Contact", "intro": "Write to me.", "aside": "Mon-Fri"},
+        }
+    )
+
+    en = client.get("/api/modules/kontaktni_formular/info", params={"language": "en-GB"}).json()
+    default = client.get("/api/modules/kontaktni_formular/info").json()
+    unknown = client.get("/api/modules/kontaktni_formular/info", params={"language": "de"}).json()
+
+    assert (en["title"], en["intro"], en["aside"]) == ("Contact", "Write to me.", "Mon-Fri")
+    assert default["title"] == unknown["title"] == "Kontakt"
+
+
+def test_info_exposes_nothing_beyond_the_page_fields(client, use_info_settings):
+    use_info_settings(auth_api_key="secret-api-key", stripe_secret_key="sk_live_x", mail_password="hunter2")
+
+    resp = client.get("/api/modules/kontaktni_formular/info")
+
+    assert set(resp.json()) == {"title", "intro", "aside", "details"}
+    assert set(resp.json()["details"]) == {"email", "address", "github_url", "linkedin_url"}
+    for secret in ("secret-api-key", "sk_live_x", "hunter2"):
+        assert secret not in resp.text
+
+
+def test_info_rejects_an_overlong_language(client, use_info_settings):
+    use_info_settings()
+
+    assert client.get("/api/modules/kontaktni_formular/info", params={"language": "x" * 36}).status_code == 422

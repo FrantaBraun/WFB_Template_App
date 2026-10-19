@@ -255,7 +255,7 @@ function EventForm({ eventId }: { eventId: string | undefined }) {
 export default function EventFormPage() {
   const { t } = useTranslation('event_calendar')
   const { id } = useParams<{ id: string }>()
-  usePageMeta({ title: id ? t('form.editTitle') : t('form.newTitle') })
+  usePageMeta({ title: id ? t('form.editTitle') : t('form.newTitle'), noindex: true })
   return (
     <EditorGate>
       <EventForm key={id ?? 'new'} eventId={id} />
