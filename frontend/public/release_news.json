@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add a Contact page to this site: a heading and introduction, the email, address, GitHub and LinkedIn details next to the form, and a note, in Czech and English",
         "Page titles and descriptions no longer say \"Authenticate WFB\": every page now takes the application's name (nav.brand) and a default description (meta.description) from its translations, and also sets a canonical URL, Open Graph and Twitter tags and the page language. Sign-in, account, administration and diagnostic pages ask search engines not to index them",
         "The contact page can now show an introduction, contact details (email, address, GitHub, LinkedIn) and a note next to the form, all set per deployment; the page moved to /contact (/kontakt redirects there). With nothing configured it is still just the form",
         "Switch on the CRM module for this site: administrators get a header link to their partners, the partners' tasks and the invoices uploaded against them",
