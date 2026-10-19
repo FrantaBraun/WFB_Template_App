@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Switch on the CRM module for this site: its partner, task and invoice endpoints are mounted under /api/modules/crm and open to administrators only",
         "Add a CRM module (app/modules/crm), for administrators only: partners with contact and company details, their tasks (status, price, dates), and invoice PDFs uploaded against a task - checked to really be PDFs and capped at 10 MB, stored privately under uploads/crm/ and served only to administrators through an authenticated download"
     ],
     "releases": []

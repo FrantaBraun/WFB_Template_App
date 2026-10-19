@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Switch on the CRM module for this site: administrators get a header link to their partners, the partners' tasks and the invoices uploaded against them",
         "Add a CRM module (src/modules/crm), shown to administrators only: a header icon opens the partner list with search, each partner's page with their tasks, and each task's page where invoice PDFs are uploaded, downloaded and deleted - in Czech and English"
     ],
     "releases": []

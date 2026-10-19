@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Administration**
 
 - **Hidden sign-in**: there is no visible Login button anywhere on the public site, so only the administrator who knows the address of the sign-in form can sign in. This is obscurity, not protection: access is still decided by `User.is_admin` / `require_admin` (never by the auth role). The template's `Layout` shows Login / Register links to signed-out visitors, so they have to go on this branch; what to do with the Register page is still to be decided.
-- **A simple CRM for the administrator**, to be built as a **standalone, reusable feature module** that other applications of the family can switch on as well (build it with the `new-module` skill, not directly in this branch): register a **partner** (information, contact details); keep **tasks** (jobs) per partner; upload **invoices as PDF files** against individual tasks.
+- **A simple CRM for the administrator**, built as the **standalone, reusable `crm` feature module** (it lives in `core`, which other applications of the family can switch on as well, and is switched on for this branch in `backend/modules.json` and `frontend/public/modules.json`; see "Feature modules" below): register a **partner** (information, contact details); keep **tasks** (jobs) per partner; upload **invoices as PDF files** against individual tasks. Changes to the module itself belong on `core`/`main` (use the `new-module` skill), not in this branch.
 
 **Positioning - this shapes the copy of every public page**
 
