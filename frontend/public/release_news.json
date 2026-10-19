@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "The release build no longer writes its own frontend .env with fixed addresses: it copies the development directory's frontend/.env as it is stored, stops with guidance when it is missing, and warns when an address in it points at localhost",
         "Add a Portfolio module (src/modules/portfolio): a responsive grid of project cards, a page for each project with its description, technologies and an Open button, and an administrator area at /portfolio/manage to add, edit, reorder, hide and delete projects in Czech and English - the header link is left to the site that uses it",
         "The build now writes robots.txt and a sitemap.xml of the public pages from VITE_APP_URL (left out, with a warning, when it is not set), adds a share image to index.html, and index.html carries a description and Open Graph tags for crawlers and link previews that do not run JavaScript",
         "Add the public pages of the freelancer site: a new home page, Services, Pricing and financing (with sample prices, marked as such on the page), About me, and the Privacy, Terms and Cookies pages written for this site, all in Czech and English; the home page also describes the site for search engines (schema.org)",

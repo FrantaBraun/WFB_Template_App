@@ -37,6 +37,7 @@ import tomllib
 import zipfile
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).parent.parent
 SCRIPTS_DIR = Path(__file__).parent
@@ -178,10 +179,50 @@ def build_scripts(output_path: Path) -> None:
 
 # ─── Build: frontend ──────────────────────────────────────────────────────────
 
+_FRONTEND_ENV = ROOT / "frontend" / ".env"
+_LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
+
+
+def copy_frontend_env(dest: Path, source: Path | None = None) -> None:
+    """Put the development directory's frontend/.env next to the extracted
+    sources, byte for byte as it is stored - the build writes no .env of its own.
+
+    Like backend/.env in build_scripts() this is the current local file, never
+    one from the git ref (it is untracked). So the build takes whatever the
+    development directory has: VITE_API_URL, VITE_APP_URL, VITE_AUTH_URL ...
+    Vite bakes these into the static bundle, hence the warning when a URL still
+    points at this machine (a development value) - only a warning, since a
+    local build for a local check is legitimate. Values are never printed."""
+    source = source or _FRONTEND_ENV
+    if not source.is_file():
+        sys.exit(
+            f"File not found: {source}\n"
+            "The frontend build takes its settings from the development directory's frontend/.env - "
+            "copy frontend/.env.example to frontend/.env and fill in the values for the build."
+        )
+    shutil.copyfile(source, dest)
+
+    keys, local = [], []
+    for line in source.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        keys.append(key)
+        if key.endswith("_URL") and urlsplit(value.strip().strip("\"'")).hostname in _LOCAL_HOSTS:
+            local.append(key)
+    print(f"  Using {source} as it is stored ({', '.join(keys) or 'no variables'}).")
+    if local:
+        print(f"  WARNING: {', '.join(local)} point at a local address - fine for a local check, "
+              "wrong for a build that is going to a server.")
+
+
 def build_frontend(ref: str, output_path: Path, cfg: dict) -> None:
-    """Extract frontend/ at the given git ref into a temp dir, write a build-time
-    .env (public URLs only - nothing secret), run npm install + build there, and
-    zip the resulting dist/ - the frontend ships as a static build, not source."""
+    """Extract frontend/ at the given git ref into a temp dir, copy the
+    development directory's frontend/.env into it (see copy_frontend_env), run
+    npm install + build there, and zip the resulting dist/ - the frontend ships
+    as a static build, not source."""
     npm = shutil.which("npm") or cfg.get("build", {}).get("npm_command", "npm")
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -196,19 +237,8 @@ def build_frontend(ref: str, output_path: Path, cfg: dict) -> None:
         with zipfile.ZipFile(archive) as z:
             z.extractall(src)
 
-        with open(src / ".env", "w") as f:
-            f.write(f"""# Base URL of the auth service API (no trailing slash)
-VITE_API_URL=https://template-app.withfbraun.com
+        copy_frontend_env(src / ".env")
 
-# Base URL of this frontend app (used for OAuth callbacks, email links)
-VITE_APP_URL=https://template-app.withfbraun.com
-
-VITE_AUTH_URL=https://auth.withfbraun.com
-
-#API Key for the auth service API (used for server-to-server requests)
-VITE_API_KEY={cfg.get('client_api_key')}""")
-
-        print(src, src / ".env")
         print("  npm install …")
         subprocess.run([npm, "install", "--prefer-offline"], cwd=src, check=True)
 

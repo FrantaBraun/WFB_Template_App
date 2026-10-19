@@ -1,13 +1,10 @@
 # Build configuration — copy to build.config.toml and fill in your values.
 # build.config.toml is gitignored (contains FTP credentials).
 
-# Deliberately public trial API key baked into the packaged frontend build's
-# .env - lets people try the demo build without registering their own
-# application on the auth service. Not a real secret; never use this pattern
-# for an actual application's own API key (see CLAUDE.md's Deployment notes).
-# Must stay top-level (read as cfg.get("client_api_key"), not nested under
-# [build] or any other table).
-client_api_key = "your-public-trial-api-key"
+# The frontend build's .env is not configured here: build.py copies the
+# development directory's frontend/.env as it is stored (VITE_API_URL,
+# VITE_APP_URL, VITE_AUTH_URL ...). Set it to the target server's addresses
+# before building - see CLAUDE.md's Deployment notes.
 
 [ftp]
 host     = "ftp.example.com"
