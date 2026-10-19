@@ -16,7 +16,7 @@ import usePageMeta from '../hooks/usePageMeta'
  */
 export default function Register() {
   const { t, i18n } = useTranslation()
-  usePageMeta({ title: t('register.pageTitle'), description: t('register.pageDescription') })
+  usePageMeta({ title: t('register.pageTitle'), description: t('register.pageDescription'), noindex: true })
 
   const [email, setEmail] = useState('')
   const [login, setLogin] = useState('')

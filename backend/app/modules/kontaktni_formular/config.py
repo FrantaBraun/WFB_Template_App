@@ -2,16 +2,20 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
-"""Confirmation-email settings for the contact form, read from the
-git-tracked backend/modules/kontaktni_formular.json rather than .env - for
-the same reason as backend/modules.json (see app/modules/registry.py): the
-texts are per-application content that should follow the branch, and
-multi-line, per-language templates don't fit .env anyway.
+"""Settings of the contact form module, read from the git-tracked
+backend/modules/kontaktni_formular.json rather than .env - for the same
+reason as backend/modules.json (see app/modules/registry.py): the texts are
+per-application content that should follow the branch, and multi-line,
+per-language texts don't fit .env anyway. Per-server values (the address
+the form is delivered to, the public address / GitHub / LinkedIn details)
+are .env's, see Settings.
 
 Each language under `reply_templates` has a `subject` and `body` rendered
 with str.format; only the placeholders in TEMPLATE_PLACEHOLDERS are allowed
-(`{{` / `}}` for a literal brace). Everything is validated when the file is
-loaded, so a broken template fails there rather than on a visitor's submit.
+(`{{` / `}}` for a literal brace). `page` holds the optional texts shown
+around the form and `show_email` whether the delivery address is shown as a
+contact detail. Everything is validated when the file is loaded, so a broken
+template fails there rather than on a visitor's submit.
 """
 
 import string
@@ -56,12 +60,40 @@ class ReplyTemplate(BaseModel):
         return self.subject.format(**values), self.body.format(**values)
 
 
+class PageTexts(BaseModel):
+    """Optional texts around the form on the contact page, one set per
+    language. All three are empty by default, which leaves the page exactly
+    as it was before they existed (the heading comes from the frontend's own
+    locale then). Paragraphs are separated by a blank line."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(default="", max_length=120)
+    intro: str = Field(default="", max_length=2000)
+    aside: str = Field(default="", max_length=1000)
+
+
+def _for_language(items: dict, language: str | None):
+    """The entry for `language` - an exact match first ("pt-br"), then its
+    primary subtag ("en-US" -> "en") - or None when there is no such entry."""
+    if language:
+        code = normalize_language(language)
+        for candidate in (code, code.split("-")[0]):
+            if candidate in items:
+                return items[candidate]
+    return None
+
+
 class ContactFormConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     send_reply: bool = True
     default_language: str
     reply_templates: dict[str, ReplyTemplate] = Field(min_length=1)
+    # Show Settings.contact_mail (where the form is delivered) as a public
+    # contact detail. Off by default: a branch has to opt in to publishing it.
+    show_email: bool = False
+    page: dict[str, PageTexts] = Field(default_factory=dict)
 
     @field_validator("default_language")
     @classmethod
@@ -72,6 +104,11 @@ class ContactFormConfig(BaseModel):
     @classmethod
     def _normalize_template_languages(cls, templates: dict[str, ReplyTemplate]) -> dict[str, ReplyTemplate]:
         return {normalize_language(code): template for code, template in templates.items()}
+
+    @field_validator("page")
+    @classmethod
+    def _normalize_page_languages(cls, pages: dict[str, PageTexts]) -> dict[str, PageTexts]:
+        return {normalize_language(code): texts for code, texts in pages.items()}
 
     @model_validator(mode="after")
     def _default_language_has_template(self) -> "ContactFormConfig":
@@ -86,12 +123,17 @@ class ContactFormConfig(BaseModel):
         """The template for `language` - an exact match first ("pt-br"),
         then its primary subtag ("en-US" -> "en") - or default_language's
         when no language was sent or none of those is configured."""
-        if language:
-            code = normalize_language(language)
-            for candidate in (code, code.split("-")[0]):
-                if candidate in self.reply_templates:
-                    return self.reply_templates[candidate]
-        return self.reply_templates[self.default_language]
+        return _for_language(self.reply_templates, language) or self.reply_templates[self.default_language]
+
+    def page_texts_for(self, language: str | None) -> PageTexts:
+        """The page texts for `language`, matched like reply_template_for,
+        then default_language's, then empty ones - a language without texts
+        is not an error, the page just shows none."""
+        return (
+            _for_language(self.page, language)
+            or self.page.get(self.default_language)
+            or PageTexts()
+        )
 
 
 def load_contact_form_config(path: Path = CONFIG_FILE) -> ContactFormConfig:
