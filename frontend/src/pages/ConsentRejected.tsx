@@ -11,7 +11,7 @@ import usePageMeta from '../hooks/usePageMeta'
 /** Landed on after the user rejects consent on /consent - dead-end page, no way back except re-login. */
 export default function ConsentRejected() {
   const { t } = useTranslation()
-  usePageMeta({ title: t('consentRejected.pageTitle') })
+  usePageMeta({ title: t('consentRejected.pageTitle'), noindex: true })
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center text-slate-900 dark:text-slate-100">

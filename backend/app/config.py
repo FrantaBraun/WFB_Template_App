@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     # module without setting this fails loudly (see the module's router)
     # rather than silently mailing nobody.
     contact_mail: str = ""
+    # Public contact details the module's page may show next to the form -
+    # each only when set (the address of the form itself is shown only when
+    # the module config's show_email is on). Links must be http(s) URLs;
+    # anything else is left out of the page.
+    contact_address: str = ""
+    contact_github_url: str = ""
+    contact_linkedin_url: str = ""
 
     # Stripe payment gate module (app/modules/stripe_payment_gate) - empty
     # by default; the module's endpoints fail loudly (503) until both keys

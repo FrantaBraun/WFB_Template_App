@@ -4,18 +4,30 @@
  * Freely available as a template for building custom applications.
  */
 
+import { Navigate } from 'react-router-dom'
 import type { ModuleDefinition } from '../types'
 import ContactPage from './ContactPage'
 
 const contactFormModule: ModuleDefinition = {
   key: 'kontaktni_formular',
-  routes: [{ path: '/kontakt', element: <ContactPage /> }],
-  nav: [{ to: '/kontakt', labelKey: 'kontaktni_formular:nav.contact' }],
+  // The page lives at /contact; /kontakt was its first address and stays as a
+  // redirect so links already out there keep working.
+  routes: [
+    { path: '/contact', element: <ContactPage /> },
+    { path: '/kontakt', element: <Navigate to="/contact" replace /> },
+  ],
+  nav: [{ to: '/contact', labelKey: 'kontaktni_formular:nav.contact' }],
   locales: {
     cs: {
       nav: { contact: 'Kontakt' },
       page: {
         title: 'Kontaktní formulář',
+        metaDescription: 'Napište nám zprávu přes kontaktní formulář.',
+        detailsHeading: 'Kontaktní údaje',
+        emailDetail: 'E-mail',
+        addressDetail: 'Adresa',
+        githubDetail: 'GitHub',
+        linkedinDetail: 'LinkedIn',
         subjectLabel: 'Předmět',
         messageLabel: 'Zpráva',
         emailLabel: 'Váš e-mail (pro odpověď)',
@@ -32,6 +44,12 @@ const contactFormModule: ModuleDefinition = {
       nav: { contact: 'Contact' },
       page: {
         title: 'Contact form',
+        metaDescription: 'Send us a message through the contact form.',
+        detailsHeading: 'Contact details',
+        emailDetail: 'Email',
+        addressDetail: 'Address',
+        githubDetail: 'GitHub',
+        linkedinDetail: 'LinkedIn',
         subjectLabel: 'Subject',
         messageLabel: 'Message',
         emailLabel: 'Your email (for a reply)',

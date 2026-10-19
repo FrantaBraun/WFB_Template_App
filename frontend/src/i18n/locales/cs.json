@@ -1,4 +1,7 @@
 {
+  "meta": {
+    "description": "Webová aplikace postavená na sdíleném jádru With FBraun."
+  },
   "common": {
     "save": "Uložit",
     "saving": "Ukládání…",

@@ -1,4 +1,7 @@
 {
+  "meta": {
+    "description": "A web application built on the shared With FBraun core."
+  },
   "common": {
     "save": "Save",
     "saving": "Saving…",
