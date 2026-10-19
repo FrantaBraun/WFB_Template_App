@@ -1,4 +1,7 @@
 {
+  "meta": {
+    "description": "API Hub – a register of API documentation with historical versions and links to third-party documentation."
+  },
   "common": {
     "save": "Save",
     "saving": "Saving…",

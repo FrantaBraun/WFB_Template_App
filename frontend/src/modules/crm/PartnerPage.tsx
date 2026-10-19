@@ -159,7 +159,7 @@ function PartnerDetail({ partnerId }: { partnerId: string }) {
 export default function PartnerPage() {
   const { t } = useTranslation('crm')
   const { partnerId } = useParams<{ partnerId: string }>()
-  usePageMeta({ title: t('partners.title') })
+  usePageMeta({ title: t('partners.title'), noindex: true })
   return (
     <CrmGate>
       <PartnerDetail key={partnerId} partnerId={partnerId ?? ''} />

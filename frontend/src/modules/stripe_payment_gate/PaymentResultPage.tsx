@@ -27,7 +27,7 @@ type LoadState = 'loading' | 'ready' | 'notFound' | 'error'
  */
 export default function PaymentResultPage() {
   const { t, i18n } = useTranslation('stripe_payment_gate')
-  usePageMeta({ title: t('result.title') })
+  usePageMeta({ title: t('result.title'), noindex: true })
   const [params] = useSearchParams()
   const paymentId = params.get('payment_id')
   const canceled = params.get('canceled') === '1'

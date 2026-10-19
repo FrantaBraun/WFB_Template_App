@@ -1,4 +1,7 @@
 {
+  "meta": {
+    "description": "API Hub – evidence API dokumentací s historickými verzemi a odkazy na dokumentace třetích stran."
+  },
   "common": {
     "save": "Uložit",
     "saving": "Ukládání…",

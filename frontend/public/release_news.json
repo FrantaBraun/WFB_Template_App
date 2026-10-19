@@ -1,5 +1,7 @@
 {
   "unreleased": [
+    "Page titles and descriptions no longer say \"Authenticate WFB\": every page now takes the application's name (nav.brand) and a default description (meta.description) from its translations, and also sets a canonical URL, Open Graph and Twitter tags and the page language. Sign-in, account, administration and diagnostic pages ask search engines not to index them",
+    "The contact page can now show an introduction, contact details (email, address, GitHub, LinkedIn) and a note next to the form, all set per deployment; the page moved to /contact (/kontakt redirects there). With nothing configured it is still just the form",
     "Add a CRM module (src/modules/crm), shown to administrators only: a header icon opens the partner list with search, each partner's page with their tasks, and each task's page where invoice PDFs are uploaded, downloaded and deleted - in Czech and English"
   ],
   "releases": [
