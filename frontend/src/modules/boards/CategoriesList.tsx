@@ -7,7 +7,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
 import {
   API_BASE,
   CATEGORIES_PATH,
@@ -22,14 +21,14 @@ import { card, chip, primaryButton, secondaryButton } from './styles'
 
 /**
  * The list of categories (boards), busiest first, with a "Load more"
- * button, plus the link to create a new one (or to sign in first).
+ * button, plus - for an administrator, the only one who can create a
+ * category - the link to create a new one.
  * Exported for applications that show it on other pages - the home page
  * does. `headingTag` is the heading level it renders its title as, so it
  * can be the page's own h1 or a section's h2.
  */
 export default function CategoriesList({ headingTag: Heading = 'h2' }: { headingTag?: 'h1' | 'h2' }) {
   const { t } = useTranslation('boards')
-  const { user } = useAuth()
   const me = useBoardsMe()
   const [items, setItems] = useState<Category[] | null>(null)
   const [hasMore, setHasMore] = useState(false)
@@ -95,9 +94,11 @@ export default function CategoriesList({ headingTag: Heading = 'h2' }: { heading
               {t('list.moderation')}
             </Link>
           )}
-          <Link to={user ? `${CATEGORIES_PATH}/new` : '/login'} className={user ? primaryButton : secondaryButton}>
-            {user ? t('list.create') : t('list.loginToCreate')}
-          </Link>
+          {me?.is_admin && (
+            <Link to={`${CATEGORIES_PATH}/new`} className={primaryButton}>
+              {t('list.create')}
+            </Link>
+          )}
         </div>
       </div>
 

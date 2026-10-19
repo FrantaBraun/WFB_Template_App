@@ -30,7 +30,8 @@ import { Counter } from './PostForm'
 import { card, primaryButton, secondaryButton } from './styles'
 
 /**
- * /categories/new - a signed-in user creates a category: a title (its
+ * /categories/new - an administrator creates a category (nobody else can:
+ * ordinary users post into the categories, they do not make them): a title (its
  * address is generated from it) and a short description. Like a post, it
  * goes through the content check first - a violating title or description
  * is refused, a risky one needs confirming - and a new category gets
@@ -71,6 +72,7 @@ export default function NewCategoryPage() {
       const detail = errorDetail(err)
       if (detail?.assessment) setReview(detail.assessment)
       else if (detail?.code === 'account_blocked') setErrorKey('newCategory.accountBlocked')
+      else if (detail?.code === 'admin_required') setErrorKey('newCategory.adminOnly')
       else setErrorKey(err instanceof ApiError && err.status === 422 ? 'newCategory.invalid' : 'newCategory.error')
     } finally {
       setBusy(false)
@@ -100,7 +102,7 @@ export default function NewCategoryPage() {
       </p>
       <h1 className="mb-6 text-3xl font-bold tracking-tight">{t('newCategory.title')}</h1>
 
-      {loading ? (
+      {loading || (user && me === null) ? (
         <p className="text-slate-500 dark:text-slate-400">{t('common.loading')}</p>
       ) : !user ? (
         <p>
@@ -110,6 +112,8 @@ export default function NewCategoryPage() {
         </p>
       ) : me?.blocked ? (
         <BlockedNotice reason={me.blocked_reason} />
+      ) : !me?.is_admin ? (
+        <p className="rounded-2xl border border-slate-300 p-5 dark:border-slate-700">{t('newCategory.adminOnly')}</p>
       ) : (
         <form onSubmit={submit} className={`space-y-4 p-5 sm:p-6 ${card}`}>
           <div>

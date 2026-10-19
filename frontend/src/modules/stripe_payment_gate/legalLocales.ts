@@ -83,7 +83,7 @@ const cs = {
         title: '2. Co služba je a jak funguje',
         paragraphs: [
           '{{service}}',
-          'Obsah služby si může přečíst kdokoli. Přidat příspěvek, založit kategorii a vyjádřit souznění může jen přihlášený uživatel s účtem u přihlašovací služby auth.withfbraun.com.',
+          'Obsah služby si může přečíst kdokoli. Přidat příspěvek a vyjádřit souznění může jen přihlášený uživatel s účtem u přihlašovací služby auth.withfbraun.com. Kategorie zakládá jen administrátor provozovatele; uživatelé do nich přidávají příspěvky.',
           'Příspěvek tvoří nadpis (nejvýše {{postTitleMax}} znaků) a text (nejvýše {{postBodyMax}} znaků včetně mezer; emotikony jsou povoleny). Kategorii tvoří název (nejvýše {{categoryTitleMax}} znaků) a krátký popis (nejvýše {{categoryDescriptionMax}} znaků včetně mezer); adresa kategorie se vytvoří z jejího názvu.',
         ],
       },
@@ -419,7 +419,7 @@ const en: typeof cs = {
         title: '2. What the service is and how it works',
         paragraphs: [
           '{{service}}',
-          'Anyone can read the content of the service. Only a signed-in user with an account at the sign-in service auth.withfbraun.com can add a post, create a category or resonate.',
+          'Anyone can read the content of the service. Only a signed-in user with an account at the sign-in service auth.withfbraun.com can add a post or resonate. Categories are created only by the provider’s administrator; users add posts to them.',
           'A post consists of a title (at most {{postTitleMax}} characters) and a text (at most {{postBodyMax}} characters including spaces; emoji are allowed). A category consists of a name (at most {{categoryTitleMax}} characters) and a short description (at most {{categoryDescriptionMax}} characters including spaces); the category’s address is generated from its name.',
         ],
       },
