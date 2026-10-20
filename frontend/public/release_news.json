@@ -1,5 +1,8 @@
 {
     "unreleased": [
+        "Add an articles module (src/modules/articles): a list with search and a type filter, the article page drawn in its type's colours (light and dark theme), and an administrator area to write articles with the full editor (images, video, tables, HTML source), choose status and display window, pin them and manage the article types and their colours",
+        "The rich-text editor gains text alignment, tables, a horizontal rule, code blocks, YouTube / Vimeo video links and an HTML source mode (the server still strips anything unsafe on save)",
+        "A module can declare the modules it requires (a console warning is logged once when one is enabled without them) and contribute components to named slots that other modules render with <ModuleSlot>, so a module can extend another module's pages without that module knowing about it",
         "The \"New category\" button is shown to administrators only, and the new-category page tells everybody else that only an administrator can create a category (and that they can still add posts to the existing ones); the Terms say so too",
         "The release build no longer writes its own frontend .env with fixed addresses: it copies the development directory's frontend/.env as it is stored, stops with guidance when it is missing, and warns when an address in it points at localhost",
         "Page titles and descriptions no longer say \"Authenticate WFB\": every page now takes the application's name (nav.brand) and a default description (meta.description) from its translations, and also sets a canonical URL, Open Graph and Twitter tags and the page language. Sign-in, account, administration and diagnostic pages ask search engines not to index them",

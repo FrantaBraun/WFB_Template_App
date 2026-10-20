@@ -18,6 +18,12 @@ class ModuleManifest:
     `prefix` overrides it) to derive the module's API prefix, so a mismatch
     would silently split one module's identity in two and it's rejected at
     discovery time.
+
+    `requires` lists the keys of other modules this one only works with
+    (e.g. a calendar built on articles). It is advisory: enabling a module
+    without what it requires never stops the app, it is logged as a warning
+    at startup (registry.check_module_dependencies) so a half-switched-on
+    configuration is visible instead of failing in some request later.
     """
 
     key: str
@@ -29,3 +35,4 @@ class ModuleManifest:
     # said out loud in the console, such as a setting that quietly switches
     # a feature off. Whatever it raises is logged and does not stop the startup.
     on_startup: Callable[[], None] | None = None
+    requires: tuple[str, ...] = ()
