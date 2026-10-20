@@ -35,11 +35,34 @@ for (const module of allModules) {
 
 let enabledKeysPromise: Promise<Set<string>> | null = null
 
+/**
+ * One message per enabled module whose `requires` isn't satisfied - either
+ * the required module isn't enabled or no module with that key exists (a
+ * typo). Pure, so it can be reasoned about (and reused) without the console.
+ */
+export function findMissingRequirements(modules: ModuleDefinition[], enabledKeys: Set<string>): string[] {
+  const known = new Set(modules.map((module) => module.key))
+  const problems: string[] = []
+  for (const module of modules) {
+    if (!enabledKeys.has(module.key)) continue
+    for (const required of module.requires ?? []) {
+      if (!known.has(required)) problems.push(`module "${module.key}" requires unknown module "${required}"`)
+      else if (!enabledKeys.has(required)) {
+        problems.push(`module "${module.key}" is enabled but requires "${required}", which is not enabled`)
+      }
+    }
+  }
+  return problems
+}
+
 async function loadEnabledKeys(): Promise<Set<string>> {
   const resp = await fetch('/modules.json')
   if (!resp.ok) return new Set()
   const config: { enabled?: string[] } = await resp.json()
-  return new Set(config.enabled ?? [])
+  const keys = new Set(config.enabled ?? [])
+  // Once per page load, when the list is first read: a warning, never a block.
+  for (const problem of findMissingRequirements(allModules, keys)) console.warn(problem)
+  return keys
 }
 
 /** Discovered modules whose key is listed in public/modules.json's `enabled` array. */

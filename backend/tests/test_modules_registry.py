@@ -7,6 +7,7 @@ throwaway fixture packages on app.modules.__path__ rather than committing a
 real example module under app/modules/ - this repo's module system ships as
 pure structure, with no concrete modules of its own."""
 
+import logging
 import sys
 
 import pytest
@@ -14,6 +15,7 @@ import pytest
 import app.modules as modules_pkg
 from app.modules.registry import (
     MODULES_CONFIG_FILE,
+    check_module_dependencies,
     discover_modules,
     get_enabled_modules,
     import_all_module_models,
@@ -21,13 +23,14 @@ from app.modules.registry import (
 )
 
 
-def _write_fixture_module(tmp_path, name, *, manifest_key=None, with_models=False):
+def _write_fixture_module(tmp_path, name, *, manifest_key=None, with_models=False, requires=()):
     """Create tmp_path/<name>/ as an importable app.modules.<name> subpackage."""
     pkg_dir = tmp_path / name
     pkg_dir.mkdir()
     key = name if manifest_key is None else manifest_key
     (pkg_dir / "__init__.py").write_text(
-        "from app.modules.base import ModuleManifest\n" f"manifest = ModuleManifest(key={key!r})\n"
+        "from app.modules.base import ModuleManifest\n"
+        f"manifest = ModuleManifest(key={key!r}, requires={tuple(requires)!r})\n"
     )
     if with_models:
         (pkg_dir / "models.py").write_text("MODELS_IMPORTED = True\n")
@@ -130,3 +133,67 @@ def test_import_all_module_models_imports_only_modules_with_models(fixture_modul
 
     assert "app.modules.fixture_with_models.models" in sys.modules
     assert "app.modules.fixture_without_models.models" not in sys.modules
+
+
+# --- Module dependencies ------------------------------------------------------
+
+
+def test_manifest_requires_defaults_to_nothing(fixture_modules_path):
+    _write_fixture_module(fixture_modules_path, "fixture_plain")
+
+    found = {manifest.key: manifest for manifest in discover_modules()}
+
+    assert found["fixture_plain"].requires == ()
+
+
+def test_enabled_module_without_its_requirement_is_warned_about(fixture_modules_path, caplog):
+    _write_fixture_module(fixture_modules_path, "fixture_base")
+    _write_fixture_module(fixture_modules_path, "fixture_top", requires=["fixture_base"])
+
+    with caplog.at_level(logging.WARNING, logger="app.modules.registry"):
+        problems = check_module_dependencies(["fixture_top"])
+
+    assert problems == ["module 'fixture_top' is enabled but requires 'fixture_base', which is not enabled"]
+    assert problems[0] in caplog.text
+
+
+def test_satisfied_requirement_is_silent(fixture_modules_path, caplog):
+    _write_fixture_module(fixture_modules_path, "fixture_base")
+    _write_fixture_module(fixture_modules_path, "fixture_top", requires=["fixture_base"])
+
+    with caplog.at_level(logging.WARNING, logger="app.modules.registry"):
+        problems = check_module_dependencies(["fixture_base", "fixture_top"])
+
+    assert problems == []
+    assert "requires" not in caplog.text
+
+
+def test_disabled_module_with_missing_requirement_is_not_warned_about(fixture_modules_path):
+    _write_fixture_module(fixture_modules_path, "fixture_base")
+    _write_fixture_module(fixture_modules_path, "fixture_top", requires=["fixture_base"])
+
+    assert check_module_dependencies([]) == []
+    assert check_module_dependencies(["fixture_base"]) == []
+
+
+def test_requirement_that_no_module_provides_is_reported_as_unknown(fixture_modules_path):
+    _write_fixture_module(fixture_modules_path, "fixture_typo", requires=["fixture_missing"])
+
+    problems = check_module_dependencies(["fixture_typo", "fixture_missing"])
+
+    assert problems == ["module 'fixture_typo' requires unknown module 'fixture_missing'"]
+
+
+def test_dependency_check_never_raises_and_reports_every_problem(fixture_modules_path):
+    _write_fixture_module(fixture_modules_path, "fixture_a")
+    _write_fixture_module(fixture_modules_path, "fixture_b")
+    _write_fixture_module(fixture_modules_path, "fixture_c", requires=["fixture_a", "fixture_b"])
+
+    problems = check_module_dependencies(["fixture_c"])
+
+    assert len(problems) == 2
+
+
+def test_committed_modules_json_has_its_requirements_met():
+    """This branch's own enabled set shouldn't ship a warning at startup."""
+    assert check_module_dependencies(load_enabled_module_keys(MODULES_CONFIG_FILE)) == []
