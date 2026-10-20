@@ -8,30 +8,41 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
 import usePageMeta from '../../hooks/usePageMeta'
+import '../articles/articles.css'
 import {
   API_BASE,
   EVENTS_PATH,
   eventPath,
   fetchJson,
-  formatEventDate,
+  formatEventWhen,
   monthName,
+  typeStyle,
   useIsEditor,
   type ArchiveYear,
   type EventTeaser,
 } from './api'
 import EventCalendar from './EventCalendar'
 
-/** One listing row: thumbnail, date, title, short description - the whole card links to the event page. */
+/**
+ * One listing row: the article's image, the date (and time), title and short description - the
+ * whole card links to the event's article, framed and tinted in the colours of the article's type
+ * (neutral without one).
+ */
 export function EventCard({ event }: { event: EventTeaser }) {
   const { t, i18n } = useTranslation('event_calendar')
+  const { article } = event
+  const tone = article.type
+    ? 'article-typed'
+    : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
   return (
     <Link
-      to={eventPath(event.slug)}
-      className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
+      to={eventPath(event)}
+      style={typeStyle(article.type)}
+      className={`flex gap-4 rounded-2xl border-2 p-4 text-slate-900 transition hover:shadow-sm dark:text-slate-100 ${tone}`}
     >
       <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-28 sm:w-36 dark:bg-slate-800">
-        {event.image_url ? (
-          <img src={event.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+        {article.image_url ? (
+          <img src={article.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
         ) : (
           <div aria-hidden="true" className="flex h-full w-full items-center justify-center text-3xl text-slate-300 dark:text-slate-600">
             📅
@@ -39,13 +50,15 @@ export function EventCard({ event }: { event: EventTeaser }) {
         )}
       </div>
       <div className="min-w-0 space-y-1">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {formatEventDate(event.event_date, i18n.language)}
-          {event.pinned && (
-            <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-900/60 dark:text-violet-200">
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600 dark:text-slate-300">
+          <span>{formatEventWhen(event, i18n.language)}</span>
+          {article.type && <span className="rounded-full border border-current px-2 py-0.5 text-xs font-medium">{article.type.name}</span>}
+          {article.pinned && (
+            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-900/60 dark:text-violet-200">
               {t('list.pinned')}
             </span>
           )}
+          {article.status === 'archived' && <span className="text-xs">{t('list.archived')}</span>}
         </p>
         <h2 className="text-lg font-semibold leading-snug">{event.title}</h2>
         {event.short_description && (
