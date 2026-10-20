@@ -1,0 +1,18 @@
+/**
+ * Part of the With FBraun project template.
+ * Author: František Braun <frantisek.braun95@gmail.com>
+ * Freely available as a template for building custom applications.
+ */
+
+/* An article drawn in its type's colours. api.ts's typeStyle() sets the four
+   custom properties inline; the dark pair applies under the app's
+   class-based dark mode (a `.dark` class on <html>), not the OS setting. */
+.article-typed {
+  border-color: var(--art-border-light);
+  background-color: var(--art-bg-light);
+}
+
+.dark .article-typed {
+  border-color: var(--art-border-dark);
+  background-color: var(--art-bg-dark);
+}
