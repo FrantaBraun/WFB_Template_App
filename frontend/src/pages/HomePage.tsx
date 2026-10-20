@@ -8,14 +8,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import { articlePath } from '../modules/articles'
 import { EventCalendar } from '../modules/event_calendar'
-import { API_BASE as EVENTS_API, eventPath, parseEventDate, type EventTeaser as ArticleTeaser } from '../modules/event_calendar/api'
-
-interface Dashboard {
-  upcoming: ArticleTeaser | null
-  pinned: ArticleTeaser[]
-  recent_past: ArticleTeaser[]
-}
+import { API_BASE as EVENTS_API, parseEventDate, type Dashboard, type DatedArticle as ArticleTeaser } from '../modules/event_calendar/api'
 
 /** Same open-book mark as Layout.tsx's nav badge, at hero size - see that file's BookIcon for why this is duplicated rather than shared. */
 function BookIcon({ className }: { className?: string }) {
@@ -29,10 +24,10 @@ function BookIcon({ className }: { className?: string }) {
 
 /** The single nearest-upcoming article - a bigger, date-badge led card, distinct from the grid teasers below it. */
 function UpcomingCard({ article }: { article: ArticleTeaser }) {
-  const date = parseEventDate(article.event_date)
+  const date = parseEventDate(article.date)
   return (
     <Link
-      to={eventPath(article.slug)}
+      to={articlePath(article.slug)}
       className="flex items-start gap-4 rounded-2xl border-2 border-ink bg-white p-5 transition-transform hover:-translate-y-0.5 dark:border-ink-dark/30 dark:bg-card-dark"
     >
       <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-mustard/25 font-display text-ink dark:bg-mustard-dark/20 dark:text-ink-dark">
@@ -41,7 +36,7 @@ function UpcomingCard({ article }: { article: ArticleTeaser }) {
       </div>
       <div>
         <h3 className="font-display font-semibold text-ink dark:text-ink-dark">{article.title}</h3>
-        <p className="mt-1 text-sm text-ink-soft dark:text-ink-soft-dark">{article.short_description}</p>
+        <p className="mt-1 text-sm text-ink-soft dark:text-ink-soft-dark">{article.perex}</p>
       </div>
     </Link>
   )
@@ -66,10 +61,10 @@ function TeaserCard({
   if (variant === 'past') {
     return (
       <Link
-        to={eventPath(article.slug)}
+        to={articlePath(article.slug)}
         className="block rounded-2xl border border-dashed border-ink/25 p-4 hover:border-ink/45 dark:border-ink-dark/25 dark:hover:border-ink-dark/45"
       >
-        <p className="text-xs text-ink-muted dark:text-ink-muted-dark">{parseEventDate(article.event_date).toLocaleDateString()}</p>
+        <p className="text-xs text-ink-muted dark:text-ink-muted-dark">{parseEventDate(article.date).toLocaleDateString()}</p>
         <h4 className="mt-1 font-display text-sm font-semibold text-ink-soft dark:text-ink-soft-dark">{article.title}</h4>
       </Link>
     )
@@ -77,7 +72,7 @@ function TeaserCard({
 
   return (
     <Link
-      to={eventPath(article.slug)}
+      to={articlePath(article.slug)}
       className="relative block rounded-2xl border-2 border-ink bg-white p-5 transition-transform hover:-translate-y-0.5 dark:border-ink-dark/30 dark:bg-card-dark"
     >
       {variant === 'pinned' && (
@@ -86,16 +81,16 @@ function TeaserCard({
           className={`absolute -top-2 right-5 h-4 w-4 rotate-45 ${accentIndex % 2 === 0 ? 'bg-teal' : 'bg-coral dark:bg-coral-dark'}`}
         />
       )}
-      <p className="text-sm text-ink-muted dark:text-ink-muted-dark">{parseEventDate(article.event_date).toLocaleDateString()}</p>
+      <p className="text-sm text-ink-muted dark:text-ink-muted-dark">{parseEventDate(article.date).toLocaleDateString()}</p>
       <h3 className="mt-1 font-display font-semibold text-ink dark:text-ink-dark">{article.title}</h3>
-      <p className="mt-1 text-sm text-ink-soft dark:text-ink-soft-dark">{article.short_description}</p>
+      <p className="mt-1 text-sm text-ink-soft dark:text-ink-soft-dark">{article.perex}</p>
     </Link>
   )
 }
 
-/** Public landing page - fetches the event_calendar module's dashboard once and
- * renders its three groups (nearest upcoming, pinned, last 5 non-pinned
- * past), each teaser linking through to /events/:slug. */
+/** Public landing page - fetches the event_calendar module's dashboard once (the
+ * wall is made of articles) and renders its three groups (the article with the
+ * nearest upcoming date, pinned, last 5 non-pinned past), each teaser linking through to /articles/:slug. */
 export default function HomePage() {
   const { t } = useTranslation()
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)

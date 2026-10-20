@@ -24,10 +24,10 @@ import PageDetail from "./pages/PageDetail"
 import { useEnabledModules } from "./modules/registry"
 
 
-/** /clanek/:slug -> /events/:slug - articles moved into the event_calendar module with their slugs unchanged. */
+/** /clanek/:slug -> /articles/:slug - the old article links keep working; articles are the articles module's now, slugs unchanged. */
 function ArticleRedirect() {
   const { slug } = useParams<{ slug: string }>()
-  return <Navigate to={`/events/${slug ?? ''}`} replace />
+  return <Navigate to={`/articles/${slug ?? ''}`} replace />
 }
 
 function App() {
@@ -50,8 +50,8 @@ function App() {
       <Route path="/admin/pages" element={<AdminPagesList />} />
       <Route path="/admin/pages/new" element={<AdminPageForm />} />
       <Route path="/admin/pages/:id/edit" element={<AdminPageForm />} />
-      {/* Articles became the event_calendar module's events - old admin bookmarks land in its editor area. */}
-      <Route path="/admin/articles/*" element={<Navigate to="/events/manage" replace />} />
+      {/* Old admin bookmarks land in the articles module's editor area. */}
+      <Route path="/admin/articles/*" element={<Navigate to="/articles/manage" replace />} />
       {/* Public content - admin-authored, sanitized on write */}
       {/* Old article links (shared, bookmarked, or inside editor HTML) keep working. */}
       <Route path="/clanek/:slug" element={<ArticleRedirect />} />

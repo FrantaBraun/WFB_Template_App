@@ -10,14 +10,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.modules.event_calendar.models import Event
 from app.models.page import Page
+from app.modules.articles.models import Article
 
 router = APIRouter()
 
 
 class MentionableItem(BaseModel):
-    type: Literal["page", "event"]
+    type: Literal["page", "article"]
     id: str
     label: str
     slug: str
@@ -25,21 +25,21 @@ class MentionableItem(BaseModel):
 
 @router.get("/", response_model=list[MentionableItem])
 async def list_mentionable(db: AsyncSession = Depends(get_db)) -> list[MentionableItem]:
-    """Combined Page+Event list backing the WYSIWYG editor's @-mention
+    """Combined Page+Article list backing the WYSIWYG editor's @-mention
     suggestions. All statuses included, including drafts - an admin should
     be able to cross-link two drafts being written together. That's exactly
     why this lives under /api/admin rather than being public: a public
     version would leak unpublished titles/slugs even though the draft's own
     detail route 404s for them."""
     pages_result = await db.execute(select(Page.id, Page.heading, Page.slug))
-    events_result = await db.execute(select(Event.id, Event.title, Event.slug))
+    articles_result = await db.execute(select(Article.id, Article.title, Article.slug))
 
     items = [
         MentionableItem(type="page", id=str(row.id), label=row.heading, slug=row.slug)
         for row in pages_result
     ]
     items += [
-        MentionableItem(type="event", id=str(row.id), label=row.title, slug=row.slug)
-        for row in events_result
+        MentionableItem(type="article", id=str(row.id), label=row.title, slug=row.slug)
+        for row in articles_result
     ]
     return items

@@ -10,13 +10,13 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 # render at root level (/{slug}), so one matching a real route would make
 # React Router's own static-route-wins ranking silently swallow it - the
 # admin who saved it would see no error, just a page that never renders
-# anywhere. Event slugs live under /events/ (event_calendar module) and
+# anywhere. Article slugs live under /articles/ (articles module) and
 # aren't at risk of this. "clanek" stays reserved - /clanek/<slug> still
-# redirects old article links to /events/<slug>. Keep this in sync with
+# redirects old article links to /articles/<slug>. Keep this in sync with
 # frontend/src/App.tsx's route table and enabled modules' routes.
 PAGE_RESERVED_SLUGS = frozenset({
     "login", "register", "account", "oauth", "consent", "consent-rejected",
-    "version", "release-news", "admin", "clanek", "api", "uploads", "events",
+    "version", "release-news", "admin", "clanek", "api", "uploads", "events", "articles",
 })
 
 
