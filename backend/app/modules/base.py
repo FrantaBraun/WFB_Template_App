@@ -17,9 +17,16 @@ class ModuleManifest:
     `prefix` overrides it) to derive the module's API prefix, so a mismatch
     would silently split one module's identity in two and it's rejected at
     discovery time.
+
+    `requires` lists the keys of other modules this one only works with
+    (e.g. a calendar built on articles). It is advisory: enabling a module
+    without what it requires never stops the app, it is logged as a warning
+    at startup (registry.check_module_dependencies) so a half-switched-on
+    configuration is visible instead of failing in some request later.
     """
 
     key: str
     router: APIRouter | None = None
     prefix: str | None = None
     tags: list[str] = field(default_factory=list)
+    requires: tuple[str, ...] = ()
