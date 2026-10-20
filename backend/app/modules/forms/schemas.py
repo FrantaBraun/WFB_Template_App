@@ -159,7 +159,9 @@ def normalize_config(question_type: str, config: dict[str, Any]) -> dict[str, An
     try:
         return CONFIG_MODELS[question_type].model_validate(config).model_dump()
     except ValidationError as exc:
-        raise ValueError("; ".join(f"{'.'.join(map(str, e['loc'])) or 'config'}: {e['msg']}" for e in exc.errors())) from exc
+        raise ValueError(
+            "; ".join(f"{'.'.join(map(str, e['loc'])) or 'config'}: {e['msg'].removeprefix('Value error, ')}" for e in exc.errors())
+        ) from exc
 
 
 # --- Writing a form -------------------------------------------------------------
