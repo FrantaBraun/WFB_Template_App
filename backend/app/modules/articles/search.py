@@ -14,7 +14,7 @@ import html
 import re
 import unicodedata
 
-from sqlalchemy import and_
+from sqlalchemy import and_, false
 
 from app.modules.articles.models import Article
 
@@ -44,11 +44,15 @@ def _like_pattern(term: str) -> str:
     return f"%{escaped}%"
 
 
-def matches(query: str):
-    """SQL condition: every word of `query` appears in the article's search_text.
+def matches(query: str, column=None):
+    """SQL condition: every word of `query` appears in `column`, a text column
+    holding text already passed through normalize_text() (default: the
+    article's own search_text). Other modules that keep their own normalized
+    search text (the event calendar) pass it here so the rule stays the same.
     An empty (all-whitespace) query matches nothing."""
+    column = Article.search_text if column is None else column
     terms = normalize_text(query).split(" ")
     terms = [term for term in terms if term]
     if not terms:
-        return Article.id.is_(None)
-    return and_(*(Article.search_text.like(_like_pattern(term), escape="\\") for term in terms))
+        return false()
+    return and_(*(column.like(_like_pattern(term), escape="\\") for term in terms))
