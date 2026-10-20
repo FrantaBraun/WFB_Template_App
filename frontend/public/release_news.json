@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "The rich-text editor gains text alignment, tables, a horizontal rule, code blocks, YouTube / Vimeo video links and an HTML source mode (the server still strips anything unsafe on save)",
         "A module can declare the modules it requires (a console warning is logged once when one is enabled without them) and contribute components to named slots that other modules render with <ModuleSlot>, so a module can extend another module's pages without that module knowing about it",
         "The release build no longer writes its own frontend .env with fixed addresses: it copies the development directory's frontend/.env as it is stored, stops with guidance when it is missing, and warns when an address in it points at localhost",
         "The contact page can now show an introduction, contact details (email, address, GitHub, LinkedIn) and a note next to the form, all set per deployment; the page moved to /contact (/kontakt redirects there). With nothing configured it is still just the form",

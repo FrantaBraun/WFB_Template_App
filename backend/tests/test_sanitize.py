@@ -59,3 +59,87 @@ def test_strips_executable_content(payload):
     assert "onclick" not in cleaned
     assert "javascript:" not in cleaned
     assert "<iframe" not in cleaned
+
+
+# --- Tables, alignment, rules, code, video embeds ---------------------------------
+
+
+def test_keeps_tables_with_header_cells_and_spans():
+    html = (
+        '<table><tbody><tr><th colspan="2" style="text-align:center">H</th></tr>'
+        '<tr><td rowspan="2">a</td><td>b</td></tr></tbody></table>'
+    )
+    cleaned = sanitize_html(html)
+    for fragment in ("<table>", "<th", 'colspan="2"', 'rowspan="2"', "text-align:center", "<td"):
+        assert fragment in cleaned
+
+
+@pytest.mark.parametrize("tag", ["p", "h1", "h3", "h5"])
+def test_keeps_text_align_on_paragraphs_and_headings(tag):
+    cleaned = sanitize_html(f'<{tag} style="text-align: right">x</{tag}>')
+    assert "text-align:right" in cleaned.replace(" ", "")
+
+
+def test_keeps_horizontal_rule_and_code_block():
+    cleaned = sanitize_html("<hr><pre><code>a &lt; b</code></pre><p>x <code>y</code></p>")
+    for fragment in ("<hr>", "<pre>", "<code>"):
+        assert fragment in cleaned
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
+        "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?start=30",
+        "https://player.vimeo.com/video/76979871",
+        "https://player.vimeo.com/video/76979871?h=8272103f6e",
+    ],
+)
+def test_keeps_youtube_and_vimeo_embeds_and_hardens_them(src):
+    cleaned = sanitize_html(f'<iframe src="{src}" allowfullscreen allow="camera; microphone" onload="x()"></iframe>')
+    assert f'src="{src}"' in cleaned
+    assert "allowfullscreen" in cleaned
+    assert 'loading="lazy"' in cleaned
+    assert 'referrerpolicy="strict-origin-when-cross-origin"' in cleaned
+    assert "sandbox=" in cleaned
+    assert "allow=" not in cleaned
+    assert "onload" not in cleaned
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "https://evil.example/embed/dQw4w9WgXcQ",
+        "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "http://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
+        "https://www.youtube-nocookie.com.evil.example/embed/dQw4w9WgXcQ",
+        "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ/../../x",
+        "https://www.youtube-nocookie.com/embed/short",
+        "https://player.vimeo.com/video/abc",
+        "https://player.vimeo.com/video/123?x=<script>",
+        "//www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
+        "javascript:alert(1)",
+        "data:text/html,<script>alert(1)</script>",
+    ],
+)
+def test_drops_iframes_from_anywhere_else(src):
+    cleaned = sanitize_html(f'<p>before</p><iframe src="{src}"></iframe><p>after</p>')
+    assert "<iframe" not in cleaned
+    assert "<p>before</p>" in cleaned and "<p>after</p>" in cleaned
+
+
+def test_drops_iframe_without_src_and_srcdoc():
+    cleaned = sanitize_html('<iframe></iframe><iframe srcdoc="<script>alert(1)</script>"></iframe>')
+    assert "<iframe" not in cleaned
+    assert "srcdoc" not in cleaned
+
+
+def test_strips_style_properties_that_load_or_position_on_every_styled_tag():
+    cleaned = sanitize_html(
+        '<table><tbody><tr><td style="background:url(https://evil.example/x);position:absolute;text-align:left">x</td></tr></tbody></table>'
+        '<p style="color:red;behavior:url(x)">y</p>'
+    )
+    assert "url(" not in cleaned
+    assert "position" not in cleaned
+    assert "behavior" not in cleaned
+    assert "text-align:left" in cleaned.replace(" ", "")
