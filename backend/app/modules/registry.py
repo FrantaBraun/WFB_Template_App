@@ -88,6 +88,36 @@ def get_enabled_modules(enabled_keys: Iterable[str]) -> list[ModuleManifest]:
     return [manifest for manifest in discover_modules() if manifest.key in enabled_keys]
 
 
+def check_module_dependencies(
+    enabled_keys: Iterable[str], manifests: Iterable[ModuleManifest] | None = None
+) -> list[str]:
+    """Log a warning for every enabled module whose `requires` isn't met.
+
+    Two kinds of problem: a required module that exists but isn't enabled
+    (the usual "switched on half of a feature" mistake), and a required key
+    no discovered module has (a typo in a manifest). Returns the messages so
+    tests can assert on them. Only warns, never raises: a configuration
+    slip must not stop the application from starting.
+    """
+    manifests = discover_modules() if manifests is None else list(manifests)
+    known = {manifest.key for manifest in manifests}
+    enabled = set(enabled_keys)
+    problems: list[str] = []
+    for manifest in sorted(manifests, key=lambda m: m.key):
+        if manifest.key not in enabled:
+            continue
+        for required in manifest.requires:
+            if required not in known:
+                problem = f"module {manifest.key!r} requires unknown module {required!r}"
+            elif required not in enabled:
+                problem = f"module {manifest.key!r} is enabled but requires {required!r}, which is not enabled"
+            else:
+                continue
+            logger.warning(problem)
+            problems.append(problem)
+    return problems
+
+
 def import_all_module_models() -> None:
     """Import <module>.models for every discovered module that has one.
 

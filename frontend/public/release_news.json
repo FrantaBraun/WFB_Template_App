@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "A module can declare the modules it requires (a console warning is logged once when one is enabled without them) and contribute components to named slots that other modules render with <ModuleSlot>, so a module can extend another module's pages without that module knowing about it",
         "The release build no longer writes its own frontend .env with fixed addresses: it copies the development directory's frontend/.env as it is stored, stops with guidance when it is missing, and warns when an address in it points at localhost",
         "The contact page can now show an introduction, contact details (email, address, GitHub, LinkedIn) and a note next to the form, all set per deployment; the page moved to /contact (/kontakt redirects there). With nothing configured it is still just the form",
         "Add a CRM module (src/modules/crm), shown to administrators only: a header icon opens the partner list with search, each partner's page with their tasks, and each task's page where invoice PDFs are uploaded, downloaded and deleted - in Czech and English",
