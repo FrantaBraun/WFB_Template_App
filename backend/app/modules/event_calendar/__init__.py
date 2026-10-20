@@ -5,4 +5,4 @@
 from app.modules.base import ModuleManifest
 from app.modules.event_calendar.router import router
 
-manifest = ModuleManifest(key="event_calendar", router=router, tags=["event_calendar"])
+manifest = ModuleManifest(key="event_calendar", router=router, tags=["event_calendar"], requires=("articles",))
