@@ -8,7 +8,7 @@ from app.api.account import router as account_router
 from app.api.auth import router as auth_router
 from app.api.public import release_news as public_release_news
 from app.api.public import version as public_version
-from app.modules.registry import get_enabled_modules, load_enabled_module_keys
+from app.modules.registry import check_module_dependencies, get_enabled_modules, load_enabled_module_keys
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(public_version.router, prefix="/public", tags=["public"])
@@ -18,8 +18,11 @@ api_router.include_router(account_router.router, prefix="/account", tags=["accou
 
 # Feature modules (see app/modules/) mount themselves here, gated by
 # backend/modules.json's `enabled` array - core routes above are never
-# conditional.
-for module in get_enabled_modules(load_enabled_module_keys()):
+# conditional. A module enabled without the modules it `requires` is only
+# warned about, never refused.
+_enabled_keys = load_enabled_module_keys()
+check_module_dependencies(_enabled_keys)
+for module in get_enabled_modules(_enabled_keys):
     if module.router is not None:
         api_router.include_router(
             module.router,
