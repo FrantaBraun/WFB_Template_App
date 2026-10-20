@@ -29,6 +29,7 @@ from app.models.user import User
 from app.modules.articles import manifest
 from app.modules.articles.models import Article, ArticleType
 from app.modules.articles.router import router as articles_router
+from app.modules.event_calendar.models import Event
 
 BASE = "/api/modules/articles"
 TODAY = date.today()
@@ -48,6 +49,10 @@ _articles_app.include_router(articles_router, prefix=BASE)
 
 @pytest.fixture(autouse=True)
 async def _overrides(db_session, tmp_path, rsa_keypair, monkeypatch):
+    # Events refer to articles (ON DELETE RESTRICT): on a database that holds
+    # some - a developer's - they have to go first, inside this test's
+    # rolled-back transaction, or the articles could not be cleared.
+    await db_session.execute(delete(Event))
     await db_session.execute(delete(Article))
     await db_session.execute(delete(ArticleType))
     _, public_pem = rsa_keypair

@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     mail_ssl_tls: bool = False
     mail_suppress_send: bool = False
 
-    # Uploads - files uploaded through modules (e.g. event_calendar's event
+    # Uploads - files uploaded through modules (e.g. the articles module's
     # images), each module in its own subfolder. Relative paths resolve
     # against backend/. A production .env must point somewhere that survives
     # a deploy - see scripts/upgrade.sh's backend/ wipe-and-recreate.
