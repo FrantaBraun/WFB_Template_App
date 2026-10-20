@@ -280,7 +280,7 @@ function Toolbar({
       </ToolbarButton>
 
       <span className="ml-auto" />
-      <ToolbarButton onClick={onToggleSource} title={t('editor.htmlSourceHint')}>
+      <ToolbarButton onClick={onToggleSource} title={t('editor.htmlSource')}>
         <span className="font-mono">HTML</span>
       </ToolbarButton>
 
