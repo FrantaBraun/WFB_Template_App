@@ -1,0 +1,274 @@
+{
+  "_comment": "Shared test vectors for which questions of a form are shown for the answers given. Checked by backend/tests/test_modules_forms_logic.py against app/modules/forms/logic.py and by hand (node, see CLAUDE.md) against frontend/src/modules/forms/conditions.ts - the two are a literal translation of each other, and this file is what keeps them so. `answers` are typed values: checkbox = list of option ids, radio = option id, text/date/time/datetime = string, number = number; a missing key is an unanswered question. `visible` is the ids of the questions shown, in order.",
+  "vectors": [
+    {
+      "name": "no conditions: everything is shown",
+      "questions": [
+        {"id": "q1", "type": "text"},
+        {"id": "q2", "type": "number"}
+      ],
+      "answers": {},
+      "visible": ["q1", "q2"]
+    },
+    {
+      "name": "answered: a typed text answers, blank text does not",
+      "questions": [
+        {"id": "q1", "type": "text"},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "answered"}]}
+      ],
+      "answers": {"q1": "hello"},
+      "visible": ["q1", "q2"]
+    },
+    {
+      "name": "answered: whitespace only is not an answer",
+      "questions": [
+        {"id": "q1", "type": "text"},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "answered"}]}
+      ],
+      "answers": {"q1": "   "},
+      "visible": ["q1"]
+    },
+    {
+      "name": "answered: an empty checkbox list is not an answer",
+      "questions": [
+        {"id": "q1", "type": "checkbox", "config": {"options": [{"id": "a", "label": "A"}]}},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "answered"}]}
+      ],
+      "answers": {"q1": []},
+      "visible": ["q1"]
+    },
+    {
+      "name": "answered: the number 0 IS an answer",
+      "questions": [
+        {"id": "q1", "type": "number"},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "answered"}]}
+      ],
+      "answers": {"q1": 0},
+      "visible": ["q1", "q2"]
+    },
+    {
+      "name": "not_answered: shown while the source is missing",
+      "questions": [
+        {"id": "q1", "type": "radio", "config": {"options": [{"id": "a", "label": "A"}]}},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "not_answered"}]}
+      ],
+      "answers": {},
+      "visible": ["q1", "q2"]
+    },
+    {
+      "name": "not_answered: hidden once the source is answered",
+      "questions": [
+        {"id": "q1", "type": "radio", "config": {"options": [{"id": "a", "label": "A"}]}},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "not_answered"}]}
+      ],
+      "answers": {"q1": "a"},
+      "visible": ["q1"]
+    },
+    {
+      "name": "radio equals: matching option shows, other hides",
+      "questions": [
+        {"id": "q1", "type": "radio", "config": {"options": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}]}},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "equals", "value": "a"}]},
+        {"id": "q3", "type": "text", "conditions": [{"question_id": "q1", "operator": "equals", "value": "b"}]}
+      ],
+      "answers": {"q1": "a"},
+      "visible": ["q1", "q2"]
+    },
+    {
+      "name": "radio equals while unanswered is false, not_equals is true",
+      "questions": [
+        {"id": "q1", "type": "radio", "config": {"options": [{"id": "a", "label": "A"}]}},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "equals", "value": "a"}]},
+        {"id": "q3", "type": "text", "conditions": [{"question_id": "q1", "operator": "not_equals", "value": "a"}]}
+      ],
+      "answers": {},
+      "visible": ["q1", "q3"]
+    },
+    {
+      "name": "radio not_equals once answered with the other option",
+      "questions": [
+        {"id": "q1", "type": "radio", "config": {"options": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}]}},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "not_equals", "value": "a"}]}
+      ],
+      "answers": {"q1": "b"},
+      "visible": ["q1", "q2"]
+    },
+    {
+      "name": "text equals: trimmed, case-sensitive",
+      "questions": [
+        {"id": "q1", "type": "text"},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "equals", "value": "Yes"}]},
+        {"id": "q3", "type": "text", "conditions": [{"question_id": "q1", "operator": "equals", "value": "yes"}]}
+      ],
+      "answers": {"q1": "  Yes "},
+      "visible": ["q1", "q2"]
+    },
+    {
+      "name": "number equals compares numerically (3 equals 3.0)",
+      "questions": [
+        {"id": "q1", "type": "number", "config": {"kind": "decimal"}},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "equals", "value": 3}]},
+        {"id": "q3", "type": "text", "conditions": [{"question_id": "q1", "operator": "not_equals", "value": 3}]}
+      ],
+      "answers": {"q1": 3.0},
+      "visible": ["q1", "q2"]
+    },
+    {
+      "name": "number gt / gte / lt / lte at the boundary",
+      "questions": [
+        {"id": "q1", "type": "number"},
+        {"id": "gt", "type": "text", "conditions": [{"question_id": "q1", "operator": "gt", "value": 5}]},
+        {"id": "gte", "type": "text", "conditions": [{"question_id": "q1", "operator": "gte", "value": 5}]},
+        {"id": "lt", "type": "text", "conditions": [{"question_id": "q1", "operator": "lt", "value": 5}]},
+        {"id": "lte", "type": "text", "conditions": [{"question_id": "q1", "operator": "lte", "value": 5}]}
+      ],
+      "answers": {"q1": 5},
+      "visible": ["q1", "gte", "lte"]
+    },
+    {
+      "name": "number above and below the boundary",
+      "questions": [
+        {"id": "q1", "type": "number"},
+        {"id": "gt", "type": "text", "conditions": [{"question_id": "q1", "operator": "gt", "value": 5}]},
+        {"id": "lt", "type": "text", "conditions": [{"question_id": "q1", "operator": "lt", "value": 5}]}
+      ],
+      "answers": {"q1": 5.5},
+      "visible": ["q1", "gt"]
+    },
+    {
+      "name": "ordering operators are false while unanswered",
+      "questions": [
+        {"id": "q1", "type": "number"},
+        {"id": "gt", "type": "text", "conditions": [{"question_id": "q1", "operator": "gt", "value": 5}]},
+        {"id": "lte", "type": "text", "conditions": [{"question_id": "q1", "operator": "lte", "value": 5}]}
+      ],
+      "answers": {},
+      "visible": ["q1"]
+    },
+    {
+      "name": "date gt / lte compare as dates",
+      "questions": [
+        {"id": "q1", "type": "date"},
+        {"id": "after", "type": "text", "conditions": [{"question_id": "q1", "operator": "gt", "value": "2026-06-30"}]},
+        {"id": "upto", "type": "text", "conditions": [{"question_id": "q1", "operator": "lte", "value": "2026-06-30"}]}
+      ],
+      "answers": {"q1": "2026-07-01"},
+      "visible": ["q1", "after"]
+    },
+    {
+      "name": "date equals / not_equals",
+      "questions": [
+        {"id": "q1", "type": "date"},
+        {"id": "same", "type": "text", "conditions": [{"question_id": "q1", "operator": "equals", "value": "2026-07-01"}]},
+        {"id": "other", "type": "text", "conditions": [{"question_id": "q1", "operator": "not_equals", "value": "2026-07-01"}]}
+      ],
+      "answers": {"q1": "2026-07-01"},
+      "visible": ["q1", "same"]
+    },
+    {
+      "name": "time gte / lt compare as times",
+      "questions": [
+        {"id": "q1", "type": "time"},
+        {"id": "late", "type": "text", "conditions": [{"question_id": "q1", "operator": "gte", "value": "12:00"}]},
+        {"id": "early", "type": "text", "conditions": [{"question_id": "q1", "operator": "lt", "value": "12:00"}]}
+      ],
+      "answers": {"q1": "09:30"},
+      "visible": ["q1", "early"]
+    },
+    {
+      "name": "datetime gt compares date then time",
+      "questions": [
+        {"id": "q1", "type": "datetime"},
+        {"id": "later", "type": "text", "conditions": [{"question_id": "q1", "operator": "gt", "value": "2026-07-01T10:00"}]}
+      ],
+      "answers": {"q1": "2026-07-01T10:30"},
+      "visible": ["q1", "later"]
+    },
+    {
+      "name": "checkbox contains / not_contains",
+      "questions": [
+        {"id": "q1", "type": "checkbox", "config": {"options": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}]}},
+        {"id": "has_a", "type": "text", "conditions": [{"question_id": "q1", "operator": "contains", "value": "a"}]},
+        {"id": "no_a", "type": "text", "conditions": [{"question_id": "q1", "operator": "not_contains", "value": "a"}]},
+        {"id": "has_b", "type": "text", "conditions": [{"question_id": "q1", "operator": "contains", "value": "b"}]}
+      ],
+      "answers": {"q1": ["a"]},
+      "visible": ["q1", "has_a"]
+    },
+    {
+      "name": "checkbox: nothing ticked contains nothing, so not_contains is true",
+      "questions": [
+        {"id": "q1", "type": "checkbox", "config": {"options": [{"id": "a", "label": "A"}]}},
+        {"id": "has_a", "type": "text", "conditions": [{"question_id": "q1", "operator": "contains", "value": "a"}]},
+        {"id": "no_a", "type": "text", "conditions": [{"question_id": "q1", "operator": "not_contains", "value": "a"}]}
+      ],
+      "answers": {"q1": []},
+      "visible": ["q1", "no_a"]
+    },
+    {
+      "name": "several conditions are ANDed",
+      "questions": [
+        {"id": "q1", "type": "radio", "config": {"options": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}]}},
+        {"id": "q2", "type": "number"},
+        {"id": "both", "type": "text", "conditions": [
+          {"question_id": "q1", "operator": "equals", "value": "a"},
+          {"question_id": "q2", "operator": "gte", "value": 10}
+        ]}
+      ],
+      "answers": {"q1": "a", "q2": 9},
+      "visible": ["q1", "q2"]
+    },
+    {
+      "name": "several conditions are ANDed: all hold",
+      "questions": [
+        {"id": "q1", "type": "radio", "config": {"options": [{"id": "a", "label": "A"}]}},
+        {"id": "q2", "type": "number"},
+        {"id": "both", "type": "text", "conditions": [
+          {"question_id": "q1", "operator": "equals", "value": "a"},
+          {"question_id": "q2", "operator": "gte", "value": 10}
+        ]}
+      ],
+      "answers": {"q1": "a", "q2": 10},
+      "visible": ["q1", "q2", "both"]
+    },
+    {
+      "name": "chain: hiding a question hides what depends on its answer",
+      "questions": [
+        {"id": "q1", "type": "radio", "config": {"options": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}]}},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "equals", "value": "a"}]},
+        {"id": "q3", "type": "text", "conditions": [{"question_id": "q2", "operator": "answered"}]}
+      ],
+      "answers": {"q1": "b", "q2": "left over from before", "q3": "x"},
+      "visible": ["q1"]
+    },
+    {
+      "name": "chain: shown all the way when the first condition holds",
+      "questions": [
+        {"id": "q1", "type": "radio", "config": {"options": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}]}},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "equals", "value": "a"}]},
+        {"id": "q3", "type": "text", "conditions": [{"question_id": "q2", "operator": "answered"}]}
+      ],
+      "answers": {"q1": "a", "q2": "yes"},
+      "visible": ["q1", "q2", "q3"]
+    },
+    {
+      "name": "chain: a hidden source counts as unanswered, so not_answered holds",
+      "questions": [
+        {"id": "q1", "type": "radio", "config": {"options": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}]}},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "q1", "operator": "equals", "value": "a"}]},
+        {"id": "q3", "type": "text", "conditions": [{"question_id": "q2", "operator": "not_answered"}]}
+      ],
+      "answers": {"q1": "b", "q2": "left over"},
+      "visible": ["q1", "q3"]
+    },
+    {
+      "name": "a condition on a question the form no longer has hides the question",
+      "questions": [
+        {"id": "q1", "type": "text"},
+        {"id": "q2", "type": "text", "conditions": [{"question_id": "gone", "operator": "answered"}]}
+      ],
+      "answers": {"q1": "x"},
+      "visible": ["q1"]
+    }
+  ]
+}
