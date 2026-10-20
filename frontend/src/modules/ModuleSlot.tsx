@@ -4,7 +4,9 @@
  * Freely available as a template for building custom applications.
  */
 
-import { useEnabledModules } from './registry'
+// From moduleStore, not registry: registry imports every module, and a module
+// that renders a slot imports this file - see the note at the top of moduleStore.ts.
+import { useEnabledModules } from './moduleStore'
 
 /**
  * Renders what every enabled module contributes to the slot `name` (its
