@@ -4,7 +4,7 @@
 
 """Invoice PDF validation and storage under Settings.uploads_dir/crm/.
 
-Unlike event_calendar's images, these files are NOT public: nothing here
+Unlike the articles module's images, these files are NOT public: nothing here
 builds a URL, and the only way to read one back is the module's
 admin-gated download route, which looks the file up through its Invoice
 row. Stored names are server-generated (uuid4 hex + .pdf), never derived
