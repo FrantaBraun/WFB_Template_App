@@ -2,6 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Application: Ukázková hospůdka
+
+**Purpose:** Ukázkový minimalistický web pro představení malé hospody s poledním menu a rezervačním systémem – jak celých prostor od zvoleného času do konce otevírací doby, tak jednotlivého stolu pro určitý počet lidí v čase od–do. Jde o demo pro rozšíření portfolia, ne o skutečný provoz.
+
+**Demo, ne skutečná hospoda:** název, adresa, provozovatel, nabídka i všechny ostatní údaje o hospodě jsou smyšlené a lze si je vymýšlet podle potřeby. Vzhled webu se přizpůsobuje nabídce a zaměření hospůdky (např. staročeská kuchyně a široký výběr výčepních piv).
+
+**Co web obsahuje:**
+- **Veřejná část:** informace o hospodě, nabídka, polední menu, adresa a provozovatel, otevírací doba a rezervace.
+- **Polední menu a nabídka** se upravují v administraci.
+- **Otevírací doba** se spravuje pro jednotlivé dny a lze ji jednorázově upravit pro konkrétní den (např. nečekaně zavřeno z nějakého důvodu).
+- **Rezervace stolu:** stůl pro *x* lidí v čase od–do. Systém ověřuje dostupnost stolu v daném čase; mezi dvěma rezervacemi téhož stolu musí být alespoň 30 minut.
+- **Rezervace celých prostor:** vždy od zvoleného času do konce otevírací doby. V této době už nesmí existovat žádná rezervace stolu, a naopak – je-li zarezervován celý prostor, nelze v tu dobu rezervovat stůl.
+- **Administrace:** polední menu, nabídka, otevírací doba (včetně výjimek pro konkrétní dny) a kalendář rezervací.
+
+Forked from `core` by the `new-app` skill on 2026-10-21. Branch: `showing_pub`; database `showing_pub_db`.
+
 ## Repository purpose
 
 This repository hosts a **family of applications built on one shared core**, rather than a single deployable app. The reusable foundation — `backend/` (FastAPI), `frontend/` (Vite/React), and `scripts/` (build + deployment tooling), wired to a separate, shared authorization service at `auth.withfbraun.com` (see "Authorization" below, which is the largest and most actively-evolving part of it) — is developed on the `core` branch. Each application lives in its own branch and pulls in `core`'s changes, so a fix or feature that belongs to every app is made once, on `core`, instead of being duplicated per application. Components remain independently versioned and deployed within any given branch — see "Independent versioning" below.

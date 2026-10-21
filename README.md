@@ -1,8 +1,17 @@
-# With FBraun — App Family Template
+# Ukázková hospůdka
 
-A shared foundation for a family of full-stack applications: a **FastAPI** backend, a **Vite + React + TypeScript** frontend, and deployment tooling — pre-wired to a shared, external authorization service so you don't have to build login, registration, or session handling from scratch.
+Ukázkový minimalistický web pro představení malé hospody s poledním menu a rezervačním systémem – jak celých prostor od zvoleného času do konce otevírací doby, tak jednotlivého stolu pro určitý počet lidí v čase od–do. Jde o demo pro rozšíření portfolia; postavené je na sdíleném jádru (**FastAPI** backend, **Vite + React + TypeScript** frontend, sdílená autorizační služba) z repozitáře With FBraun.
 
 This repository doesn't ship a single app — it hosts a shared core plus one branch per application, so improvements to the shared foundation are made once and carried into every app instead of being duplicated per app.
+
+## O aplikaci
+
+Název, adresa, provozovatel, nabídka i všechny ostatní údaje o hospodě jsou smyšlené. Vzhled webu se přizpůsobuje nabídce a zaměření hospůdky (např. staročeská kuchyně a široký výběr výčepních piv).
+
+- **Veřejná část:** informace o hospodě, nabídka, polední menu, adresa, otevírací doba a rezervace.
+- **Rezervace stolu** pro *x* lidí v čase od–do; systém ověřuje dostupnost stolu a mezi dvěma rezervacemi téhož stolu musí být alespoň 30 minut.
+- **Rezervace celých prostor** vždy od zvoleného času do konce otevírací doby. V té době už nesmí existovat žádná rezervace stolu, a je-li zarezervován celý prostor, nelze rezervovat ani stůl.
+- **Administrace:** polední menu a nabídka, otevírací doba pro jednotlivé dny (s jednorázovou úpravou konkrétního dne, např. nečekaně zavřeno) a kalendář rezervací.
 
 ## Branches
 
