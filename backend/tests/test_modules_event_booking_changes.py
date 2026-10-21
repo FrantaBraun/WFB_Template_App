@@ -12,6 +12,7 @@ rolled-back session; e-mails are captured, never sent. The races between two
 requests are in test_modules_event_booking_concurrency.py."""
 
 import uuid
+from datetime import datetime, timezone
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -343,6 +344,11 @@ async def test_several_things_at_once_are_one_change_and_one_mail(client, db_ses
 async def test_every_change_adds_to_the_history_newest_first(client, db_session, admin, world):
     await _patch(client, admin, world.booking, name="First")
     await _patch(client, admin, world.booking, name="Second")
+    # Inside one test transaction Postgres' now() is the same for every row; in use each change is its own request.
+    by_name = {change.changes["name"]["to"]: change for change in await _history(db_session, world.booking)}
+    by_name["First"].created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    by_name["Second"].created_at = datetime(2026, 1, 2, tzinfo=timezone.utc)
+    await db_session.commit()
 
     detail = (await client.get(f"{BASE}/manage/bookings/{world.booking.id}", headers=admin)).json()
     listed = (await client.get(f"{BASE}/manage/registrations/{world.registration.id}/bookings", headers=admin)).json()["items"][0]
