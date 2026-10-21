@@ -16,7 +16,7 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 # frontend/src/App.tsx's route table and enabled modules' routes.
 PAGE_RESERVED_SLUGS = frozenset({
     "login", "register", "account", "oauth", "consent", "consent-rejected",
-    "version", "release-news", "admin", "clanek", "api", "uploads", "events", "articles",
+    "version", "release-news", "admin", "clanek", "api", "uploads", "events", "articles", "bookings", "forms",
 })
 
 
