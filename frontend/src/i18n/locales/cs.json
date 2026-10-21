@@ -190,8 +190,8 @@
     "mentionNoResults": "Žádné výsledky"
   },
   "notFound" : {
-    "pageTitle" : "Not Found",
-    "title" : "The page was not Found",
-    "backToHomePage" : "Back to the Home Page"
+    "pageTitle" : "Nenalezeno",
+    "title" : "Stránka nenalezena",
+    "backToHomePage" : "Zpět na domovskou stránku"
   }
 }
