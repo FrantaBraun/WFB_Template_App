@@ -34,6 +34,7 @@ import IntegrationKnowledgeBase from "./pages/IntegrationKnowledgeBase"
 import KnowledgeBasePageView from "./pages/KnowledgeBasePageView"
 import KnowledgeBasePageEdit from "./pages/KnowledgeBasePageEdit"
 import { useEnabledModules } from "./modules/registry"
+import NotFound from "./pages/NotFound"
 
 // Pulls in the YAML parser and, on demand, the Swagger UI / ReDoc bundles - none
 // of which the rest of the app needs.
@@ -46,12 +47,12 @@ function PageLoading() {
 
 function App() {
   const modules = useEnabledModules()
-
+  const isRegistrationAllowed = (import.meta.env.VITE_REGISTRATION_ALLOWED || 'true') === 'true';
   return (<Layout modules={modules}>
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      {isRegistrationAllowed && <Route path="/register" element={<Register />} />}
       <Route path="/account" element={<Account />} />
       <Route path="/teams" element={<Teams />} />
       <Route path="/teams/invitations/:token" element={<AcceptInvitation />} />
@@ -89,6 +90,7 @@ function App() {
           <Route key={`${module.key}:${route.path}`} path={route.path} element={route.element} />
         )),
       )}
+      <Route path="*" element={<NotFound />} />
     </Routes>
 
   </Layout>
