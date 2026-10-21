@@ -13,6 +13,8 @@ import Footer from './Footer'
 import LanguageDropdown from './LanguageDropdown'
 import ThemeToggle from './ThemeToggle'
 
+const isRegistrationAllowed = (import.meta.env.VITE_REGISTRATION_ALLOWED || 'true') === 'true';
+
 function MenuIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
@@ -111,6 +113,7 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
           </button>
         </>
       ) : (
+        isRegistrationAllowed &&
         <Link to="/login" aria-label={t('common.login')} className="rounded-full p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100">
           <LoginIcon className="h-5 w-5" />
         </Link>

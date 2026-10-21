@@ -11,6 +11,8 @@ import { getAuthUrl } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
 
+const isRegistrationAllowed = (import.meta.env.VITE_REGISTRATION_ALLOWED || 'true') === 'true';
+
 // Redirects straight to the auth service - it owns the entire Google exchange
 // and redirects back to /oauth/callback with tokens, no backend involvement.
 function buildGoogleLoginUrl() {
@@ -105,13 +107,14 @@ export default function Login() {
       >
         {t('login.google')}
       </a>
-
-      <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-        {t('login.noAccount')}{' '}
-        <Link to="/register" className="text-slate-900 underline dark:text-slate-100">
-          {t('login.registerLink')}
-        </Link>
-      </p>
+      {isRegistrationAllowed &&
+        <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
+          {t('login.noAccount')}{' '}
+          <Link to="/register" className="text-slate-900 underline dark:text-slate-100">
+            {t('login.registerLink')}
+          </Link>
+        </p>
+      }
     </div>
   )
 }
