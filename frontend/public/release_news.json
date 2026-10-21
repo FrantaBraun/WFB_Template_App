@@ -1,4 +1,6 @@
 {
-    "unreleased": [],
+    "unreleased": [
+        "Add a table_reservations module (src/modules/table_reservations): a Reservations page where anyone, signed in or not, chooses a table or the whole pub, the number of people, a day in a calendar (closed and past days are struck through) and an arrival time from the free ones (with the length of the stay for a table), then leaves name, e-mail, phone, a note and consent - next to the opening hours and their one-off changes; usable at 320 px. The link in the confirmation e-mail opens a page with a Cancel button. For administrators (a calendar icon in the header): a calendar of reservations with the number per day, for each day its hours, reservations with contact details and notes, closing the day or changing its hours (with a list of the reservations in the way, each cancelled with its own message to the guest before the change can be saved again), cancelling a reservation with a message and an e-mail to the guest, the regular opening hours of each weekday and one-off changes of a date, and the tables of the pub"
+    ],
     "releases": []
 }

@@ -1,0 +1,63 @@
+{
+  "max_days_ahead": 90,
+  "lead_minutes": 30,
+  "default_duration": 120,
+  "duration_options": [60, 90, 120, 150, 180, 240],
+  "max_active_per_email": 3,
+  "retention_months": 12,
+  "send_confirmation": true,
+  "notify_admin": true,
+  "privacy_url": null,
+  "pub_name": "Ukázková hospůdka",
+  "default_language": "cs",
+  "kind_labels": {
+    "cs": { "table": "stůl", "whole_venue": "celý prostor" },
+    "en": { "table": "table", "whole_venue": "the whole pub" }
+  },
+  "note_headings": {
+    "cs": "Vzkaz od hospůdky:",
+    "en": "A message from the pub:"
+  },
+  "templates": {
+    "confirmation": {
+      "cs": {
+        "subject": "Rezervace potvrzena: {date} v {start}",
+        "body": "Dobrý den, {name},\n\nděkujeme za rezervaci. Potvrzujeme ji:\n\nCo: {what}\nDatum: {date}\nČas: {start}–{end}\nPočet osob: {party_size}\n\nPokud se nebudete moci dostavit, zrušte prosím rezervaci, ať místo uvolníme dalším hostům:\n{cancel_url}\n\nTěšíme se na Vás.\n{pub_name}\n"
+      },
+      "en": {
+        "subject": "Reservation confirmed: {date} at {start}",
+        "body": "Hello {name},\n\nthank you for your reservation. We confirm it:\n\nWhat: {what}\nDate: {date}\nTime: {start}-{end}\nGuests: {party_size}\n\nIf you cannot come, please cancel the reservation so we can free the place for other guests:\n{cancel_url}\n\nWe look forward to seeing you.\n{pub_name}\n"
+      }
+    },
+    "admin_notification": {
+      "cs": {
+        "subject": "Nová rezervace: {date} v {start} ({what}, {party_size})",
+        "body": "Nová rezervace.\n\nCo: {what} ({table})\nDatum: {date}\nČas: {start}–{end}\nPočet osob: {party_size}\nJméno: {name}\nE-mail: {email}\nTelefon: {phone}\nPoznámka hosta: {guest_note}\n"
+      },
+      "en": {
+        "subject": "New reservation: {date} at {start} ({what}, {party_size})",
+        "body": "A new reservation.\n\nWhat: {what} ({table})\nDate: {date}\nTime: {start}-{end}\nGuests: {party_size}\nName: {name}\nEmail: {email}\nPhone: {phone}\nGuest's note: {guest_note}\n"
+      }
+    },
+    "cancellation": {
+      "cs": {
+        "subject": "Rezervace zrušena: {date} v {start}",
+        "body": "Dobrý den, {name},\n\nVaše rezervace ({what}, {date}, {start}–{end}) byla zrušena.\n\n{pub_name}\n"
+      },
+      "en": {
+        "subject": "Reservation cancelled: {date} at {start}",
+        "body": "Hello {name},\n\nyour reservation ({what}, {date}, {start}-{end}) has been cancelled.\n\n{pub_name}\n"
+      }
+    },
+    "cancelled_by_admin": {
+      "cs": {
+        "subject": "Zrušení Vaší rezervace: {date} v {start}",
+        "body": "Dobrý den, {name},\n\nbohužel jsme museli zrušit Vaši rezervaci ({what}, {date}, {start}–{end}).\n\n{note_section}Za nepříjemnosti se omlouváme. Novou rezervaci můžete vytvořit na našem webu.\n\n{pub_name}\n"
+      },
+      "en": {
+        "subject": "Your reservation has been cancelled: {date} at {start}",
+        "body": "Hello {name},\n\nunfortunately we had to cancel your reservation ({what}, {date}, {start}-{end}).\n\n{note_section}We apologise for the inconvenience. You can make a new reservation on our website.\n\n{pub_name}\n"
+      }
+    }
+  }
+}
