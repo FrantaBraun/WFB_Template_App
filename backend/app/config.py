@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     contact_github_url: str = ""
     contact_linkedin_url: str = ""
 
+    # Event booking module (app/modules/event_booking) - where the notice about
+    # each new booking goes; CONTACT_MAIL when empty, and nobody (with a
+    # warning in the log) when both are.
+    booking_notify_mail: str = ""
+
     # Stripe payment gate module (app/modules/stripe_payment_gate) - empty
     # by default; the module's endpoints fail loudly (503) until both keys
     # are set, rather than half-working. stripe_api_url is only overridden
@@ -61,7 +66,7 @@ class Settings(BaseSettings):
     mail_ssl_tls: bool = False
     mail_suppress_send: bool = False
 
-    # Uploads - files uploaded through modules (e.g. event_calendar's event
+    # Uploads - files uploaded through modules (e.g. the articles module's
     # images), each module in its own subfolder. Relative paths resolve
     # against backend/. A production .env must point somewhere that survives
     # a deploy - see scripts/upgrade.sh's backend/ wipe-and-recreate.

@@ -8,6 +8,8 @@ import { Extension } from '@tiptap/core'
 import ColorExtension from '@tiptap/extension-color'
 import FontFamilyExtension from '@tiptap/extension-font-family'
 import ImageExtension from '@tiptap/extension-image'
+import { TableKit } from '@tiptap/extension-table'
+import TextAlignExtension from '@tiptap/extension-text-align'
 import { FontSize, TextStyle as TextStyleExtension } from '@tiptap/extension-text-style'
 import { EditorContent, ReactRenderer, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -17,6 +19,8 @@ import { useTranslation } from 'react-i18next'
 import tippy, { type Instance as TippyInstance } from 'tippy.js'
 import LinkDialog from './LinkDialog'
 import MentionList from './MentionList'
+import VideoDialog from './VideoDialog'
+import { VideoEmbed } from './videoEmbed'
 
 /** One @-mention target: inserted as a plain link to `url` labelled `label`. */
 export interface MentionableItem {
@@ -135,7 +139,38 @@ function ToolbarButton({
   )
 }
 
-function Toolbar({ editor, onInsertImage, onOpenLinkDialog }: { editor: Editor; onInsertImage?: () => void; onOpenLinkDialog: () => void }) {
+const ALIGNMENTS = [
+  { value: 'left', labelKey: 'editor.alignLeft', lines: [14, 10, 14, 8] },
+  { value: 'center', labelKey: 'editor.alignCenter', lines: [14, 8, 14, 10] },
+  { value: 'right', labelKey: 'editor.alignRight', lines: [14, 10, 14, 8] },
+  { value: 'justify', labelKey: 'editor.alignJustify', lines: [14, 14, 14, 14] },
+] as const
+
+/** A tiny four-line icon for a text alignment: each line is drawn from the left, centred or the right edge. */
+function AlignIcon({ align, lines }: { align: (typeof ALIGNMENTS)[number]['value']; lines: readonly number[] }) {
+  return (
+    <svg width="16" height="14" viewBox="0 0 16 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      {lines.map((width, i) => {
+        const x1 = align === 'right' ? 15 - width + 1 : align === 'center' ? (16 - width) / 2 + 0.5 : 1
+        return <line key={i} x1={x1} x2={x1 + width - 1} y1={2 + i * 3.3} y2={2 + i * 3.3} />
+      })}
+    </svg>
+  )
+}
+
+function Toolbar({
+  editor,
+  onInsertImage,
+  onOpenLinkDialog,
+  onOpenVideoDialog,
+  onToggleSource,
+}: {
+  editor: Editor
+  onInsertImage?: () => void
+  onOpenLinkDialog: () => void
+  onOpenVideoDialog: () => void
+  onToggleSource: () => void
+}) {
   const { t } = useTranslation()
   const activeHeadingLevel = HEADING_LEVELS.find((level) => editor.isActive('heading', { level })) ?? 'p'
 
@@ -222,8 +257,45 @@ function Toolbar({ editor, onInsertImage, onOpenLinkDialog }: { editor: Editor; 
         className="h-7 w-7 cursor-pointer rounded border border-slate-200 dark:border-slate-800"
       />
 
+      {ALIGNMENTS.map(({ value, labelKey, lines }) => (
+        <ToolbarButton key={value} active={editor.isActive({ textAlign: value })} onClick={() => editor.chain().focus().setTextAlign(value).run()} title={t(labelKey)}>
+          <AlignIcon align={value} lines={lines} />
+        </ToolbarButton>
+      ))}
+
       <ToolbarButton onClick={onOpenLinkDialog}>{t('editor.link')}</ToolbarButton>
       {onInsertImage && <ToolbarButton onClick={onInsertImage}>{t('editor.image')}</ToolbarButton>}
+      <ToolbarButton onClick={onOpenVideoDialog}>{t('editor.video')}</ToolbarButton>
+      <ToolbarButton
+        active={editor.isActive('table')}
+        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+      >
+        {t('editor.table')}
+      </ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title={t('editor.horizontalRule')}>
+        ―
+      </ToolbarButton>
+      <ToolbarButton active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()} title={t('editor.codeBlock')}>
+        <span className="font-mono">{'</>'}</span>
+      </ToolbarButton>
+
+      <span className="ml-auto" />
+      <ToolbarButton onClick={onToggleSource} title={t('editor.htmlSource')}>
+        <span className="font-mono">HTML</span>
+      </ToolbarButton>
+
+      {editor.isActive('table') && (
+        <div className="flex w-full flex-wrap items-center gap-1 border-t border-slate-200 pt-2 dark:border-slate-800">
+          <ToolbarButton onClick={() => editor.chain().focus().addRowAfter().run()}>{t('editor.tableAddRow')}</ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().addColumnAfter().run()}>{t('editor.tableAddColumn')}</ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().deleteRow().run()}>{t('editor.tableDeleteRow')}</ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().deleteColumn().run()}>{t('editor.tableDeleteColumn')}</ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleHeaderRow().run()}>{t('editor.tableHeaderRow')}</ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().deleteTable().run()}>
+            <span className="text-red-600 dark:text-red-400">{t('editor.tableDelete')}</span>
+          </ToolbarButton>
+        </div>
+      )}
     </div>
   )
 }
@@ -244,16 +316,24 @@ interface LinkDialogState {
 }
 
 /** Shared WYSIWYG HTML editor: headings 1-5, bold/italic/underline/strike,
- * font size/family/color, lists/quote, a link dialog (text + URL, for both
- * inserting and editing - including a link inserted via @-mention), image
- * upload (when `uploadImage` is given) and @-triggered suggestions (when
- * `loadMentionables` is given) that insert a plain link. Its output must
- * stay within what the backend's app/services/sanitize.py allows - keep
- * the two in sync when adding an extension. */
+ * font size/family/color, text alignment, lists/quote, tables, a horizontal
+ * rule, code blocks, a link dialog (text + URL, for both inserting and
+ * editing - including a link inserted via @-mention), image upload (when
+ * `uploadImage` is given), YouTube/Vimeo video embeds, a raw HTML source
+ * mode and @-triggered suggestions (when `loadMentionables` is given) that
+ * insert a plain link. Its output must stay within what the backend's
+ * app/services/sanitize.py allows - keep the two in sync when adding an
+ * extension. The source mode edits any HTML, but the server sanitizes every
+ * save, so only allowed tags survive (scripts, styles and other-origin
+ * frames never do). */
 export default function RichTextEditor({ value, onChange, loadMentionables, uploadImage }: RichTextEditorProps) {
+  const { t } = useTranslation()
   const mentionableRef = useRef<MentionableItem[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null)
+  const [videoDialogOpen, setVideoDialogOpen] = useState(false)
+  // null = the WYSIWYG view; a string = the raw HTML being edited as text.
+  const [sourceText, setSourceText] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loadMentionables) return
@@ -281,6 +361,9 @@ export default function RichTextEditor({ value, onChange, loadMentionables, uplo
       ColorExtension,
       FontFamilyExtension,
       FontSize,
+      TextAlignExtension.configure({ types: ['heading', 'paragraph'] }),
+      TableKit.configure({ table: { resizable: false } }),
+      VideoEmbed,
       MentionSuggestion.configure({ suggestion: createMentionSuggestion(() => mentionableRef.current) }),
     ],
     content: value,
@@ -341,15 +424,61 @@ export default function RichTextEditor({ value, onChange, loadMentionables, uplo
     setLinkDialog(null)
   }
 
+  function handleVideoInsert(src: string) {
+    editor?.chain().focus().setVideo({ src }).run()
+    setVideoDialogOpen(false)
+  }
+
+  /** WYSIWYG -> raw HTML, or back: the editor re-parses the text, which drops whatever it has no node for. */
+  function toggleSource() {
+    if (!editor) return
+    if (sourceText === null) {
+      setSourceText(editor.getHTML())
+      return
+    }
+    editor.commands.setContent(sourceText)
+    onChange(editor.getHTML())
+    setSourceText(null)
+  }
+
   if (!editor) return null
+
+  const inSource = sourceText !== null
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-      <Toolbar editor={editor} onInsertImage={uploadImage ? () => fileInputRef.current?.click() : undefined} onOpenLinkDialog={openLinkDialog} />
+      {inSource ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 p-2 dark:border-slate-800">
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('editor.htmlSourceHint')}</p>
+          <ToolbarButton onClick={toggleSource}>{t('editor.backToEditor')}</ToolbarButton>
+        </div>
+      ) : (
+        <Toolbar
+          editor={editor}
+          onInsertImage={uploadImage ? () => fileInputRef.current?.click() : undefined}
+          onOpenLinkDialog={openLinkDialog}
+          onOpenVideoDialog={() => setVideoDialogOpen(true)}
+          onToggleSource={toggleSource}
+        />
+      )}
       <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={handleFileChange} />
-      <div className="rich-text-content px-3 py-2 text-slate-900 dark:text-slate-100">
+      {inSource && (
+        <textarea
+          value={sourceText}
+          onChange={(e) => {
+            setSourceText(e.target.value)
+            // Saving straight from source mode must keep these edits too.
+            onChange(e.target.value)
+          }}
+          spellCheck={false}
+          aria-label={t('editor.htmlSource')}
+          className="block min-h-[20rem] w-full resize-y bg-transparent px-3 py-2 font-mono text-sm text-slate-900 outline-none dark:text-slate-100"
+        />
+      )}
+      <div className={`rich-text-content px-3 py-2 text-slate-900 dark:text-slate-100 ${inSource ? 'hidden' : ''}`}>
         <EditorContent editor={editor} />
       </div>
+      {videoDialogOpen && <VideoDialog onInsert={handleVideoInsert} onCancel={() => setVideoDialogOpen(false)} />}
       {linkDialog && (
         <LinkDialog
           isEditing={linkDialog.isEditing}
