@@ -1,6 +1,6 @@
 {
   "meta": {
-    "description": "A web application built on the shared With FBraun core."
+    "description": "Hostinec U Zlatého chmele – traditional Czech cooking, eight beers on tap, a lunch menu every weekday and table reservations online. A demo website."
   },
   "common": {
     "save": "Save",
@@ -18,10 +18,6 @@
     "changeLanguage": "Change language",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
-  },
-  "home": {
-    "title": "Project template",
-    "description": "This is a default template for building further applications. It contains no functional logic — just a ready-made environment to start building on."
   },
   "login": {
     "pageTitle": "Sign in",
@@ -144,11 +140,13 @@
     "loadError": "Failed to load release news."
   },
   "nav": {
-    "brand": "Ukázková hospůdka"
+    "brand": "Hostinec U Zlatého chmele",
+    "about": "About us"
   },
   "footer": {
     "ecosystem": "WithFBraun",
-    "copyright": "© {{year}} František Braun"
+    "copyright": "© {{year}} František Braun",
+    "demo": "A demo website: the inn, its address, phone number and operator do not exist, everything here is made up."
   },
   "editor": {
     "paragraph": "Paragraph",
@@ -192,9 +190,63 @@
     "backToEditor": "Back to the editor",
     "mentionNoResults": "No results"
   },
-  "notFound" : {
-    "pageTitle" : "Not Found",
-    "title" : "The page was not Found",
-    "backToHomePage" : "Back to the Home Page"
+  "notFound": {
+    "pageTitle": "Not Found",
+    "title": "The page was not Found",
+    "backToHomePage": "Back to the Home Page"
+  },
+  "home": {
+    "eyebrow": "A traditional Czech inn since {{year}}",
+    "tagline": "Beef sirloin in cream sauce like your grandmother's, eight beers on tap and a lunch menu every weekday. Come and sit down.",
+    "reserve": "Reserve a table",
+    "menu": "Menu",
+    "about": "About us",
+    "todayTitle": "Today at our inn",
+    "hoursTitle": "Opening hours",
+    "highlightsTitle": "Why come to us",
+    "highlights": {
+      "kitchen": {
+        "title": "Traditional Czech cooking",
+        "text": "Svíčková, roast pork with dumplings and sauerkraut, kulajda soup or fried cheese. We cook from local ingredients to recipes handed down from one generation to the next."
+      },
+      "beer": {
+        "title": "Eight beers on tap",
+        "text": "Lagers from proven breweries, light and dark, and two taps that change with the season. We serve from tanks, so the beer is always fresh and nicely cold."
+      },
+      "party": {
+        "title": "The whole inn for you",
+        "text": "A celebration, a family gathering or a company party? You can reserve the whole inn from a chosen time until closing."
+      }
+    },
+    "ctaTitle": "Come for a beer and for lunch",
+    "ctaText": "Reserve a table online and we will have it ready for you. You can cancel without signing in, with the link in the confirmation e-mail."
+  },
+  "about": {
+    "title": "About us",
+    "description": "The story of Hostinec U Zlatého chmele, our kitchen and beer, the contact and the operator.",
+    "lead": "Hostinec U Zlatého chmele has stood on the corner of Chmelařská street since {{year}}. It is a place to eat well, drink well-chilled beer and not to hurry.",
+    "story": {
+      "title": "Our story",
+      "text": "The inn was built in 1894 by Josef Šebesta, a hop grower from Žatec, so that the seasonal pickers had somewhere to sit after work. It soon became a place where brewers, hop merchants and neighbours met.\n\nAfter the war it was a malthouse, and after 1990 the Šebesta family opened the inn again. We repaired the vaulted ceilings, kept the original tiled stove and put the wooden taps back in the taproom."
+    },
+    "kitchen": {
+      "title": "The kitchen",
+      "text": "We cook traditional Czech food without shortcuts: svíčková with cream and cranberries, roast pork with homemade dumplings and sauerkraut, beef goulash or fried cheese. The lunch menu, which changes every day, is on the menu page.\n\nEvery dish has its allergens marked with numbers; we are glad to explain them at the bar at any time."
+    },
+    "beer": {
+      "title": "The beer",
+      "text": "We serve eight beers from proven breweries - light, amber and dark. Two taps change with the season and with what has caught our eye in the small breweries.\n\nWe serve from tanks so the beer is always fresh, and properly chilled. If you are not sure, you can taste first."
+    },
+    "contactTitle": "Contact",
+    "phone": "Phone",
+    "email": "Email",
+    "reserveLink": "Reserve a table online",
+    "operatorTitle": "Operator",
+    "operator": "Operator",
+    "ico": "Company ID",
+    "seat": "Registered office",
+    "directionsTitle": "How to find us",
+    "directions": "It is a four-minute walk from the square, and the bus stop is right in front of the house. You can park in the car park near the station.",
+    "demoNotice": "This is a demo website for a portfolio. Hostinec U Zlatého chmele does not exist and everything on this site (the address, phone number, e-mail, operator, company ID and the story) is made up. An e-mail address on example.com is never delivered anywhere."
   }
 }

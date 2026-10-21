@@ -4,12 +4,62 @@
  * Freely available as a template for building custom applications.
  */
 
+/* Self-hosted fonts (npm packages, no request to a third party): Alfa Slab One
+   for the pub's name and the big titles - a slab like an inn's signboard -
+   and Lora for every heading. Only the Latin and Latin Extended (Czech) files
+   are listed for the slab; the variable Lora ships its subsets with a
+   unicode-range, so a browser fetches just what a page needs. */
+@import "@fontsource-variable/lora/wght.css";
+@import "@fontsource/alfa-slab-one/latin-400.css";
+@import "@fontsource/alfa-slab-one/latin-ext-400.css";
 @import "tailwindcss";
 
 /* Tailwind v4 is CSS-first with no tailwind.config.js - this line switches
    dark: utilities from the OS-level prefers-color-scheme default to a
    .dark class on <html>, toggled by ThemeContext (see src/context/ThemeContext.tsx). */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* The pub's identity: an old Czech inn - parchment paper, dark-wood brown ink,
+   the green of a hop and the amber of a lager, with copper and brick red as
+   small accents. Each accent has a -dark counterpart for the dark ("tavern at
+   night") theme rather than relying on opacity math, since the paper flips
+   lightness entirely. */
+@theme {
+  --font-display: 'Alfa Slab One', Rockwell, 'Rockwell Nova', Georgia, serif;
+  --font-serif: 'Lora Variable', Georgia, 'Times New Roman', serif;
+
+  --color-parchment: #f4ead2;
+  --color-parchment-dark: #1c120b;
+  --color-hop: #3b6a35;
+  --color-hop-dark: #9cc78b;
+  --color-beer: #d38a06;
+  --color-beer-dark: #f2b84b;
+  --color-copper: #b25a26;
+  --color-brick: #983a28;
+
+  /* Cards, inputs and the like say `bg-white`; on a parchment page a pure white
+     reads as a sheet of printer paper, so white is ivory here. */
+  --color-white: #fffaf0;
+
+  /* The shared modules (reservations, the menu, articles, the account and
+     sign-in pages) are written against Tailwind's cool "slate" greys, which on
+     parchment and dark wood would read as blue-grey boxes. Redefining the ramp
+     here re-tones every one of them in a single place, without touching module
+     code that comes from `core`: 50-200 are surfaces and borders in the light
+     theme, 300-600 text and muted text, 700-950 the dark theme's borders, cards
+     and page (950 = parchment-dark). */
+  --color-slate-50: #faf3e1;
+  --color-slate-100: #f1e6cb;
+  --color-slate-200: #e2d3b1;
+  --color-slate-300: #cdb994;
+  --color-slate-400: #a8926f;
+  --color-slate-500: #7a6548;
+  --color-slate-600: #5e4a35;
+  --color-slate-700: #4a3a2b;
+  --color-slate-800: #3a2c20;
+  --color-slate-900: #2a1d13;
+  --color-slate-950: #1c120b;
+}
 
 :root {
   color-scheme: light;
@@ -34,16 +84,47 @@ body {
     'Segoe UI',
     Roboto,
     sans-serif;
-  background: radial-gradient(circle at top, #f8fafc, #e2e8f0 60%);
+  background:
+    radial-gradient(1100px 520px at 50% -8%, #fbf4e0, transparent),
+    var(--color-parchment);
+  background-attachment: fixed;
 }
 
 .dark body {
-  background: radial-gradient(circle at top, #1e293b, #020617 60%);
+  background:
+    radial-gradient(900px 480px at 50% -8%, #31200f, transparent),
+    var(--color-parchment-dark);
+  background-attachment: fixed;
+}
+
+/* Every heading, in the shared modules too, gets the serif without a class on
+   each one; .font-display is for display text that is not a heading (the brand). */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+  }
 }
 
 ::selection {
-  background-color: #38bdf8;
-  color: #020617;
+  background-color: var(--color-beer-dark);
+  color: var(--color-slate-950);
+}
+
+/* A faint woven texture for the hero and the call-to-action band. */
+.pub-texture {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgb(120 80 40 / 0.045) 0 2px,
+    transparent 2px 14px
+  );
+}
+
+.dark .pub-texture {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgb(255 220 160 / 0.04) 0 2px,
+    transparent 2px 14px
+  );
 }
 
 /* Shared by RichTextEditor's live view (nested one level deeper under

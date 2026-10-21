@@ -8,7 +8,7 @@
   "send_confirmation": true,
   "notify_admin": true,
   "privacy_url": null,
-  "pub_name": "Ukázková hospůdka",
+  "pub_name": "Hostinec U Zlatého chmele",
   "default_language": "cs",
   "kind_labels": {
     "cs": { "table": "stůl", "whole_venue": "celý prostor" },

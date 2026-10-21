@@ -1,6 +1,6 @@
 {
   "meta": {
-    "description": "Webová aplikace postavená na sdíleném jádru With FBraun."
+    "description": "Hostinec U Zlatého chmele – staročeská kuchyně, osm čepovaných piv, polední menu každý všední den a rezervace stolu online. Ukázkový web."
   },
   "common": {
     "save": "Uložit",
@@ -18,10 +18,6 @@
     "changeLanguage": "Změnit jazyk",
     "openMenu": "Otevřít nabídku",
     "closeMenu": "Zavřít nabídku"
-  },
-  "home": {
-    "title": "Šablona projektu",
-    "description": "Toto je výchozí šablona pro tvorbu dalších aplikací. Neobsahuje žádnou funkční logiku — jen předpřipravené prostředí, na kterém lze začít stavět."
   },
   "login": {
     "pageTitle": "Přihlášení",
@@ -144,11 +140,13 @@
     "loadError": "Načtení novinek se nezdařilo."
   },
   "nav": {
-    "brand": "Ukázková hospůdka"
+    "brand": "Hostinec U Zlatého chmele",
+    "about": "O nás"
   },
   "footer": {
     "ecosystem": "WithFBraun",
-    "copyright": "© {{year}} František Braun"
+    "copyright": "© {{year}} František Braun",
+    "demo": "Ukázkový web: hostinec, adresa, telefon ani provozovatel neexistují, všechny údaje jsou smyšlené."
   },
   "editor": {
     "paragraph": "Odstavec",
@@ -192,9 +190,63 @@
     "backToEditor": "Zpět do editoru",
     "mentionNoResults": "Žádné výsledky"
   },
-  "notFound" : {
-    "pageTitle" : "Nenalezeno",
-    "title" : "Stránka nenalezena",
-    "backToHomePage" : "Zpět na domovskou stránku"
+  "notFound": {
+    "pageTitle": "Nenalezeno",
+    "title": "Stránka nenalezena",
+    "backToHomePage": "Zpět na domovskou stránku"
+  },
+  "home": {
+    "eyebrow": "Staročeský hostinec od roku {{year}}",
+    "tagline": "Svíčková jako od babičky, osm čepovaných piv a polední menu každý všední den. Přijďte si sednout.",
+    "reserve": "Rezervovat stůl",
+    "menu": "Jídelní lístek",
+    "about": "O nás",
+    "todayTitle": "Dnes u nás",
+    "hoursTitle": "Otevírací doba",
+    "highlightsTitle": "Proč k nám chodit",
+    "highlights": {
+      "kitchen": {
+        "title": "Staročeská kuchyně",
+        "text": "Svíčková, vepřo knedlo zelo, kulajda nebo smažený sýr. Vaříme z lokálních surovin podle receptů, které se tu předávají z generace na generaci."
+      },
+      "beer": {
+        "title": "Osm čepovaných piv",
+        "text": "Ležáky z ověřených pivovarů, světlé i tmavé, a dva kohouty, které střídáme podle sezóny. Čepujeme z tanků, ať je pivo vždy čerstvé a pěkně studené."
+      },
+      "party": {
+        "title": "Celý hostinec pro vás",
+        "text": "Oslava, rodinná sešlost nebo firemní večírek? Celý hostinec si můžete zarezervovat od zvoleného času až do zavírací doby."
+      }
+    },
+    "ctaTitle": "Přijďte na pivo i na oběd",
+    "ctaText": "Stůl si rezervujte online a my ho pro vás připravíme. Rezervaci můžete bez přihlášení kdykoli zrušit odkazem z potvrzovacího e-mailu."
+  },
+  "about": {
+    "title": "O nás",
+    "description": "Příběh hostince U Zlatého chmele, naše kuchyně a pivo, kontakt a provozovatel.",
+    "lead": "Hostinec U Zlatého chmele stojí na rohu Chmelařské ulice od roku {{year}}. Je to místo, kde se dobře jí, pije dobře vychlazené pivo a nikdo nespěchá.",
+    "story": {
+      "title": "Náš příběh",
+      "text": "Hostinec postavil v roce 1894 žatecký chmelař Josef Šebesta, aby měli sezónní sběrači po práci kde posedět. Z hostince se brzy stalo místo, kde se potkávali sládci, obchodníci s chmelem i sousedé.\n\nPo válce tu byla sladovna a po roce 1990 hostinec znovu otevřela rodina Šebestových. Opravili jsme klenuté stropy, nechali původní kachlová kamna a vrátili do výčepu dřevěné pípy."
+    },
+    "kitchen": {
+      "title": "Kuchyně",
+      "text": "Vaříme staročeskou kuchyni bez zkratek: svíčkovou se smetanou a brusinkami, vepřo knedlo zelo s domácími knedlíky, hovězí guláš nebo smažený sýr. Polední menu, které se mění každý den, najdete v jídelním lístku.\n\nAlergeny máme u každého jídla označené čísly; kdykoli Vám je rádi vysvětlíme u obsluhy."
+    },
+    "beer": {
+      "title": "Pivo",
+      "text": "Čepujeme osm piv z ověřených pivovarů, světlé, polotmavé i tmavé. Dva kohouty střídáme podle sezóny a podle toho, co nás v malých pivovarech zaujalo.\n\nPivo čepujeme z tanků, ať je vždy čerstvé a pořádně vychlazené. Kdo si není jistý, může nejdřív ochutnat."
+    },
+    "contactTitle": "Kontakt",
+    "phone": "Telefon",
+    "email": "E-mail",
+    "reserveLink": "Rezervovat stůl online",
+    "operatorTitle": "Provozovatel",
+    "operator": "Provozovatel",
+    "ico": "IČO",
+    "seat": "Sídlo",
+    "directionsTitle": "Jak se k nám dostanete",
+    "directions": "Od náměstí jsou to pěšky čtyři minuty, autobusová zastávka je přímo před domem. Parkovat můžete na nedalekém parkovišti u nádraží.",
+    "demoNotice": "Toto je ukázkový web pro portfolio. Hostinec U Zlatého chmele neexistuje a všechny údaje na tomto webu (adresa, telefon, e-mail, provozovatel, IČO i příběh) jsou smyšlené. E-mailová adresa na doméně example.com nikdy nikam nedojde."
   }
 }

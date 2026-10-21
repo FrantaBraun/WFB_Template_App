@@ -8,6 +8,7 @@
 // and declares the app's client-side routes.
 import { Route, Routes } from "react-router-dom"
 import HomePage from "./pages/HomePage"
+import About from "./pages/About"
 import Layout from "./components/Layout"
 import Account from "./pages/Account"
 import Consent from "./pages/Consent"
@@ -27,6 +28,7 @@ function App() {
   return (<Layout modules={modules}>
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/o-nas" element={<About />} />
       <Route path="/login" element={<Login />} />
       {isRegistrationAllowed && <Route path="/register" element={<Register />} />}
       <Route path="/account" element={<Account />} />

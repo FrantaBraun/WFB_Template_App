@@ -17,6 +17,9 @@
 // show to every visitor): the header shows a calendar icon to administrators only,
 // as a headerWidget. Every administration page is wrapped in ReservationsGate and
 // the backend checks User.is_admin on every /manage request regardless.
+//
+// Exported for an application's own pages: OpeningHours (a line about today and the
+// week's hours - a home page's side panel).
 import type { ModuleDefinition } from '../types'
 import AdminNavLink from './AdminNavLink'
 import CalendarPage from './CalendarPage'
@@ -24,6 +27,8 @@ import CancelPage from './CancelPage'
 import HoursPage from './HoursPage'
 import ReservationPage from './ReservationPage'
 import TablesPage from './TablesPage'
+
+export { default as OpeningHours } from './OpeningHours'
 
 const tableReservationsModule: ModuleDefinition = {
   key: 'table_reservations',
@@ -59,6 +64,8 @@ const tableReservationsModule: ModuleDefinition = {
       hours: {
         title: 'Otevírací doba',
         closed: 'zavřeno',
+        openToday: 'Dnes otevřeno {{opens}}–{{closes}}',
+        closedToday: 'Dnes zavřeno',
         exceptionsTitle: 'Změny otevírací doby',
       },
       picker: {
@@ -306,6 +313,8 @@ const tableReservationsModule: ModuleDefinition = {
       hours: {
         title: 'Opening hours',
         closed: 'closed',
+        openToday: 'Open today {{opens}}-{{closes}}',
+        closedToday: 'Closed today',
         exceptionsTitle: 'Changes of the opening hours',
       },
       picker: {

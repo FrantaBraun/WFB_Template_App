@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import type { ModuleDefinition } from '../modules/types'
 import Footer from './Footer'
+import { PubLogo } from './PubGraphics'
 import LanguageDropdown from './LanguageDropdown'
 import ThemeToggle from './ThemeToggle'
 
@@ -75,6 +76,7 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
 
   const navLinks = (
     <>
+      <Link to="/o-nas" onClick={closeMobileMenu} className="hover:text-slate-900 dark:hover:text-slate-100">{t('nav.about')}</Link>
       {modules.flatMap((module) => module.nav ?? []).map((item) => (
         <Link key={item.to} to={item.to} onClick={closeMobileMenu} className="hover:text-slate-900 dark:hover:text-slate-100">{t(item.labelKey)}</Link>
       ))}
@@ -107,13 +109,12 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
   )
 
   return (
-    <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+    <header className="border-b border-t-[3px] border-slate-200 border-t-hop bg-white dark:border-slate-800 dark:border-t-hop-dark dark:bg-slate-950">
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-1 px-3 py-3 text-sm text-slate-600 dark:text-slate-300 sm:gap-2 sm:px-6">
-        <Link to="/" aria-label={t('nav.brand')} className="tracking-tight text-stone-800 hover:text-stone-600 dark:text-stone-200 dark:hover:text-stone-300 flex min-w-0">
-          <img src="/logo.png" alt="" className="mx-1 shrink-0 bg-slate-200 rounded max-sm:w-8" width={40} />
-          {/* On phones the icon cluster keeps its size, so the name truncates (and drops out below 360px) and the WFB tag hides. */}
-          <span className='hidden min-w-0 self-center truncate font-extrabold min-[360px]:block sm:self-auto'>{t('nav.brand')}</span>
-          <span className='ms-1 hidden text-stone-500 dark:text-stone-400 text-xs pt-4 sm:block' style={{marginLeft: "-15px"}}>WFB</span>
+        <Link to="/" aria-label={t('nav.brand')} className="flex min-w-0 items-center gap-2 text-slate-900 hover:text-hop dark:text-slate-100 dark:hover:text-beer-dark">
+          <PubLogo className="h-9 w-9 shrink-0" />
+          {/* On phones the icon cluster keeps its size, so the name truncates (and drops out below 360px). */}
+          <span className="font-display hidden min-w-0 truncate text-base tracking-wide min-[360px]:block sm:text-lg">{t('nav.brand')}</span>
         </Link>
 
         <nav className="hidden items-center gap-4 md:flex">

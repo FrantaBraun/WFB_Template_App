@@ -22,7 +22,6 @@ import {
   sendJson,
   statusOf,
   toMinutes,
-  weekdayName,
   type Availability,
   type Created,
   type DayInfo,
@@ -30,6 +29,7 @@ import {
   type Kind,
 } from './api'
 import MonthGrid from './MonthGrid'
+import { HoursList } from './OpeningHours'
 import { PageMessage, cardClass, errorClass, inputClass, labelClass, mutedClass, okClass, primaryButtonClass, secondaryButtonClass } from './ui'
 
 /**
@@ -84,37 +84,11 @@ export default function ReservationPage() {
 }
 
 function HoursCard({ info }: { info: Info }) {
-  const { t, i18n } = useTranslation('table_reservations')
-  const language = i18n.resolvedLanguage ?? i18n.language
+  const { t } = useTranslation('table_reservations')
   return (
     <aside className={`${cardClass} h-fit space-y-4`}>
-      <div>
-        <h2 className="mb-2 text-lg font-semibold">{t('hours.title')}</h2>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-          {info.weekly.map((entry) => (
-            <div key={entry.weekday} className="contents">
-              <dt className="capitalize">{weekdayName(entry.weekday, language)}</dt>
-              <dd className={entry.is_closed ? mutedClass : ''}>
-                {entry.is_closed || !entry.opens || !entry.closes ? t('hours.closed') : `${formatTime(entry.opens)}–${formatTime(entry.closes)}`}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-      {info.exceptions.length > 0 && (
-        <div>
-          <h3 className="mb-2 text-sm font-semibold">{t('hours.exceptionsTitle')}</h3>
-          <ul className="space-y-1 text-sm">
-            {info.exceptions.map((entry) => (
-              <li key={entry.day}>
-                <span className="font-medium">{formatDay(entry.day, language, 'short')}</span>:{' '}
-                {entry.is_closed || !entry.opens || !entry.closes ? t('hours.closed') : `${formatTime(entry.opens)}–${formatTime(entry.closes)}`}
-                {entry.reason && <span className={mutedClass}> – {entry.reason}</span>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <h2 className="text-lg font-semibold">{t('hours.title')}</h2>
+      <HoursList info={info} />
     </aside>
   )
 }

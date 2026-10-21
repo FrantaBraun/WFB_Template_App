@@ -77,6 +77,12 @@ python -m uvicorn app.main:app --reload
 
 The API is now running at `http://localhost:8000`, under the `/api` prefix.
 
+To show the demo pub with something in it (tables, opening hours, a menu with eight draught beers, this week's and next week's lunch menu), run once after the migrations:
+
+```bash
+python seed_demo.py           # what already exists is left alone; add --replace to remake the standing menu
+```
+
 ### 2. Frontend
 
 ```bash

@@ -58,7 +58,7 @@ export default function ThemeToggle() {
       aria-checked={darkMode}
       aria-label={t('common.toggleDarkMode')}
       className={`inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-        darkMode ? 'bg-sky-600' : 'bg-slate-300 dark:bg-slate-700'
+        darkMode ? 'bg-hop' : 'bg-slate-300 dark:bg-slate-700'
       }`}
     >
       <span
