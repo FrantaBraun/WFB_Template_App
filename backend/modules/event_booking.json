@@ -18,17 +18,17 @@
     "confirmation": {
       "cs": {
         "subject": "Potvrzení přihlášky: {event_title}",
-        "body": "Dobrý den, {name},\n\nděkujeme za přihlášku. Potvrzujeme Váš termín.\n\nUdálost: {event_title}\nRegistrace: {registration_name}\nTermín: {date}, {time}\n\nPokud se nebudete moci zúčastnit, přihlášku můžete zrušit zde:\n{cancel_url}\n"
+        "body": "Dobrý den, {name},\n\nděkujeme za přihlášku, těšíme se na Vás! Potvrzujeme Váš termín.\n\nAkce: {event_title}\nRegistrace: {registration_name}\nTermín: {date}, {time}\n\nPokud se nebudete moci zúčastnit, zrušte prosím přihlášku zde, místo se uvolní ostatním:\n{cancel_url}\n\nSlavíčkovy knihohrátky\n"
       },
       "en": {
         "subject": "Booking confirmation: {event_title}",
-        "body": "Hello {name},\n\nthank you for your booking. We confirm your slot.\n\nEvent: {event_title}\nRegistration: {registration_name}\nDate: {date}, {time}\n\nIf you cannot make it, you can cancel your booking here:\n{cancel_url}\n"
+        "body": "Hello {name},\n\nthank you for your booking, we look forward to seeing you! We confirm your slot.\n\nEvent: {event_title}\nRegistration: {registration_name}\nDate: {date}, {time}\n\nIf you cannot make it, please cancel your booking here so the place goes to somebody else:\n{cancel_url}\n\nSlavíčkovy knihohrátky\n"
       }
     },
     "admin_notification": {
       "cs": {
         "subject": "Nová přihláška: {event_title} ({date})",
-        "body": "Nová přihláška na událost {event_title} (registrace {registration_name}).\n\nTermín: {date}, {time}\nJméno: {name}\nE-mail: {email}\n"
+        "body": "Nová přihláška na akci {event_title} (registrace {registration_name}).\n\nTermín: {date}, {time}\nJméno: {name}\nE-mail: {email}\n"
       },
       "en": {
         "subject": "New booking: {event_title} ({date})",
@@ -38,31 +38,31 @@
     "cancellation": {
       "cs": {
         "subject": "Zrušení přihlášky: {event_title}",
-        "body": "Dobrý den, {name},\n\nVaše přihláška na událost {event_title} (termín {date}, {time}) byla zrušena.\n"
+        "body": "Dobrý den, {name},\n\nVaše přihláška na akci {event_title} (termín {date}, {time}) byla zrušena. Budeme rádi, když se k nám příště přidáte.\n\nSlavíčkovy knihohrátky\n"
       },
       "en": {
         "subject": "Booking cancelled: {event_title}",
-        "body": "Hello {name},\n\nyour booking for {event_title} ({date}, {time}) has been cancelled.\n"
+        "body": "Hello {name},\n\nyour booking for {event_title} ({date}, {time}) has been cancelled. We would be glad to see you next time.\n\nSlavíčkovy knihohrátky\n"
       }
     },
     "changed": {
       "cs": {
         "subject": "Změna Vaší přihlášky: {event_title}",
-        "body": "Dobrý den, {name},\n\npořadatel upravil Vaši přihlášku na událost {event_title} (registrace {registration_name}).\n\nPůvodní termín: {old_date}, {old_time}\nNový termín: {date}, {time}\n\n{note_section}Pokud Vám změna nevyhovuje, přihlášku můžete zrušit zde:\n{cancel_url}\n"
+        "body": "Dobrý den, {name},\n\npořadatel upravil Vaši přihlášku na akci {event_title} (registrace {registration_name}).\n\nPůvodní termín: {old_date}, {old_time}\nNový termín: {date}, {time}\n\n{note_section}Pokud Vám změna nevyhovuje, přihlášku můžete zrušit zde:\n{cancel_url}\n\nSlavíčkovy knihohrátky\n"
       },
       "en": {
         "subject": "Your booking has been changed: {event_title}",
-        "body": "Hello {name},\n\nthe organiser has changed your booking for {event_title} (registration {registration_name}).\n\nPrevious date: {old_date}, {old_time}\nNew date: {date}, {time}\n\n{note_section}If the change does not suit you, you can cancel your booking here:\n{cancel_url}\n"
+        "body": "Hello {name},\n\nthe organiser has changed your booking for {event_title} (registration {registration_name}).\n\nPrevious date: {old_date}, {old_time}\nNew date: {date}, {time}\n\n{note_section}If the change does not suit you, you can cancel your booking here:\n{cancel_url}\n\nSlavíčkovy knihohrátky\n"
       }
     },
     "cancelled_by_admin": {
       "cs": {
         "subject": "Zrušení Vaší přihlášky: {event_title}",
-        "body": "Dobrý den, {name},\n\npořadatel zrušil Vaši přihlášku na událost {event_title} (registrace {registration_name}).\n\nZrušený termín: {old_date}, {old_time}\n\n{note_section}Omlouváme se za nepříjemnosti.\n"
+        "body": "Dobrý den, {name},\n\nbohužel jsme museli zrušit Vaši přihlášku na akci {event_title} (registrace {registration_name}).\n\nZrušený termín: {old_date}, {old_time}\n\n{note_section}Omlouváme se za nepříjemnosti a doufáme, že se uvidíme příště.\n\nSlavíčkovy knihohrátky\n"
       },
       "en": {
         "subject": "Your booking has been cancelled: {event_title}",
-        "body": "Hello {name},\n\nthe organiser has cancelled your booking for {event_title} (registration {registration_name}).\n\nCancelled date: {old_date}, {old_time}\n\n{note_section}We apologise for the inconvenience.\n"
+        "body": "Hello {name},\n\nunfortunately we had to cancel your booking for {event_title} (registration {registration_name}).\n\nCancelled date: {old_date}, {old_time}\n\n{note_section}We apologise for the inconvenience and hope to see you next time.\n\nSlavíčkovy knihohrátky\n"
       }
     }
   }
