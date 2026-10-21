@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { setTokens } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
+import { consumeReturnPath } from '../utils/returnPath'
 
 /**
  * Landing page for the Google OAuth redirect - the auth service appends
@@ -45,7 +46,7 @@ export default function OAuthCallback() {
       .then((loaded) => {
         // If consent was required, loadUser() already redirected to
         // /consent internally - navigating to '/' here too would cancel it.
-        if (loaded) navigate('/', { replace: true })
+        if (loaded) navigate(consumeReturnPath() ?? '/', { replace: true })
       })
       .catch(() => setError(t('oauthCallback.profileLoadError')))
   }, [navigate, loadUser, t])
