@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import usePageMeta from '../hooks/usePageMeta'
+import NotFound from './NotFound'
 
 interface PageData {
   heading: string
@@ -38,11 +39,7 @@ export default function PageDetail() {
   }, [slug])
 
   if (notFound) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-ink dark:text-ink-dark">
-        <p className="text-sm text-ink-soft dark:text-ink-soft-dark">{t('pageDetail.notFound')}</p>
-      </div>
-    )
+     return <NotFound/>
   }
 
   if (!page) {
