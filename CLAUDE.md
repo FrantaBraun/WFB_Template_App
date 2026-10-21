@@ -12,8 +12,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Veřejná část:** informace o hospodě, nabídka, polední menu, adresa a provozovatel, otevírací doba a rezervace.
 - **Polední menu a nabídka** se upravují v administraci.
 - **Otevírací doba** se spravuje pro jednotlivé dny a lze ji jednorázově upravit pro konkrétní den (např. nečekaně zavřeno z nějakého důvodu).
-- **Rezervace stolu:** stůl pro *x* lidí v čase od–do. Systém ověřuje dostupnost stolu v daném čase; mezi dvěma rezervacemi téhož stolu musí být alespoň 30 minut.
+- **Rezervace stolu:** pro *x* lidí v čase od–do. **Stůl nevybírá zákazník, přiděluje ho systém podle požadované kapacity.** Systém ověřuje dostupnost stolu v daném čase; mezi dvěma rezervacemi téhož stolu musí být alespoň 30 minut. **Výchozí délka rezervace je 2 hodiny** (nejdéle do konce otevírací doby), zákazník ve formuláři může zadat jinou požadovanou dobu.
 - **Rezervace celých prostor:** vždy od zvoleného času do konce otevírací doby. V této době už nesmí existovat žádná rezervace stolu, a naopak – je-li zarezervován celý prostor, nelze v tu dobu rezervovat stůl.
+- **Kdo rezervuje:** rezervovat může kdokoli, i anonymně (bez přihlášení).
+- **Zavření dne:** má-li den rezervace, nelze ho zavřít (výjimkou z otevírací doby), dokud je administrátor nevyřeší – **každou zvlášť zruší** v administraci. Zrušení nese text od administrátora a zákazníkovi odejde e-mail, že rezervace je zrušena, spolu s tímto textem.
 - **Administrace:** polední menu, nabídka, otevírací doba (včetně výjimek pro konkrétní dny) a kalendář rezervací.
 
 Forked from `core` by the `new-app` skill on 2026-10-21. Branch: `showing_pub`; database `showing_pub_db`.

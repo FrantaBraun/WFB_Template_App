@@ -9,8 +9,10 @@ This repository doesn't ship a single app — it hosts a shared core plus one br
 Název, adresa, provozovatel, nabídka i všechny ostatní údaje o hospodě jsou smyšlené. Vzhled webu se přizpůsobuje nabídce a zaměření hospůdky (např. staročeská kuchyně a široký výběr výčepních piv).
 
 - **Veřejná část:** informace o hospodě, nabídka, polední menu, adresa, otevírací doba a rezervace.
-- **Rezervace stolu** pro *x* lidí v čase od–do; systém ověřuje dostupnost stolu a mezi dvěma rezervacemi téhož stolu musí být alespoň 30 minut.
+- **Rezervace stolu** pro *x* lidí; stůl přiděluje systém podle požadované kapacity, zákazník ho nevybírá. Výchozí délka jsou 2 hodiny (nejdéle do konce otevírací doby), zákazník může zadat jinou. Mezi dvěma rezervacemi téhož stolu musí být alespoň 30 minut.
 - **Rezervace celých prostor** vždy od zvoleného času do konce otevírací doby. V té době už nesmí existovat žádná rezervace stolu, a je-li zarezervován celý prostor, nelze rezervovat ani stůl.
+- **Rezervovat lze i anonymně**, bez přihlášení.
+- **Zavření dne s rezervacemi:** administrátor nejdřív každou rezervaci zvlášť zruší; zákazník dostane e-mail se zprávou od administrátora.
 - **Administrace:** polední menu a nabídka, otevírací doba pro jednotlivé dny (s jednorázovou úpravou konkrétního dne, např. nečekaně zavřeno) a kalendář rezervací.
 
 ## Branches
