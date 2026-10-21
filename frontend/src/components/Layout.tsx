@@ -48,6 +48,7 @@ function ConfettiBackground() {
     </div>
   )
 }
+const isRegistrationAllowed = (import.meta.env.VITE_REGISTRATION_ALLOWED || 'true') === 'true';
 
 function MenuIcon({ className }: { className?: string }) {
   return (
@@ -151,7 +152,8 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
           </button>
         </>
       ) : (
-        <Link to="/login" aria-label={t('common.login')} className={iconButtonClass}>
+        isRegistrationAllowed &&
+        <Link to="/login" aria-label={t('common.login')} className={iconButtonClass + " rounded-full p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"}>
           <LoginIcon className="h-5 w-5" />
         </Link>
       )}

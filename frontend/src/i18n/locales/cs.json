@@ -242,5 +242,10 @@
   "footer": {
     "ecosystem": "WithFBraun",
     "copyright": "© {{year}} František Braun"
+  },
+  "notFound" : {
+    "pageTitle" : "Nenalezeno",
+    "title" : "Stránka nenalezena",
+    "backToHomePage" : "Zpět na domovskou stránku"
   }
 }

@@ -22,6 +22,7 @@ import AdminPagesList from "./pages/admin/AdminPagesList"
 import AdminPageForm from "./pages/admin/AdminPageForm"
 import PageDetail from "./pages/PageDetail"
 import { useEnabledModules } from "./modules/registry"
+import NotFound from "./pages/NotFound"
 
 
 /** /clanek/:slug -> /articles/:slug - the old article links keep working; articles are the articles module's now, slugs unchanged. */
@@ -32,12 +33,12 @@ function ArticleRedirect() {
 
 function App() {
   const modules = useEnabledModules()
-
+  const isRegistrationAllowed = (import.meta.env.VITE_REGISTRATION_ALLOWED || 'true') === 'true';
   return (<Layout modules={modules}>
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      {isRegistrationAllowed && <Route path="/register" element={<Register />} />}
       <Route path="/account" element={<Account />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/consent" element={<Consent />} />
@@ -67,6 +68,7 @@ function App() {
           app/api/validators.py's PAGE_RESERVED_SLUGS) so a page can never be
           saved under a slug one of the routes above would otherwise shadow. */}
       <Route path="/:slug" element={<PageDetail />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
 
   </Layout>
