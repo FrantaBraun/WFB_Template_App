@@ -11,6 +11,7 @@ import { apiFetch } from '../api/client'
 import { articlePath } from '../modules/articles'
 import { EventCalendar } from '../modules/event_calendar'
 import { API_BASE as EVENTS_API, parseEventDate, type Dashboard, type DatedArticle as ArticleTeaser } from '../modules/event_calendar/api'
+import usePageMeta from '../hooks/usePageMeta'
 
 /** Same open-book mark as Layout.tsx's nav badge, at hero size - see that file's BookIcon for why this is duplicated rather than shared. */
 function BookIcon({ className }: { className?: string }) {
@@ -98,6 +99,8 @@ export default function HomePage() {
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState<ArticleTeaser[] | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  usePageMeta({ title: '', description: t('meta.description')})
 
   useEffect(() => {
     apiFetch(`${EVENTS_API}/dashboard`)
