@@ -18,16 +18,17 @@ import OAuthCallback from "./pages/OAuthCallback"
 import Version from "./pages/Version"
 import ReleaseNews from "./pages/ReleaseNews"
 import { useEnabledModules } from "./modules/registry"
+import NotFound from "./pages/NotFound"
 
 
 function App() {
   const modules = useEnabledModules()
-
+  const isRegistrationAllowed = (import.meta.env.VITE_REGISTRATION_ALLOWED || 'true') === 'true';
   return (<Layout modules={modules}>
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      {isRegistrationAllowed && <Route path="/register" element={<Register />} />}
       <Route path="/account" element={<Account />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/consent" element={<Consent />} />
@@ -41,6 +42,7 @@ function App() {
           <Route key={`${module.key}:${route.path}`} path={route.path} element={route.element} />
         )),
       )}
+      <Route path="*" element={<NotFound />} />
     </Routes>
 
   </Layout>

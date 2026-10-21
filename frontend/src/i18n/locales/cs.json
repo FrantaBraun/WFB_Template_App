@@ -191,5 +191,10 @@
     "htmlSourceHint": "Zdrojový kód smí obsahovat jen povolené značky. Skripty, vlastní styly a vložené rámce z jiných stránek než YouTube a Vimeo se při uložení odstraní.",
     "backToEditor": "Zpět do editoru",
     "mentionNoResults": "Žádné výsledky"
+  },
+  "notFound" : {
+    "pageTitle" : "Not Found",
+    "title" : "The page was not Found",
+    "backToHomePage" : "Back to the Home Page"
   }
 }
