@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
 
 const isRegistrationAllowed = (import.meta.env.VITE_REGISTRATION_ALLOWED || 'true') === 'true';
+const isGoogleSignInAllowed = (import.meta.env.VITE_GOOGLE_SIGN_ALLOWED || 'true') === 'true';
 
 // Redirects straight to the auth service - it owns the entire Google exchange
 // and redirects back to /oauth/callback with tokens, no backend involvement.
@@ -94,19 +95,21 @@ export default function Login() {
           {loading ? t('login.submitting') : t('login.submit')}
         </button>
       </form>
+      {isGoogleSignInAllowed && <>
+        <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-slate-500">
+          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+          {t('login.or')}
+          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+        </div>
 
-      <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-slate-500">
-        <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
-        {t('login.or')}
-        <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
-      </div>
-
-      <a
-        href={buildGoogleLoginUrl()}
-        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-center font-medium text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-      >
-        {t('login.google')}
-      </a>
+        <a
+          href={buildGoogleLoginUrl()}
+          className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-center font-medium text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+        >
+          {t('login.google')}
+        </a>
+      </>
+      }
       {isRegistrationAllowed &&
         <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
           {t('login.noAccount')}{' '}
