@@ -29,7 +29,7 @@ type Message = { type: 'success' | 'error'; text: string } | null
  * uses elsewhere of not duplicating near-identical forms. */
 export default function AdminPageForm() {
   const { t } = useTranslation()
-  usePageMeta({ title: t('admin.pages.title'), description: t('admin.pageDescription') })
+  usePageMeta({ title: t('admin.pages.title'), description: t('admin.pageDescription'), noindex: true })
   const { user, loading: authLoading } = useRequireAdmin()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()

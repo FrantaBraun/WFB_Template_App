@@ -36,6 +36,27 @@
   --color-coral: #e86a5c;
   --color-coral-dark: #f28a7d;
   --color-violet: #9b7ebd;
+
+  /* The shared modules (articles, events, forms, registrations, the account
+     and sign-in pages) are written against Tailwind's cool "slate" greys, which
+     on this app's warm paper / brown dark background read as blue-grey cards
+     that clash with it. Redefining the slate ramp here re-tones every one of
+     them in a single place, without touching module code that comes from
+     `core`: 50-200 are surfaces and borders in the light theme, 300-600 text
+     and muted text (300 / 400 / 500 / 600 equal ink-soft-dark /
+     ink-muted-dark / ink-muted / ink-soft above), 700-950 the dark theme's
+     borders, cards (900 = card-dark) and page (950 = paper-dark). */
+  --color-slate-50: #f7f2e5;
+  --color-slate-100: #efe8d6;
+  --color-slate-200: #e0d7c1;
+  --color-slate-300: #cabfa9;
+  --color-slate-400: #a89d87;
+  --color-slate-500: #6e6858;
+  --color-slate-600: #5a5347;
+  --color-slate-700: #4b443a;
+  --color-slate-800: #3c352c;
+  --color-slate-900: #2c2620;
+  --color-slate-950: #211d17;
 }
 
 :root {
@@ -213,14 +234,14 @@ h1, h2, h3, h4, h5, h6 {
 
 .rich-text-content th,
 .rich-text-content td {
-  border: 1px solid rgb(148 163 184 / 0.6);
+  border: 1px solid rgb(168 157 135 / 0.6);
   padding: 0.4rem 0.6rem;
   vertical-align: top;
   min-width: 4rem;
 }
 
 .rich-text-content th {
-  background: rgb(148 163 184 / 0.15);
+  background: rgb(168 157 135 / 0.15);
   font-weight: 600;
   text-align: left;
 }
@@ -233,7 +254,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .rich-text-content pre {
-  background: rgb(148 163 184 / 0.15);
+  background: rgb(168 157 135 / 0.15);
   border-radius: 0.5rem;
   padding: 0.75rem 1rem;
   overflow-x: auto;
@@ -248,7 +269,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .rich-text-content p code {
-  background: rgb(148 163 184 / 0.2);
+  background: rgb(168 157 135 / 0.2);
   border-radius: 0.25rem;
   padding: 0.1em 0.3em;
 }
@@ -268,9 +289,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .rich-text-content .ProseMirror .ProseMirror-selectednode {
-  outline: 2px solid #38bdf8;
+  outline: 2px solid var(--color-teal);
 }
 
 .rich-text-content .ProseMirror .selectedCell {
-  background: rgb(56 189 248 / 0.2);
+  background: rgb(47 125 120 / 0.2);
 }

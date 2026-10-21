@@ -23,7 +23,7 @@ type SortColumn = 'heading' | 'status' | 'updated_at'
 
 export default function AdminPagesList() {
   const { t } = useTranslation()
-  usePageMeta({ title: t('admin.pages.title'), description: t('admin.pageDescription') })
+  usePageMeta({ title: t('admin.pages.title'), description: t('admin.pageDescription'), noindex: true })
   const { user, loading: authLoading } = useRequireAdmin()
 
   const [pages, setPages] = useState<PageRow[] | null>(null)
