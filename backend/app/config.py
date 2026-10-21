@@ -74,6 +74,7 @@ class Settings(BaseSettings):
     mail_username: str = ""
     mail_password: str = ""
     mail_from: str = "noreply@example.com"
+    mail_from_name: str = ""
     mail_server: str = "smtp.example.com"
     mail_port: int = 587
     mail_starttls: bool = True
