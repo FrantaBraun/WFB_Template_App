@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { clearTokens, getRefreshToken, setTokens } from '../api/client'
 import { apiFetch } from '../api/client'
 import { applyUserLanguage } from '../i18n'
+import { consumeReturnPath } from '../utils/returnPath'
 import { useTheme } from './ThemeContext'
 
 interface AuthContextType {
@@ -61,7 +62,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // own redirect param. Fall back to home instead.
       const currentPath = window.location.pathname
       const isTransientAuthPage = ['/login', '/oauth/callback', '/consent'].includes(currentPath)
-      const redirectTo = isTransientAuthPage ? '/' : currentPath + window.location.search
+      // From a sign-in page the visitor goes where they were headed before
+      // (a page that asked them to sign in - see utils/returnPath.ts), else home.
+      const redirectTo = isTransientAuthPage ? (consumeReturnPath() ?? '/') : currentPath + window.location.search
       navigate(`/consent?group=${groupId}&redirect=${encodeURIComponent(redirectTo)}`, { replace: true })
     },
     [navigate],
@@ -143,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setTokens(data.access_token, data.refresh_token)
     const loaded = await loadUser()
     if (loaded) {
-      navigate('/', { replace: true })
+      navigate(consumeReturnPath() ?? '/', { replace: true })
     }
   }
 
