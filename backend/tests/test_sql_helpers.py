@@ -8,16 +8,18 @@ import pytest
 
 from app.services.sql import like_pattern
 
+BACKSLASH = "\\"
+
 
 @pytest.mark.parametrize(
     ("text", "pattern"),
     [
         ("abc", "%abc%"),
         ("", "%%"),
-        ("100%", "%100\%%"),
-        ("snake_case", "%snake\_case%"),
-        ("a\b", "%a\\b%"),
-        ("%_\\", "%\%\_\\%"),
+        ("100%", "%100" + BACKSLASH + "%%"),
+        ("snake_case", "%snake" + BACKSLASH + "_case%"),
+        ("a" + BACKSLASH + "b", "%a" + BACKSLASH * 2 + "b%"),
+        ("%_" + BACKSLASH, "%" + BACKSLASH + "%" + BACKSLASH + "_" + BACKSLASH * 2 + "%"),
     ],
 )
 def test_like_pattern_matches_anywhere_and_takes_wildcards_literally(text, pattern):

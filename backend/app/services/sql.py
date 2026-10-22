@@ -8,7 +8,7 @@
 def like_pattern(text: str) -> str:
     """`text` as a LIKE / ILIKE pattern that matches it anywhere in a value: `%`, `_`
     and the escape character itself are taken literally, so a search for "100%" or
-    "snake_case" finds that and not everything. The query must say `escape="\\\\"`
-    (SQLAlchemy: `column.ilike(like_pattern(text), escape="\\\\")`)."""
-    escaped = text.replace("\\", "\\\\").replace("%", "\%").replace("_", "\_")
+    "snake_case" finds that and not everything. The query must name the escape
+    character: `column.ilike(like_pattern(text), escape="\\\\")` in SQLAlchemy."""
+    escaped = text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     return f"%{escaped}%"
