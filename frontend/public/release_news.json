@@ -1,46 +1,4 @@
 {
-    "unreleased": [
-        "Add an event_booking module (src/modules/event_booking) for registering for an event: a Register button under each date of an article (the dates of an event with a registration), which opens a form - pick a day from a list or from a month calendar in which only days with a free place can be chosen, then a time where the day has times, then name, e-mail, consent to the processing of personal data and the questions of the form (usable at 320 px, light and dark); a registration for signed-in visitors only asks you to sign in and brings you back to the article afterwards (a small helper for returning to a page after signing in, also used by the Google sign-in and the consent step), and one reached by a secret link appears only when the page was opened with it. The link in the confirmation e-mail opens a page with a Cancel button. For administrators: the registrations of all events, an editor of one (details, who may register, a link to copy and renew, blocks of days and times with a live preview of the slots they offer, the form's questions, the bookings, a CSV export, a purge of old bookings), and in the editor of an event a Registration panel with the table of its bookings - to open one, see its answers and history of changes, move it, correct its name, e-mail or answers, or cancel it, each with a note and an e-mail to the person - and a summary of the answers of confirmed bookings",
-        "Add a forms module (src/modules/forms): an editor of a form's questions (seven types, options, limits, a pattern, and conditions that show a question only for certain earlier answers), the visitor's form in which questions appear and disappear as it is answered, and for administrators a list of the answers, a page with one answer in full, and a summary per question with bars, counts and shares (how many saw a conditional question and how many answered, averages of numbers, earliest and latest dates). Other modules embed these; the page /forms/manage/<form id> shows all the answers of a form",
-        "Fix the application failing to start (a blank page with \"Cannot access 'default' before initialization\" in the console) when a page imports something from a module before the module registry is loaded, as an application's home page does with the event calendar: the list of enabled modules now lives in its own file that no module has to import the registry for",
-        "The event calendar now builds on articles: an event is a date (or a run of days, with optional times) of an article and leads to it - there is no separate event page any more. The calendar colours days and events by the article's type (light and dark theme), marks pinned articles with a pin and shows an event's short description (up to 128 characters) when you point at it or tab to it, with its popup kept on screen on phones. An article's page lists its dates, an article's editor has a panel to add, edit and delete them, and the administrators' date form picks the article by searching. Other modules can add to these pages through three new slots (event.actions, event.manage, event.editor)",
-        "Add an articles module (src/modules/articles): a list with search and a type filter, the article page drawn in its type's colours (light and dark theme), and an administrator area to write articles with the full editor (images, video, tables, HTML source), choose status and display window, pin them and manage the article types and their colours",
-        "The rich-text editor gains text alignment, tables, a horizontal rule, code blocks, YouTube / Vimeo video links and an HTML source mode (the server still strips anything unsafe on save)",
-        "A module can declare the modules it requires (a console warning is logged once when one is enabled without them) and contribute components to named slots that other modules render with <ModuleSlot>, so a module can extend another module's pages without that module knowing about it",
-        "The release build no longer writes its own frontend .env with fixed addresses: it copies the development directory's frontend/.env as it is stored, stops with guidance when it is missing, and warns when an address in it points at localhost",
-        "Page titles and descriptions no longer say \"Authenticate WFB\": every page now takes the application's name (nav.brand) and a default description (meta.description) from its translations, and also sets a canonical URL, Open Graph and Twitter tags and the page language. Sign-in, account, administration and diagnostic pages ask search engines not to index them",
-        "The contact page can now show an introduction, contact details (email, address, GitHub, LinkedIn) and a note next to the form, all set per deployment; the page moved to /contact (/kontakt redirects there). With nothing configured it is still just the form",
-        "Add a CRM module (src/modules/crm), shown to administrators only: a header icon opens the partner list with search, each partner's page with their tasks, and each task's page where invoice PDFs are uploaded, downloaded and deleted - in Czech and English",
-        "Fix the header on phones when signed in: the app name wrapped and its small tag slid under the notification bell. The header is now more compact on small screens, the name truncates (and gives way to the logo alone on the narrowest phones), and the tag only shows from tablet width up",
-        "Add an event calendar module (src/modules/event_calendar): an \"Events\" nav link to a list of the next 10 events (thumbnail, title, short description) with \"Load more\", a sidebar calendar marking event and pinned-event days, a year/month archive opening a month's full listing, event pages at /events/<slug>, and an editors' area with the full WYSIWYG editor",
-        "Fix the WYSIWYG editor's toolbar not following the cursor - the heading, bold, font, size and color controls now always show the formatting where the cursor is",
-        "Add a shared WYSIWYG HTML editor component (headings, fonts, colors, font sizes, lists, links, images and optional @-mention links) for any page or module that edits rich content",
-        "The contact form now sends the language it was filled in, so the confirmation email arrives in that language",
-        "Feature modules can now add links to the sitewide footer (footerLinks)",
-        "The Stripe payment gate module now publishes the pages a site taking payments must have - About us (provider identification), Terms and conditions, Privacy policy (GDPR) and Cookies - in Czech and English, linked from the footer and filled in from public/legal.json; its pay button now reads \"Order and pay\", links the terms and privacy policy, and can ask for the digital-content withdrawal waiver",
-        "Add a Stripe payment gate module (src/modules/stripe_payment_gate): a reusable Pay button / startCheckout() helper that redirects to Stripe Checkout, and a /platba/vysledek result page showing whether the payment succeeded, is still being confirmed, was canceled, failed, or expired",
-        "Add a notifications module (src/modules/notifications): a header bell with unread badge and dropdown, available to any application that enables it",
-        "Redesign the header so account controls, the language switcher (now a dropdown), the theme toggle, and any module-provided header icon (like the new notifications bell) stay visible everywhere, including in the collapsed mobile view - only page navigation links collapse into the hamburger menu",
-        "Fix the header nav overlapping the logo on narrow screens: below the tablet breakpoint it now collapses into a hamburger-triggered dropdown menu",
-        "Add a contact-form module (src/modules/kontaktni_formular) with a /kontakt page and nav link: subject + message, plus a required reply-to email when signed out",
-        "Add sun/moon icons to the light/dark toggle switch's thumb, matching whichever mode is active",
-        "Add a sitewide footer (linking to withfbraun.com before the copyright line) pinned to the bottom of the viewport even on short pages",
-        "Add a pluggable feature-module system: self-contained modules under src/modules/ are auto-discovered and toggled on/off per application via public/modules.json, contributing their own routes, nav links, and translations",
-        "Add light/dark theme toggle in the header, with the preference synced to the signed-in user's profile (user_data.darkMode) and a dedicated Appearance section on the Account page",
-        "Add /release-news page showing backend and frontend release history side by side, grouped by compatible major.minor version"
-    ],
-    "releases": [
-        {
-            "version": "1.0.0",
-            "release_date": "2026-07-14",
-            "changes": [
-                "Vite + React + TypeScript + Tailwind v4 app",
-                "Login, registration, and Google OAuth sign-in",
-                "Account page with separate local-data and shared-profile cards, including config.json-driven custom attributes",
-                "Custom consent screen and rejection page",
-                "Multi-language UI (Czech/English) with automatic switching to the signed-in user's own language preference",
-                "/version diagnostic page comparing backend/frontend compatibility"
-            ]
-        }
-    ]
+    "unreleased": [],
+    "releases": []
 }

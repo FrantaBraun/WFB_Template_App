@@ -1,6 +1,13 @@
-# With FBraun — App Family Template
+# HomeRepository
 
-A shared foundation for a family of full-stack applications: a **FastAPI** backend, a **Vite + React + TypeScript** frontend, and deployment tooling — pre-wired to a shared, external authorization service so you don't have to build login, registration, or session handling from scratch.
+A personal database builder: create your own repositories (databases) with your own object types (tables) and attributes, and save filters and statistics over the data. Built on the **FastAPI** backend and **Vite + React + TypeScript** frontend of the shared With FBraun core, signed in through the shared authorization service ([auth.withfbraun.com](https://auth.withfbraun.com)).
+
+## About HomeRepository
+
+- **Repositories** are private to their owner and have a name, a description, a slug and a colour scheme that tints the repository once it is opened.
+- **Tables** (object types) are defined by their attributes: text, number, boolean, date, date and time, image, reference to a record of another table of the same repository, and lists and maps of one simple type. Every record has a name and a slug of its own and can be soft-deleted and restored.
+- **Content** is browsed as a paged table or a grid, with filters, sorting and a switch for deleted records. Filters can be saved, and **statistics** (a pivot-table style grouping with count, sum, average, minimum and maximum) are shown as tables and charts above the content.
+- Everything lives in one feature module, `repository`, on this branch. See `CLAUDE.md` for the full description and rules.
 
 This repository doesn't ship a single app — it hosts a shared core plus one branch per application, so improvements to the shared foundation are made once and carried into every app instead of being duplicated per app.
 
