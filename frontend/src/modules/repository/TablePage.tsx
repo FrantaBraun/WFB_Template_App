@@ -215,6 +215,7 @@ export default function TablePage() {
         filters={savedFilters}
         activeId={activeFilterId}
         current={currentDefinition}
+        incomplete={applied.length !== conditions.length}
         onApply={applyFilter}
         onSaved={async (saved) => {
           await loadFilters()

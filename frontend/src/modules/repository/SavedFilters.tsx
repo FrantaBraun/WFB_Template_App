@@ -27,6 +27,7 @@ export default function SavedFilters({
   filters,
   activeId,
   current,
+  incomplete,
   onApply,
   onSaved,
   onDeleted,
@@ -36,6 +37,8 @@ export default function SavedFilters({
   filters: SavedFilter[]
   activeId: string | null
   current: FilterDefinition
+  /** A filter row is not complete yet: it is not part of `current`, but the page no longer says what the saved filter says. */
+  incomplete: boolean
   onApply: (filter: SavedFilter) => void
   onSaved: (filter: SavedFilter) => void
   onDeleted: () => void
@@ -44,7 +47,7 @@ export default function SavedFilters({
   const saveErrorText = useSaveErrorText()
   const api = `${tableApi(repositorySlug, table.slug)}/filters`
   const active = filters.find((filter) => filter.id === activeId) ?? null
-  const changed = active !== null && !sameDefinition(current, active.definition)
+  const changed = active !== null && (incomplete || !sameDefinition(current, active.definition))
   const [saving, setSaving] = useState<SaveMode | null>(null)
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)

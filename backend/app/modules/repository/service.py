@@ -54,6 +54,8 @@ async def commit_or_slug_taken(db: AsyncSession) -> None:
         await db.commit()
     except IntegrityError as exc:
         await db.rollback()
+        if "_slug" not in str(exc.orig):  # only the slug's unique constraints (uq_module_repository_*_slug) mean "taken"
+            raise
         raise slug_taken() from exc
 
 
@@ -151,7 +153,7 @@ def resolve_slug(name: str, requested: str | None, taken: set[str], own_slug: st
     requested one - which must be valid (422) and not used by another row in the
     same scope (409). `own_slug` is the row's current slug, which is not 'taken'."""
     taken = taken - {own_slug} if own_slug else taken
-    if requested is None or requested == "":
+    if requested is None:
         return logic.unique_slug(name, taken)
     problem = logic.slug_problem(requested)
     if problem:

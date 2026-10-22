@@ -843,3 +843,12 @@ async def test_a_table_can_refer_to_itself_with_a_reference_and_with_a_list_of_r
 
     assert resp.status_code == 200
     assert resp.json()["attributes"][0]["config"] == {"table_id": people["id"]}
+
+
+async def test_an_empty_slug_on_update_is_refused_not_regenerated(client, alice):
+    repo = await _repo(client, alice, name="Knihy")
+
+    resp = await client.patch(f"{BASE}/repositories/{repo['slug']}", json={"slug": ""}, headers=alice)
+
+    assert (resp.status_code, resp.json()["detail"]) == (422, {"errors": {"slug": "invalid"}})
+    assert (await client.get(f"{BASE}/repositories/knihy", headers=alice)).status_code == 200
