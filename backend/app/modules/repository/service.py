@@ -294,13 +294,17 @@ async def delete_table(db: AsyncSession, repository: Repository, table: Reposito
 
 
 async def records_holding_values(db: AsyncSession, table_id: uuid.UUID, attribute_ids: Sequence[uuid.UUID]) -> dict[uuid.UUID, int]:
-    """How many records of the table hold a value for each of these attributes."""
-    counts: dict[uuid.UUID, int] = {}
-    for attribute_id in attribute_ids:
-        counts[attribute_id] = await db.scalar(
-            select(func.count(Record.id)).where(Record.table_id == table_id, Record.data.has_key(str(attribute_id)))
+    """How many records of the table hold a value for each of these attributes, in one query."""
+    if not attribute_ids:
+        return {}
+    row = (
+        await db.execute(
+            select(*[func.count(Record.id).filter(Record.data.has_key(str(attribute_id))) for attribute_id in attribute_ids]).where(
+                Record.table_id == table_id
+            )
         )
-    return counts
+    ).one()
+    return dict(zip(attribute_ids, row))
 
 
 async def attribute_dependants(db: AsyncSession, table: RepositoryTable, attribute_ids: set[str]) -> list[dict[str, str]]:

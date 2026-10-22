@@ -396,3 +396,25 @@ async def test_a_users_statistic_only_ever_counts_their_own_records(client, db_s
 
     assert mine["total"] == 6
     assert theirs["total"] == 1
+
+
+async def test_a_statistic_is_computed_with_one_aggregate_query(client, db_session, alice):
+    from sqlalchemy import event
+
+    from app.database import engine
+
+    repository, sales, ids, _ = await _sales(client, db_session, alice)
+    statements: list[str] = []
+
+    def record(conn, cursor, statement, *args):
+        statements.append(statement)
+
+    event.listen(engine.sync_engine, "before_cursor_execute", record)
+    try:
+        await _result(client, alice, repository, sales, [{"field": ids["region"]}, {"field": ids["paid"]}], {"fn": "sum", "attribute_id": ids["amount"]})
+    finally:
+        event.remove(engine.sync_engine, "before_cursor_execute", record)
+
+    aggregates = [statement for statement in statements if "GROUPING SETS" in statement.upper()]
+    assert len(aggregates) == 1  # cells, both sets of totals and the grand total together
+    assert not [statement for statement in statements if "GROUP BY" in statement.upper() and "GROUPING SETS" not in statement.upper()]

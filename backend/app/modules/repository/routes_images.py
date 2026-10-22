@@ -7,9 +7,12 @@ An image belongs to whoever uploaded it until a record that holds its id is
 saved (then to that record, still only to its owner's eyes)."""
 
 import uuid
+from collections.abc import Callable, Coroutine
+from typing import Any
 
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from fastapi.responses import Response
+from fastapi.routing import APIRoute
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -20,10 +23,55 @@ from app.modules.repository.config import RepositoryConfig, get_limits
 from app.modules.repository.schemas import ImageImport, ImageOut
 from app.modules.repository.service import errors_422
 
+# What a multipart body adds to the file itself (boundaries, headers).
+MULTIPART_OVERHEAD = 64 * 1024
+
+
+def _too_large() -> HTTPException:
+    return HTTPException(status_code=413, detail={"errors": {"file": "too_large"}})
+
+
+class UploadLimitRoute(APIRoute):
+    """A route that refuses a request body larger than an image may be BEFORE it
+    is read. Starlette receives and spools a whole multipart body before the
+    endpoint (or any dependency) runs, so the endpoint's own size check would come
+    after a huge upload had already been written to disk. A declared
+    Content-Length over the limit is refused at once; a body that does not declare
+    one (chunked) is cut off as soon as it has sent more than the limit. The
+    answer is 413 `{"errors": {"file": "too_large"}}`, like an oversized image
+    that did arrive."""
+
+    def get_route_handler(self) -> Callable[[Request], Coroutine[Any, Any, Response]]:
+        handler = super().get_route_handler()
+
+        async def limited(request: Request) -> Response:
+            # The dependency override lets tests set the limits, as for the endpoints themselves.
+            limits = request.app.dependency_overrides.get(get_limits, get_limits)()
+            allowed = limits.max_image_bytes + MULTIPART_OVERHEAD
+            declared = request.headers.get("content-length", "")
+            if declared.isdigit() and int(declared) > allowed:
+                raise _too_large()
+            received = 0
+            receive = request.receive
+
+            async def counting_receive():
+                nonlocal received
+                message = await receive()
+                received += len(message.get("body", b""))
+                if received > allowed:
+                    raise _too_large()
+                return message
+
+            return await handler(Request(request.scope, counting_receive, request._send))
+
+        return limited
+
+
+upload_router = APIRouter(prefix="/images", route_class=UploadLimitRoute)
 router = APIRouter(prefix="/images")
 
 
-@router.post("", status_code=201)
+@upload_router.post("", status_code=201)
 async def upload_image(
     file: UploadFile,
     user: User = Depends(get_current_user),

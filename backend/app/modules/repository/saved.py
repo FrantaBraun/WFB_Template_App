@@ -18,7 +18,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from fastapi import HTTPException
-from sqlalchemy import func, select
+from sqlalchemy import func, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.repository import filters, pivot, query, records
@@ -229,16 +229,31 @@ async def compute(
             return func.count()
         return {"sum": func.sum, "avg": func.avg, "min": func.min, "max": func.max}[function](inner.c.v)
 
-    async def grouped(dimension_indexes: list[int]) -> list[tuple[Any, ...]]:
-        selected = [inner.c[f"k{index}"] for index in dimension_indexes]
-        statement = select(*selected, aggregate().label("value")).select_from(inner)
-        if selected:
-            statement = statement.group_by(*selected)
-        return [tuple(row) for row in (await db.execute(statement)).all()]
-
-    totals = [await grouped([index]) for index in range(len(dimensions))]
-    cells = totals[0] if len(dimensions) == 1 else await grouped(list(range(len(dimensions))))
-    grand_total = (await grouped([]))[0][0]
+    # ONE query for the cells, each dimension's own totals and the grand total: GROUPING SETS
+    # groups by every combination, and GROUPING(column) says which columns a row is rolled up over
+    # (a NULL key is then an empty value, not a rolled-up column).
+    key_columns = [inner.c[f"k{index}"] for index in range(len(dimensions))]
+    sets = [tuple(key_columns)] + [(column,) for column in key_columns] + [()] if len(dimensions) == 2 else [(key_columns[0],), ()]
+    statement = (
+        select(*key_columns, *[func.grouping(column) for column in key_columns], aggregate())
+        .select_from(inner)
+        .group_by(func.grouping_sets(*[tuple_(*columns) for columns in sets]))
+    )
+    cells: list[tuple[Any, ...]] = []
+    totals: list[list[tuple[Any, Any]]] = [[] for _ in dimensions]
+    grand_total: Any = None
+    count = len(dimensions)
+    for row in (await db.execute(statement)).all():
+        keys, rolled_up, value = row[:count], row[count : 2 * count], row[-1]
+        if all(rolled_up):
+            grand_total = value
+        elif not any(rolled_up):
+            cells.append((*keys, value))
+        else:  # one of two dimensions kept: that dimension's own totals
+            index = rolled_up.index(0)
+            totals[index].append((keys[index], value))
+    if count == 1:  # the groups of the only dimension are its cells and its totals
+        totals[0] = [(key, value) for key, value in cells]
 
     labels: dict[Any, str] = {}
     reference_ids = {

@@ -453,3 +453,50 @@ async def test_images_belong_to_their_users_records_in_the_database(client, db_s
 
     assert image.record_id == record.id
     assert image.owner_id is not None
+
+
+# --- A body that is too big is refused before it is read -------------------------------------------
+
+
+async def test_a_body_that_declares_more_than_an_image_may_be_is_refused_before_it_is_read(client, db_session, alice):
+    set_limits(max_image_bytes=2048)
+    too_big = PNG + b"x" * (200 * 1024)
+
+    resp = await _upload(client, alice, too_big)
+
+    assert resp.status_code == 413
+    assert resp.json()["detail"] == {"errors": {"file": "too_large"}}
+    db_session.expire_all()
+    assert (await db_session.scalars(select(Image))).all() == []
+
+
+async def test_a_body_that_does_not_declare_its_size_is_cut_off_once_it_is_too_big(client, alice):
+    set_limits(max_image_bytes=2048)
+    received = []
+
+    async def chunks():
+        yield b"--b\r\nContent-Disposition: form-data; name=\"file\"; filename=\"a.png\"\r\nContent-Type: image/png\r\n\r\n"
+        for _ in range(100):
+            received.append(1)
+            yield PNG + b"x" * 4096
+
+    resp = await client.post(
+        f"{BASE}/images", content=chunks(), headers={**alice, "content-type": "multipart/form-data; boundary=b"}
+    )
+
+    assert resp.status_code == 413
+    assert resp.json()["detail"] == {"errors": {"file": "too_large"}}
+    assert len(received) < 100  # it stopped reading long before the end
+
+
+async def test_a_file_within_the_limit_still_gets_through_the_body_limit(client, alice):
+    set_limits(max_image_bytes=4096)
+
+    assert (await _upload(client, alice, PNG + b"x" * 3000)).status_code == 201
+
+
+async def test_the_body_limit_does_not_touch_other_routes(client, alice):
+    set_limits(max_image_bytes=1024)
+    image_id = await _image_id(client, alice)
+
+    assert (await client.get(f"{BASE}/images/{image_id}", headers=alice)).status_code == 200
