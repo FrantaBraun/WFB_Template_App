@@ -20,8 +20,28 @@
     "closeMenu": "Zavřít nabídku"
   },
   "home": {
-    "title": "Šablona projektu",
-    "description": "Toto je výchozí šablona pro tvorbu dalších aplikací. Neobsahuje žádnou funkční logiku — jen předpřipravené prostředí, na kterém lze začít stavět."
+    "title": "HomeRepository",
+    "description": "Vytvořte si vlastní databáze: nadefinujte typy objektů a jejich atributy, ukládejte záznamy a sledujte statistiky.",
+    "features": {
+      "types": {
+        "title": "Vlastní typy objektů",
+        "text": "Tabulky s atributy, které si sami určíte: text, číslo, ano/ne, datum, obrázek, odkaz na jiný záznam, seznamy a mapy."
+      },
+      "browse": {
+        "title": "Přehledné prohlížení",
+        "text": "Stránkované tabulky nebo mřížka s filtrováním a řazením; smazané záznamy se dají obnovit."
+      },
+      "statistics": {
+        "title": "Statistiky",
+        "text": "Uložené filtry a kontingenční statistiky zobrazené jako tabulky a grafy."
+      },
+      "private": {
+        "title": "Soukromé a barevné",
+        "text": "Data vidíte jen vy a každý repozitář má vlastní barevné schéma."
+      }
+    },
+    "signIn": "Přihlásit se",
+    "register": "Vytvořit účet"
   },
   "login": {
     "pageTitle": "Přihlášení",

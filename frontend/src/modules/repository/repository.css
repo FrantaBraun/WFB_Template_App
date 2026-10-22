@@ -1,0 +1,205 @@
+/**
+ * Part of the With FBraun project template.
+ * Author: František Braun <frantisek.braun95@gmail.com>
+ * Freely available as a template for building custom applications.
+ */
+
+/* The colour schemes of a repository (see schemes.ts). Every scheme sets the
+   same custom properties, a light set and, under the app's class-based dark
+   mode (a `.dark` class on <html>, not the OS setting), a dark one:
+
+     --repo-accent        buttons, active items, links (readable on --repo-tint and on white)
+     --repo-accent-hover  the same, hovered
+     --repo-on-accent     text on --repo-accent (contrast at least 4.5:1)
+     --repo-tint          the background of an opened repository
+     --repo-tint-strong   the side menu, selected rows, chips
+     --repo-border        frames and dividers
+
+   Accents are the 600/700 shade of the colour's scale in light mode (700
+   where 600 is too pale for white text) and the 400 shade, with dark text,
+   in dark mode. */
+
+.repo-scheme-blue {
+  --repo-accent: #2563eb;
+  --repo-accent-hover: #1d4ed8;
+  --repo-on-accent: #ffffff;
+  --repo-tint: #eff6ff;
+  --repo-tint-strong: #dbeafe;
+  --repo-border: #93c5fd;
+}
+.dark .repo-scheme-blue {
+  --repo-accent: #60a5fa;
+  --repo-accent-hover: #93c5fd;
+  --repo-on-accent: #0f172a;
+  --repo-tint: #0b1a33;
+  --repo-tint-strong: #172a4d;
+  --repo-border: #1e40af;
+}
+
+.repo-scheme-teal {
+  --repo-accent: #0f766e;
+  --repo-accent-hover: #115e59;
+  --repo-on-accent: #ffffff;
+  --repo-tint: #f0fdfa;
+  --repo-tint-strong: #ccfbf1;
+  --repo-border: #5eead4;
+}
+.dark .repo-scheme-teal {
+  --repo-accent: #2dd4bf;
+  --repo-accent-hover: #5eead4;
+  --repo-on-accent: #0f172a;
+  --repo-tint: #08211f;
+  --repo-tint-strong: #0f3330;
+  --repo-border: #0f766e;
+}
+
+.repo-scheme-green {
+  --repo-accent: #15803d;
+  --repo-accent-hover: #166534;
+  --repo-on-accent: #ffffff;
+  --repo-tint: #f0fdf4;
+  --repo-tint-strong: #dcfce7;
+  --repo-border: #86efac;
+}
+.dark .repo-scheme-green {
+  --repo-accent: #4ade80;
+  --repo-accent-hover: #86efac;
+  --repo-on-accent: #0f172a;
+  --repo-tint: #0a1f12;
+  --repo-tint-strong: #123320;
+  --repo-border: #166534;
+}
+
+.repo-scheme-amber {
+  --repo-accent: #b45309;
+  --repo-accent-hover: #92400e;
+  --repo-on-accent: #ffffff;
+  --repo-tint: #fffbeb;
+  --repo-tint-strong: #fef3c7;
+  --repo-border: #fcd34d;
+}
+.dark .repo-scheme-amber {
+  --repo-accent: #fbbf24;
+  --repo-accent-hover: #fcd34d;
+  --repo-on-accent: #0f172a;
+  --repo-tint: #231a05;
+  --repo-tint-strong: #3a2a08;
+  --repo-border: #92400e;
+}
+
+.repo-scheme-orange {
+  --repo-accent: #c2410c;
+  --repo-accent-hover: #9a3412;
+  --repo-on-accent: #ffffff;
+  --repo-tint: #fff7ed;
+  --repo-tint-strong: #ffedd5;
+  --repo-border: #fdba74;
+}
+.dark .repo-scheme-orange {
+  --repo-accent: #fb923c;
+  --repo-accent-hover: #fdba74;
+  --repo-on-accent: #0f172a;
+  --repo-tint: #241207;
+  --repo-tint-strong: #3a1d0b;
+  --repo-border: #9a3412;
+}
+
+.repo-scheme-red {
+  --repo-accent: #dc2626;
+  --repo-accent-hover: #b91c1c;
+  --repo-on-accent: #ffffff;
+  --repo-tint: #fef2f2;
+  --repo-tint-strong: #fee2e2;
+  --repo-border: #fca5a5;
+}
+.dark .repo-scheme-red {
+  --repo-accent: #f87171;
+  --repo-accent-hover: #fca5a5;
+  --repo-on-accent: #0f172a;
+  --repo-tint: #240b0b;
+  --repo-tint-strong: #3a1313;
+  --repo-border: #991b1b;
+}
+
+.repo-scheme-pink {
+  --repo-accent: #db2777;
+  --repo-accent-hover: #be185d;
+  --repo-on-accent: #ffffff;
+  --repo-tint: #fdf2f8;
+  --repo-tint-strong: #fce7f3;
+  --repo-border: #f9a8d4;
+}
+.dark .repo-scheme-pink {
+  --repo-accent: #f472b6;
+  --repo-accent-hover: #f9a8d4;
+  --repo-on-accent: #0f172a;
+  --repo-tint: #240a18;
+  --repo-tint-strong: #3a1229;
+  --repo-border: #9d174d;
+}
+
+.repo-scheme-violet {
+  --repo-accent: #7c3aed;
+  --repo-accent-hover: #6d28d9;
+  --repo-on-accent: #ffffff;
+  --repo-tint: #f5f3ff;
+  --repo-tint-strong: #ede9fe;
+  --repo-border: #c4b5fd;
+}
+.dark .repo-scheme-violet {
+  --repo-accent: #a78bfa;
+  --repo-accent-hover: #c4b5fd;
+  --repo-on-accent: #0f172a;
+  --repo-tint: #150f2b;
+  --repo-tint-strong: #231a47;
+  --repo-border: #5b21b6;
+}
+
+/* What the schemes colour. */
+
+.repo-tint-bg {
+  background-color: var(--repo-tint);
+}
+
+.repo-tint-strong-bg {
+  background-color: var(--repo-tint-strong);
+}
+
+.repo-border {
+  border-color: var(--repo-border);
+}
+
+.repo-accent-bg {
+  background-color: var(--repo-accent);
+  color: var(--repo-on-accent);
+}
+
+.repo-accent-bg:hover:not(:disabled) {
+  background-color: var(--repo-accent-hover);
+}
+
+.repo-accent-text {
+  color: var(--repo-accent);
+}
+
+/* The block of a repository on the home page: framed in its scheme's colour. */
+.repo-card {
+  border: 2px solid var(--repo-border);
+  background-color: var(--repo-tint);
+}
+
+/* A control that follows the scheme when it is selected or has focus. */
+.repo-focus:focus-visible {
+  outline: 2px solid var(--repo-accent);
+  outline-offset: 2px;
+}
+
+.repo-selected {
+  background-color: var(--repo-tint-strong);
+  box-shadow: inset 3px 0 0 var(--repo-accent);
+}
+
+input[type='checkbox'].repo-check,
+input[type='radio'].repo-check {
+  accent-color: var(--repo-accent);
+}

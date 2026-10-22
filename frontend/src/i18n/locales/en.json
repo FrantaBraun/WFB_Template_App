@@ -20,8 +20,28 @@
     "closeMenu": "Close menu"
   },
   "home": {
-    "title": "Project template",
-    "description": "This is a default template for building further applications. It contains no functional logic — just a ready-made environment to start building on."
+    "title": "HomeRepository",
+    "description": "Build your own databases: define object types and their attributes, store records and follow statistics.",
+    "features": {
+      "types": {
+        "title": "Your own object types",
+        "text": "Tables with attributes you define yourself: text, number, yes/no, date, image, a reference to another record, lists and maps."
+      },
+      "browse": {
+        "title": "Easy to browse",
+        "text": "Paged tables or a grid with filtering and sorting; deleted records can be restored."
+      },
+      "statistics": {
+        "title": "Statistics",
+        "text": "Saved filters and pivot-style statistics shown as tables and charts."
+      },
+      "private": {
+        "title": "Private and colourful",
+        "text": "Only you see your data, and every repository has a colour scheme of its own."
+      }
+    },
+    "signIn": "Sign in",
+    "register": "Create an account"
   },
   "login": {
     "pageTitle": "Sign in",
