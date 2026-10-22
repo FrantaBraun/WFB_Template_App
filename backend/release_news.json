@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Add app/services/sql.py with like_pattern(), the escaping of `%`, `_` and the escape character for a \"contains\" search, shared by modules instead of copied into each (the CRM module uses it now)",
         "A static page can no longer be saved under the address words /bookings and /forms, which the registration and forms areas use, in addition to the ones that were already reserved",
         "The e-mails about registrations (confirmation, cancellation, a change or cancellation by the organiser) are written in the voice of Slavíčkovy knihohrátky, in Czech and English, and signed with the name of the application",
         "Registration for events is switched on: an event can have a registration (days and times to choose from, a capacity, questions, who may register) and administrators manage the registrations and the people who signed up",
