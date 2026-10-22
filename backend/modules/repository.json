@@ -1,0 +1,9 @@
+{
+  "max_repositories_per_user": 20,
+  "max_tables_per_repository": 50,
+  "max_attributes_per_table": 50,
+  "max_records_per_table": 10000,
+  "max_image_bytes": 3145728,
+  "max_image_bytes_per_user": 209715200,
+  "unattached_image_hours": 24
+}

@@ -1,4 +1,6 @@
 {
-    "unreleased": [],
+    "unreleased": [
+        "Add a repository module (app/modules/repository): everyone who is signed in creates their own repositories (databases) with tables whose attributes they define themselves - text, number, boolean, date, date and time, image, a reference to a record of another table of the same repository, and a list or map of one simple type. Everything is private to its owner (somebody else's data answers 404), slugs are made from names and checked live, limits per user live in backend/modules/repository.json, a table's attributes are saved as one ordered list (the type of a saved attribute never changes, and removing one that records hold values for asks for confirmation first), and a repository or table is deleted by confirming its name. Records, images, filters and statistics follow"
+    ],
     "releases": []
 }
