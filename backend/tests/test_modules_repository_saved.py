@@ -490,3 +490,44 @@ async def test_removing_an_attribute_nothing_uses_is_still_fine_and_so_is_one_wh
     await client.delete(_url(repository, table, f"/statistics/{created['id']}"), headers=alice)
     remaining = {key: value for key, value in ids.items() if key != "paid"}
     assert (await _remove(client, alice, repository, table, remaining, "region")).status_code == 200
+
+
+# --- Filters on references show who they point at ----------------------------------------------------
+
+
+async def test_a_filter_on_a_reference_comes_with_the_records_it_points_at(client, alice):
+    from tests.repository_support import post_record
+
+    repository = await create_repository(client, alice, name="Library")
+    authors = await create_table(client, alice, repository["slug"], name="Authors")
+    herbert = await post_record(client, alice, repository, authors, name="Frank Herbert")
+    asimov = await post_record(client, alice, repository, authors, name="Isaac Asimov")
+    books = await create_table(client, alice, repository["slug"], name="Books")
+    author = attribute("reference", "Author", config={"table_id": authors["id"]})
+    assert (await put_attributes(client, alice, repository["slug"], books["slug"], [author])).status_code == 200
+
+    created = await client.post(
+        _url(repository, books, "/filters"),
+        json=_filter("By Herbert", conditions=[{"field": author["id"], "op": "equals", "value": herbert["id"]}]),
+        headers=alice,
+    )
+    await client.post(
+        _url(repository, books, "/filters"),
+        json=_filter("By Asimov", conditions=[{"field": author["id"], "op": "equals", "value": asimov["id"]}]),
+        headers=alice,
+    )
+    await client.post(_url(repository, books, "/filters"), json=_filter("Anything"), headers=alice)
+
+    listed = (await client.get(_url(repository, books, "/filters"), headers=alice)).json()
+
+    assert created.status_code == 201
+    assert list(created.json()["refs"]) == [herbert["id"]]
+    assert created.json()["refs"][herbert["id"]]["name"] == "Frank Herbert"
+    assert [list(item["refs"]) for item in listed] == [[herbert["id"]], [asimov["id"]], []]
+    assert listed[1]["refs"][asimov["id"]] == {
+        "name": "Isaac Asimov",
+        "slug": "isaac-asimov",
+        "table_slug": "authors",
+        "table_name": "Authors",
+        "deleted": False,
+    }

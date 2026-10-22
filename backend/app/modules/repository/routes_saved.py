@@ -31,7 +31,9 @@ router = APIRouter(prefix="/repositories/{repository_slug}/tables/{table_slug}")
 
 @router.get("/filters")
 async def list_filters(context: TableContext = Depends(table_context), db: AsyncSession = Depends(get_db)) -> list[FilterOut]:
-    return [FilterOut.model_validate(row) for row in await saved.list_filters(db, context.table)]
+    rows = await saved.list_filters(db, context.table)
+    refs = await saved.filter_refs(db, context.repository, context.attributes, rows)
+    return [saved.filter_out(row, refs) for row in rows]
 
 
 @router.post("/filters", status_code=201)
@@ -42,7 +44,8 @@ async def create_filter(
     limits: RepositoryConfig = Depends(get_limits),
 ) -> FilterOut:
     """A name and the definition of a records query (conditions, sort, include_deleted, q)."""
-    return FilterOut.model_validate(await saved.create_filter(db, context.table, context.attributes, body, limits))
+    created = await saved.create_filter(db, context.table, context.attributes, body, limits)
+    return saved.filter_out(created, await saved.filter_refs(db, context.repository, context.attributes, [created]))
 
 
 @router.put("/filters-order", status_code=204)
@@ -56,7 +59,8 @@ async def update_filter(
 ) -> FilterOut:
     """Replaces the whole filter."""
     found = await saved.get_filter(db, context.table, filter_id)
-    return FilterOut.model_validate(await saved.update_filter(db, context.attributes, found, body))
+    updated = await saved.update_filter(db, context.attributes, found, body)
+    return saved.filter_out(updated, await saved.filter_refs(db, context.repository, context.attributes, [updated]))
 
 
 @router.delete("/filters/{filter_id}", status_code=204)

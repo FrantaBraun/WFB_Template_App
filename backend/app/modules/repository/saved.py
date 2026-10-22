@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.repository import filters, pivot, query, records
 from app.modules.repository.config import RepositoryConfig
 from app.modules.repository.models import Attribute, Repository, RepositoryTable, SavedFilter, Statistic
-from app.modules.repository.schemas import FilterIn, StatisticIn
+from app.modules.repository.schemas import FilterIn, FilterOut, RefInfo, StatisticIn
 from app.modules.repository.service import errors_422, limit_reached
 
 _FILTER_PARTS = {"conditions", "sort", "include_deleted", "q"}
@@ -44,6 +44,30 @@ async def get_filter(db: AsyncSession, table: RepositoryTable, filter_id: uuid.U
     if found is None:
         raise HTTPException(status_code=404, detail="Filter not found")
     return found
+
+
+async def filter_refs(
+    db: AsyncSession, repository: Repository, attributes: Sequence[Attribute], saved_filters: Sequence[SavedFilter]
+) -> dict[str, RefInfo]:
+    """The records the reference conditions of these saved filters point at."""
+    fields = filters.fields_for(attributes)
+    ids = {
+        condition["value"]
+        for saved in saved_filters
+        for condition in saved.definition.get("conditions", [])
+        if fields.get(condition["field"]) is not None and fields[condition["field"]].kind == "reference" and condition.get("value")
+    }
+    return await records.resolve_refs(db, repository, ids)
+
+
+def filter_out(saved: SavedFilter, refs: dict[str, RefInfo]) -> FilterOut:
+    """The saved filter with the records its conditions point at (only those of its own conditions)."""
+    own = {
+        condition["value"]
+        for condition in saved.definition.get("conditions", [])
+        if isinstance(condition.get("value"), str) and condition["value"] in refs
+    }
+    return FilterOut.model_validate(saved).model_copy(update={"refs": {key: refs[key] for key in own}})
 
 
 def _normalized_definition(attributes: Sequence[Attribute], body: FilterIn) -> dict[str, Any]:

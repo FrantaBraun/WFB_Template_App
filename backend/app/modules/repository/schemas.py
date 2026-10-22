@@ -339,6 +339,8 @@ class FilterOut(BaseModel):
     # {"conditions": [...], "sort": {...} | null, "include_deleted": bool, "q": str | null}, as filters.normalize_filter made it.
     definition: dict[str, Any]
     position: int
+    # The records the definition's reference conditions point at, by id (see RefInfo), so the filter can be shown.
+    refs: dict[str, RefInfo] = Field(default_factory=dict)
 
 
 class DimensionIn(BaseModel):
