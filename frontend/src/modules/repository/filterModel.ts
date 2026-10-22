@@ -9,7 +9,7 @@
 // there are): the server validates every definition and answers 422 for one it
 // does not accept, so a mismatch here shows as an error, never as wrong data.
 
-import { newId, type Attribute, type RefInfo } from './api'
+import { newId, type Attribute, type FilterDefinition, type RefInfo } from './api'
 
 export type FieldKind = 'text' | 'number' | 'boolean' | 'date' | 'datetime' | 'reference' | 'timestamp'
 
@@ -108,4 +108,42 @@ export interface Sort {
 export function nextSort(current: Sort | null, field: string): Sort | null {
   if (current?.field !== field) return { field, dir: 'asc' }
   return current.dir === 'asc' ? { field, dir: 'desc' } : null
+}
+
+// --- Saved filters ------------------------------------------------------------------
+
+/** The definition of what the page shows now (what a saved filter would store): only complete rows count. */
+export function buildDefinition(applied: ConditionRequest[], sort: Sort | null, includeDeleted: boolean, search: string): FilterDefinition {
+  return { conditions: applied, sort, include_deleted: includeDeleted, q: search.trim() || null }
+}
+
+function sameValue(a: unknown, b: unknown): boolean {
+  return (a ?? null) === (b ?? null)
+}
+
+/** Whether two definitions filter and sort the same way (the server's JSON key order is not ours). */
+export function sameDefinition(a: FilterDefinition, b: FilterDefinition): boolean {
+  if (a.conditions.length !== b.conditions.length) return false
+  const sameConditions = a.conditions.every((condition, index) => {
+    const other = b.conditions[index]
+    return condition.field === other.field && condition.op === other.op && sameValue(condition.value, other.value) && sameValue(condition.value2, other.value2)
+  })
+  return sameConditions && sameValue(a.sort?.field, b.sort?.field) && sameValue(a.sort?.dir, b.sort?.dir) && a.include_deleted === b.include_deleted && sameValue(a.q, b.q)
+}
+
+function valueText(value: unknown): string {
+  if (value === undefined || value === null) return ''
+  return typeof value === 'boolean' ? (value ? 'true' : 'false') : String(value)
+}
+
+/** The filter rows of a saved definition, to put on the page. */
+export function definitionToDrafts(definition: FilterDefinition, refs: Record<string, RefInfo>): ConditionDraft[] {
+  return definition.conditions.map((condition) => ({
+    id: newId(),
+    field: condition.field,
+    op: condition.op,
+    value: valueText(condition.value),
+    value2: valueText(condition.value2),
+    refInfo: typeof condition.value === 'string' ? refs[condition.value] : undefined,
+  }))
 }

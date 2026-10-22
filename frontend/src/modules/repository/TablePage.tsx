@@ -21,11 +21,14 @@ import {
   tablePath,
   type RecordListItem,
   type RecordPage,
+  type SavedFilter,
   type TableDetail,
 } from './api'
 import FilterBar from './FilterBar'
-import { conditionToRequest, fieldsFor, type ConditionDraft, type Sort } from './filterModel'
+import { buildDefinition, conditionToRequest, definitionToDrafts, fieldsFor, type ConditionDraft, type Sort } from './filterModel'
 import { GridSort, Pagination, RecordsGrid, RecordsTable } from './RecordsView'
+import SavedFilters from './SavedFilters'
+import StatisticsSection from './StatisticsSection'
 import { BackLink, ConfirmDialog, PageMessage, cardClass, errorTextClass, primaryButtonClass, secondaryButtonClass } from './ui'
 
 const SEARCH_DEBOUNCE_MS = 300
@@ -50,6 +53,10 @@ export default function TablePage() {
   const [queryError, setQueryError] = useState(false)
   const [deleting, setDeleting] = useState<RecordListItem | null>(null)
   const [actionError, setActionError] = useState(false)
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([])
+  const [activeFilterId, setActiveFilterId] = useState<string | null>(null)
+  // Bumped when the records or the saved filters changed, so the statistics are computed again.
+  const [statisticsKey, setStatisticsKey] = useState(0)
   const ticket = useRef(0)
 
   usePageMeta({ title: table?.name, noindex: true })
@@ -65,6 +72,8 @@ export default function TablePage() {
     setIncludeDeleted(false)
     setSort(null)
     setPage(1)
+    setSavedFilters([])
+    setActiveFilterId(null)
     fetchJson<TableDetail>(tableApi(repository.slug, tableSlug))
       .then((found) => !cancelled && setTable(found))
       .catch((e) => !cancelled && setLoadError(errorStatus(e) === 404 ? 'notFound' : 'error'))
@@ -88,6 +97,21 @@ export default function TablePage() {
   )
   // A filter only reaches the server once it is complete; typing into a row must not fire a request per key.
   const appliedKey = JSON.stringify(applied)
+
+  const loadFilters = useCallback(async (): Promise<SavedFilter[]> => {
+    if (!table) return []
+    try {
+      const found = await fetchJson<SavedFilter[]>(`${tableApi(repository.slug, table.slug)}/filters`)
+      setSavedFilters(found)
+      return found
+    } catch {
+      return []
+    }
+  }, [repository.slug, table])
+
+  useEffect(() => {
+    void loadFilters()
+  }, [loadFilters])
 
   const loadRecords = useCallback(async () => {
     if (!table) return
@@ -123,6 +147,18 @@ export default function TablePage() {
   const filtered = search !== '' || conditions.length > 0 || includeDeleted || sort !== null
   const view = { repositorySlug: repository.slug, tableSlug: table.slug, attributes: listed, refs: result?.refs ?? {} }
 
+  const currentDefinition = buildDefinition(applied, sort, includeDeleted, search)
+
+  function applyFilter(saved: SavedFilter) {
+    setConditions(definitionToDrafts(saved.definition, saved.refs))
+    setSort(saved.definition.sort)
+    setIncludeDeleted(saved.definition.include_deleted)
+    setSearch(saved.definition.q ?? '')
+    setDebouncedSearch(saved.definition.q ?? '')
+    setPage(1)
+    setActiveFilterId(saved.id)
+  }
+
   function backToFirstPage<T>(setter: (value: T) => void) {
     return (value: T) => {
       setter(value)
@@ -135,6 +171,7 @@ export default function TablePage() {
     try {
       await sendJson<void>(`${recordApi(repository.slug, tableSlug, item.slug)}/restore`, 'POST', undefined)
       await Promise.all([loadRecords(), reload()])
+      setStatisticsKey((key) => key + 1)
     } catch {
       setActionError(true)
     }
@@ -144,6 +181,7 @@ export default function TablePage() {
     try {
       await deleteRequest(recordApi(repository.slug, tableSlug, item.slug))
       await Promise.all([loadRecords(), reload()])
+      setStatisticsKey((key) => key + 1)
       setDeleting(null)
       return null
     } catch {
@@ -169,6 +207,27 @@ export default function TablePage() {
         </div>
       </header>
 
+      <StatisticsSection table={table} repositorySlug={repository.slug} filters={savedFilters} refreshKey={statisticsKey} />
+
+      <SavedFilters
+        repositorySlug={repository.slug}
+        table={table}
+        filters={savedFilters}
+        activeId={activeFilterId}
+        current={currentDefinition}
+        onApply={applyFilter}
+        onSaved={async (saved) => {
+          await loadFilters()
+          setActiveFilterId(saved.id)
+          setStatisticsKey((key) => key + 1)
+        }}
+        onDeleted={async () => {
+          await loadFilters()
+          setActiveFilterId(null)
+          setStatisticsKey((key) => key + 1)
+        }}
+      />
+
       <FilterBar
         fields={fields}
         conditions={conditions}
@@ -185,6 +244,7 @@ export default function TablePage() {
           setIncludeDeleted(false)
           setSort(null)
           setPage(1)
+          setActiveFilterId(null)
         }}
       />
 

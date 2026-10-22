@@ -271,3 +271,89 @@ export function slugify(text: string): string {
     .replace(/[̀-ͯ]/g, '')
   return plain.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80).replace(/-+$/, '')
 }
+
+// --- Saved filters and statistics -------------------------------------------------
+
+export interface FilterCondition {
+  field: string
+  op: string
+  value?: string | number | boolean
+  value2?: string | number | boolean
+}
+
+/** What a saved filter holds (the backend's filters.normalize_filter): the body of a records query without the paging. */
+export interface FilterDefinition {
+  conditions: FilterCondition[]
+  sort: { field: string; dir: 'asc' | 'desc' } | null
+  include_deleted: boolean
+  q: string | null
+}
+
+export interface SavedFilter {
+  id: string
+  name: string
+  definition: FilterDefinition
+  position: number
+  /** The records the definition's reference conditions point at. */
+  refs: Record<string, RefInfo>
+}
+
+export type Bucket = 'day' | 'month' | 'year'
+export const BUCKETS: readonly Bucket[] = ['day', 'month', 'year']
+export const FUNCTIONS = ['count', 'sum', 'avg', 'min', 'max'] as const
+export type AggregateFunction = (typeof FUNCTIONS)[number]
+export const DISPLAYS = ['hidden', 'table', 'chart', 'both'] as const
+export type StatisticDisplay = (typeof DISPLAYS)[number]
+export const CHART_TYPES = ['bar', 'line', 'pie'] as const
+export type ChartType = (typeof CHART_TYPES)[number]
+
+export interface Dimension {
+  /** An attribute id, or `created_on`. */
+  field: string
+  /** Day, month or year for a date, a date and time and `created_on`; null for the rest. */
+  bucket: Bucket | null
+}
+
+export interface Aggregation {
+  fn: AggregateFunction
+  attribute_id: string | null
+}
+
+/** What the editor sends (POST/PUT .../statistics and .../statistics-preview). */
+export interface StatisticBody {
+  name: string
+  filter_id: string | null
+  group_by: Dimension[]
+  aggregation: Aggregation
+  display: StatisticDisplay
+  chart_type: ChartType
+}
+
+export interface Statistic extends StatisticBody {
+  id: string
+  position: number
+}
+
+/** A group of a statistic: its key (text, a number, "true" / "false", a record id, or null for "empty") and the name to show for it, if it has one. */
+export interface ResultKey {
+  key: string | number | null
+  label: string | null
+}
+
+export interface StatisticResult {
+  dimensions: 1 | 2
+  rows: ResultKey[]
+  columns: ResultKey[]
+  /** One single-element list per row for one dimension; `values[row][column]` for two. */
+  values: (number | null)[][]
+  row_totals: (number | null)[]
+  column_totals: (number | null)[]
+  total: number | null
+  /** Some groups were left out (the totals still count everything). */
+  truncated: boolean
+}
+
+export interface StatisticWithResult {
+  statistic: Statistic
+  result: StatisticResult
+}
