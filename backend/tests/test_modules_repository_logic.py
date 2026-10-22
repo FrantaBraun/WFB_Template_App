@@ -463,3 +463,33 @@ def test_ids_of_attributes_with_no_value_are_not_found():
 
     assert logic.reference_ids_in([reference], {}) == set()
     assert logic.image_ids_in([reference], {reference.id: RECORD_ID}) == set()
+
+
+# --- The size of a record ---------------------------------------------------------------
+
+
+def test_a_record_may_not_hold_more_than_the_maximum_in_all():
+    texts = [_spec("list", element_type="text") for _ in range(10)]
+    big = ["x" * logic.MAX_TEXT_LENGTH] * logic.MAX_ELEMENTS  # 1 MB each, far beyond the cap
+
+    result = logic.normalize_record_data(texts, {spec.id: big for spec in texts})
+
+    assert result.errors == {"data": "record_too_large"}
+
+
+def test_a_record_just_under_the_maximum_is_fine():
+    spec = _spec("list", element_type="text")
+    elements = ["x" * logic.MAX_TEXT_LENGTH] * 40  # about 200 KB
+
+    result = logic.normalize_record_data([spec], {spec.id: elements})
+
+    assert result.errors == {}
+
+
+def test_the_size_is_checked_only_when_everything_else_is_fine():
+    spec = _spec("text")
+    other = _spec("number")
+
+    result = logic.normalize_record_data([spec, other], {spec.id: "x", other.id: "not a number"})
+
+    assert result.errors == {other.id: "invalid_type"}

@@ -26,10 +26,13 @@ set. Per type:
   the keys of a map are the user's (non-empty, MAX_MAP_KEY_LENGTH, unique).
 
 Errors are short codes (`required`, `too_long`, `invalid_date`, ...) keyed by
-the attribute id - or `<attribute id>.<index or key>` for one element - so the
-frontend can turn them into the user's language (the shape `forms` uses).
+the attribute id - or `<attribute id>.<index or key>` for one element, or `data`
+for the record as a whole (`record_too_large`: more than MAX_RECORD_BYTES of
+values together) - so the frontend can turn them into the user's language (the
+shape `forms` uses).
 """
 
+import json
 import math
 import re
 import unicodedata
@@ -61,6 +64,9 @@ MAX_TEXT_LENGTH = 5000
 MAX_ELEMENTS = 200
 MAX_MAP_KEY_LENGTH = 100
 MAX_ABS_NUMBER = 1e15
+# What all the values of one record may take together, serialized: 50 attributes of 200 texts of 5000
+# characters would be 50 MB, which is not a record.
+MAX_RECORD_BYTES = 256 * 1024
 MIN_YEAR = 1000
 
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -366,6 +372,8 @@ def normalize_record_data(specs: Sequence[AttributeSpec], data: Mapping[str, Any
     for spec in specs:
         if spec.required and spec.id not in result.data and spec.id not in result.errors:
             result.errors[spec.id] = "required"
+    if not result.errors and len(json.dumps(result.data, ensure_ascii=False).encode("utf-8")) > MAX_RECORD_BYTES:
+        result.errors["data"] = "record_too_large"
     return result
 
 

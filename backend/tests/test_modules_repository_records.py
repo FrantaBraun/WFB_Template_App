@@ -915,3 +915,19 @@ async def test_the_values_of_an_attribute_removed_from_the_table_disappear_from_
 
     assert done.status_code == 200
     assert (await _get(client, alice, repository, table, "dune")).json()["data"] == {ids["title"]: "Dune"}
+
+
+async def test_a_record_that_is_too_large_all_together_is_refused(client, alice):
+    attrs = [attribute("list", f"Texts {index}", config={"element_type": "text"}) for index in range(8)]
+    repository, table, _ = await make_table(client, alice, *attrs)
+    big = ["x" * 5000] * 200  # 1 MB of text in one attribute: each is within its own limits
+
+    resp = await client.post(
+        records_url(repository, table),
+        json={"name": "Huge", "data": {attr["id"]: big for attr in attrs}},
+        headers=alice,
+    )
+
+    assert resp.status_code == 422
+    assert resp.json()["detail"] == {"errors": {"data": "record_too_large"}}
+    assert (await query(client, alice, repository, table)).json()["total"] == 0

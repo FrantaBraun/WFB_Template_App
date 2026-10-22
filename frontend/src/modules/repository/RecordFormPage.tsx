@@ -162,6 +162,7 @@ export default function RecordFormPage() {
       {error && (
         <p className={errorTextClass} role="alert">
           {error}
+          {errors.data && ` ${t(`record.errors.${errors.data}`, { defaultValue: t('record.errors.generic') })}`}
         </p>
       )}
       <div className="flex gap-2">
