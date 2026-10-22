@@ -181,16 +181,6 @@ async def delete_statistic(db: AsyncSession, statistic: Statistic) -> None:
     await db.commit()
 
 
-async def reorder(db: AsyncSession, rows: Sequence[SavedFilter] | Sequence[Statistic], ids: Sequence[uuid.UUID]) -> None:
-    """Gives the rows the order of `ids`, which must list every one of them exactly once."""
-    by_id = {row.id: row for row in rows}
-    if len(set(ids)) != len(ids) or set(ids) != set(by_id):
-        raise errors_422({"ids": "must_list_every_item_once"})
-    for position, row_id in enumerate(ids):
-        by_id[row_id].position = position
-    await db.commit()
-
-
 # --- Computing a statistic ---------------------------------------------------------------------
 
 

@@ -497,7 +497,7 @@ async def test_reorder_must_list_every_table_exactly_once(client, alice):
     for ids in ([first["id"]], [first["id"], first["id"]], [first["id"], second["id"], str(uuid.uuid4())], []):
         resp = await client.put(url, json={"ids": ids}, headers=alice)
         assert resp.status_code == 422, ids
-        assert resp.json()["detail"] == {"errors": {"ids": "must_list_every_table_once"}}
+        assert resp.json()["detail"] == {"errors": {"ids": "must_list_every_item_once"}}
 
 
 async def test_get_table_and_update_table(client, alice):

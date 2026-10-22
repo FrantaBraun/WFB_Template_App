@@ -250,13 +250,18 @@ async def update_table(db: AsyncSession, repository: Repository, table: Reposito
     return table
 
 
-async def reorder_tables(db: AsyncSession, repository: Repository, ids: Sequence[uuid.UUID]) -> None:
-    tables = {table.id: table for table in await list_tables(db, repository.id)}
-    if len(set(ids)) != len(ids) or set(ids) != set(tables):
-        raise errors_422({"ids": "must_list_every_table_once"})
-    for position, table_id in enumerate(ids):
-        tables[table_id].position = position
+async def apply_order(db: AsyncSession, rows: Sequence[Any], ids: Sequence[uuid.UUID]) -> None:
+    """Gives the rows (anything with `id` and `position`) the order of `ids`, which must list every one of them exactly once (422 otherwise). Commits."""
+    by_id = {row.id: row for row in rows}
+    if len(set(ids)) != len(ids) or set(ids) != set(by_id):
+        raise errors_422({"ids": "must_list_every_item_once"})
+    for position, row_id in enumerate(ids):
+        by_id[row_id].position = position
     await db.commit()
+
+
+async def reorder_tables(db: AsyncSession, repository: Repository, ids: Sequence[uuid.UUID]) -> None:
+    await apply_order(db, await list_tables(db, repository.id), ids)
 
 
 async def tables_referring_to(db: AsyncSession, repository: Repository, table: RepositoryTable) -> list[dict[str, str]]:

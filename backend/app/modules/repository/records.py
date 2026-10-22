@@ -46,6 +46,7 @@ from app.modules.repository.schemas import (
     RecordUpdate,
     RefInfo,
 )
+from app.services.sql import like_pattern
 from app.modules.repository.service import commit_or_slug_taken, errors_422, limit_reached, resolve_slug, taken_slugs
 
 SEARCH_PAGE_SIZE = 20
@@ -369,7 +370,7 @@ async def search_records(db: AsyncSession, table: RepositoryTable, text: str | N
     those whose name or slug contains `text` when given."""
     clauses = [Record.table_id == table.id, Record.deleted_on.is_(None)]
     if text and text.strip():
-        pattern = query.like_pattern(text.strip())
+        pattern = like_pattern(text.strip())
         clauses.append(or_(Record.name.ilike(pattern, escape="\\"), Record.slug.ilike(pattern, escape="\\")))
     total = await db.scalar(select(func.count(Record.id)).where(*clauses))
     rows = (

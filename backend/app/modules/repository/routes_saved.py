@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.modules.repository import saved
+from app.modules.repository import saved, service
 from app.modules.repository.config import RepositoryConfig, get_limits
 from app.modules.repository.routes_records import TableContext, table_context
 from app.modules.repository.schemas import (
@@ -50,7 +50,7 @@ async def create_filter(
 
 @router.put("/filters-order", status_code=204)
 async def reorder_filters(body: OrderIn, context: TableContext = Depends(table_context), db: AsyncSession = Depends(get_db)) -> None:
-    await saved.reorder(db, await saved.list_filters(db, context.table), body.ids)
+    await service.apply_order(db, await saved.list_filters(db, context.table), body.ids)
 
 
 @router.put("/filters/{filter_id}")
@@ -91,7 +91,7 @@ async def create_statistic(
 
 @router.put("/statistics-order", status_code=204)
 async def reorder_statistics(body: OrderIn, context: TableContext = Depends(table_context), db: AsyncSession = Depends(get_db)) -> None:
-    await saved.reorder(db, await saved.list_statistics(db, context.table), body.ids)
+    await service.apply_order(db, await saved.list_statistics(db, context.table), body.ids)
 
 
 @router.post("/statistics-preview")

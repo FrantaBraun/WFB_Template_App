@@ -24,12 +24,7 @@ from sqlalchemy.sql.elements import ColumnElement
 
 from app.modules.repository.filters import DISPLAY_TIMEZONE, Field
 from app.modules.repository.models import Record
-
-
-def like_pattern(text: str) -> str:
-    """`text` as a LIKE pattern that matches it anywhere (wildcards in it are literal)."""
-    escaped = text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-    return f"%{escaped}%"
+from app.services.sql import like_pattern
 
 
 def _value_of(kind: str, value: Any) -> Any:

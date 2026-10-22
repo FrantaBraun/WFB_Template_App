@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Repository module: the LIKE escaping and the reordering of tables, saved filters and statistics each have one shared implementation (reordering an incomplete list of tables now answers the same code, must_list_every_item_once, as the other lists)",
         "Add app/services/sql.py with like_pattern(), the escaping of `%`, `_` and the escape character for a \"contains\" search, shared by modules instead of copied into each (the CRM module uses it now)",
         "Repository module: an image upload larger than an image may be is refused with 413 before the body is read (by its declared size, or as soon as a body without one has sent too much), instead of being written to disk first; a statistic is computed with one aggregate query (cells, the totals of each dimension and the grand total together) instead of up to four, and the values to be deleted with removed attributes are counted in one query instead of one per attribute",
         "Repository module: an empty slug in an update is refused instead of silently renaming the slug from the name, and only a unique violation on a slug is reported as a taken slug",
