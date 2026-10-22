@@ -62,14 +62,19 @@ export const cs = {
           title: 'Srozumitelně a zdokumentovaně',
           text: 'Dodané řešení je vždy plně zdokumentované a napsané tak, abych mu rozuměl a mohl ho dál spravovat.',
         },
+        {
+          title: 'Bezpečnost je priorita',
+          text: 'Přikládám velkou váhu na bezpečnost. Řešení vždy využívá nejvyšší standardy bezpečnosti přístupu, šifrování dat a bezpečnostní mechanismy před většinou aktuálních hrozeb.',
+        }
       ],
     },
     ai: {
-      title: 'Moderní nástroje, včetně AI – s rozumem',
+      title: 'Moderní nástroje, bezpečně, včetně AI – s rozumem',
       paragraphs: [
         'Při vývoji používám nejmodernější prostředky, včetně umělé inteligence. Konzultuji s ní efektivitu a bezpečnost řešení a urychluje mi práci, díky čemuž jsou zakázky levnější.',
         'Dodané řešení je ale vždy plně zdokumentované a napsané tak, abych ho dokázal dál spravovat i bez AI. Použité technologii a tomu, jak funguje, plně rozumím.',
         'Nejde o produkt vygenerovaný umělou inteligencí, kterému nikdo nerozumí a který by pro každou úpravu vyžadoval součinnost s AI.',
+        'Má řešení využívají centrální ověřovací systém identifikace uživatelů, který je rovněž mým projektem. Citlivá osobní data uživatelů jsou tak zcela oddělena od webové aplikace a nejsou dostupná komunikací z internetu, ale pouze mezi aplikacemi v mé infrastruktuře.'
       ],
       more: 'Víc o tom, jak pracuji',
     },
