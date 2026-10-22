@@ -44,8 +44,9 @@ from app.modules.crm.schemas import (
     TaskOut,
     TaskUpdate,
 )
+from app.services.sql import like_pattern
 
-router = APIRouter(dependencies=[Depends(require_admin)])
+router =APIRouter(dependencies=[Depends(require_admin)])
 
 
 async def _get_partner(db: AsyncSession, partner_id: uuid.UUID) -> Partner:
@@ -60,11 +61,6 @@ async def _get_task(db: AsyncSession, task_id: uuid.UUID) -> Task:
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     return task
-
-
-def _like_pattern(text: str) -> str:
-    escaped = text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-    return f"%{escaped}%"
 
 
 # --- Partners -----------------------------------------------------------------
@@ -86,7 +82,7 @@ async def list_partners(
     if not include_archived:
         query = query.where(Partner.archived.is_(False))
     if q and q.strip():
-        pattern = _like_pattern(q.strip())
+        pattern = like_pattern(q.strip())
         query = query.where(
             Partner.name.ilike(pattern, escape="\\")
             | Partner.company.ilike(pattern, escape="\\")
