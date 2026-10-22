@@ -249,12 +249,13 @@ server {
     listen      80;
     listen      [::]:80;
     server_name ${DOMAIN};
-    return      301 https://\$host\$request_uri;
+    return      301 https://$host$request_uri;
 }
 
 server {
-    listen      443 ssl http2;
-    listen      [::]:443 ssl http2;
+    listen      443 ssl;
+    listen      [::]:443 ssl;
+    http2       on;
     server_name ${DOMAIN};
 
     ssl_certificate     ${CERT_DIR}/fullchain.pem;
@@ -262,26 +263,43 @@ server {
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
+    # Zabezpečení serveru
+    server_tokens off;
+    client_max_body_size 10M;
+
+    # Bezpečnostní hlavičky
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
     add_header X-Frame-Options "DENY" always;
     add_header X-Content-Type-Options "nosniff" always;
-    add_header Access-Control-Allow-Origin "*" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+    # ODSTRANĚNO: Access-Control-Allow-Origin "*";
 
-    # Backend – API and OAuth routes
-    location ~ ^/(api|auth|health)(/|\$) {
+    # Backend – API a Auth
+    location ~ ^/(api|auth|health|redoc|docs|openapi.json)(/|$) {
+        # limit_req zone=api_limit burst=20 nodelay; # Volitelné omezení rychlosti
+
         proxy_pass         http://127.0.0.1:${BACKEND_PORT};
-        proxy_set_header   Host              \$host;
-        proxy_set_header   X-Real-IP         \$remote_addr;
-        proxy_set_header   X-Forwarded-For   \$proxy_add_x_forwarded_for;
-        proxy_set_header   X-Forwarded-Proto \$scheme;
+        proxy_set_header   Host             $host;
+        proxy_set_header   X-Real-IP        $remote_addr;
+        proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
         proxy_read_timeout 60s;
+    }
+
+    # Blokace skrytých souborů (.git, .env...)
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
     }
 
     # Frontend SPA
     location / {
         root      ${INSTALL_DIR}/frontend;
         index     index.html;
-        try_files \$uri \$uri/ /index.html;
+        try_files $uri $uri/ /index.html;
     }
 }
 NGINX
