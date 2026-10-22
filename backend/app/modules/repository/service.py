@@ -30,9 +30,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
 from app.models.user import User
-from app.modules.repository import logic
+from app.modules.repository import filters, logic, pivot
 from app.modules.repository.config import RepositoryConfig
-from app.modules.repository.models import Attribute, Image, Record, Repository, RepositoryTable
+from app.modules.repository.models import Attribute, Image, Record, Repository, RepositoryTable, SavedFilter, Statistic
 from app.modules.repository.schemas import AttributeIn
 
 
@@ -301,6 +301,19 @@ async def records_holding_values(db: AsyncSession, table_id: uuid.UUID, attribut
     return counts
 
 
+async def attribute_dependants(db: AsyncSession, table: RepositoryTable, attribute_ids: set[str]) -> list[dict[str, str]]:
+    """The saved filters and statistics of the table that use any of these attributes
+    (a condition, a sort, a dimension, the aggregated number), as {kind, id, name}."""
+    found: list[dict[str, str]] = []
+    for saved in (await db.scalars(select(SavedFilter).where(SavedFilter.table_id == table.id).order_by(SavedFilter.position))).all():
+        if filters.attribute_ids_used(saved.definition) & attribute_ids:
+            found.append({"kind": "filter", "id": str(saved.id), "name": saved.name})
+    for statistic in (await db.scalars(select(Statistic).where(Statistic.table_id == table.id).order_by(Statistic.position))).all():
+        if pivot.attribute_ids_used(statistic.group_by, statistic.aggregation) & attribute_ids:
+            found.append({"kind": "statistic", "id": str(statistic.id), "name": statistic.name})
+    return found
+
+
 async def _images_left_behind(
     db: AsyncSession, table: RepositoryTable, removed: Sequence[Attribute], kept: Sequence[AttributeIn]
 ) -> list[uuid.UUID]:
@@ -338,6 +351,8 @@ async def replace_attributes(
       (`type_immutable` / `config_immutable`) - remove it and add it again.
     - A new reference (or list/map of references) to a table that is not in this
       repository: 422 (`invalid_table`). The table itself is fine.
+    - Removing an attribute that a saved filter or statistic uses: 409
+      `{"in_use": [{kind, id, name}]}` - those have to go (or change) first.
     - Removing an attribute that records hold values for: 409
       `{"purge_required": [{id, name, record_count}]}` unless `confirm_purge`;
       the values are then removed from those records.
@@ -387,6 +402,10 @@ async def replace_attributes(
         raise errors_422(errors)
 
     removed = [attribute_id for attribute_id in existing if attribute_id not in set(ids)]
+    if removed:
+        dependants = await attribute_dependants(db, table, {str(attribute_id) for attribute_id in removed})
+        if dependants:
+            raise HTTPException(status_code=409, detail={"in_use": dependants})
     if removed and not confirm_purge:
         holding = await records_holding_values(db, table.id, removed)
         needed = [

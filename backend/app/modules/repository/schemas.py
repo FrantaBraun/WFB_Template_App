@@ -320,3 +320,106 @@ class ImageImport(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     url: str = Field(max_length=2000)
+
+
+# --- Saved filters and statistics -------------------------------------------------
+
+
+class FilterIn(FilterSpec):
+    """A saved filter: a name and the definition of a records query (see filters.py) without the paging."""
+
+    name: Name
+
+
+class FilterOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    # {"conditions": [...], "sort": {...} | null, "include_deleted": bool, "q": str | null}, as filters.normalize_filter made it.
+    definition: dict[str, Any]
+    position: int
+
+
+class DimensionIn(BaseModel):
+    """What a statistic groups by: `field` is an attribute id or `created_on`; a
+    date, a date and time and `created_on` need a `bucket` (day, month or year)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    field: str = Field(max_length=64)
+    bucket: Literal["day", "month", "year"] | None = None
+
+
+class AggregationIn(BaseModel):
+    """`count` counts records and takes no attribute; the others need a number attribute."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    fn: Literal["count", "sum", "avg", "min", "max"]
+    attribute_id: uuid.UUID | None = None
+
+
+StatisticDisplay = Literal["hidden", "table", "chart", "both"]
+ChartType = Literal["bar", "line", "pie"]
+
+
+class StatisticIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Name
+    filter_id: uuid.UUID | None = None
+    group_by: list[DimensionIn] = Field(min_length=1, max_length=2)
+    aggregation: AggregationIn
+    display: StatisticDisplay = "both"
+    chart_type: ChartType = "bar"
+
+
+class StatisticOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    filter_id: uuid.UUID | None
+    group_by: list[dict[str, Any]]
+    aggregation: dict[str, Any]
+    display: StatisticDisplay
+    chart_type: ChartType
+    position: int
+
+
+class ResultKey(BaseModel):
+    """A group of a statistic: its key (text, a number, `true` / `false`, a record id, or null for "empty") and the name to show when it has one (references)."""
+
+    key: str | float | None
+    label: str | None = None
+
+
+class StatisticResult(BaseModel):
+    """What a statistic computes (see pivot.py). One dimension: `rows` are the groups,
+    `values` is one single-element list per row and `columns` is empty. Two: a matrix of
+    `values[row][column]` with `row_totals`, `column_totals` and a grand `total`; a
+    combination with no records is 0 for `count` and null otherwise. `truncated`: some
+    groups were left out (the totals still count everything)."""
+
+    dimensions: int
+    rows: list[ResultKey]
+    columns: list[ResultKey]
+    values: list[list[float | int | None]]
+    row_totals: list[float | int | None]
+    column_totals: list[float | int | None]
+    total: float | int | None
+    truncated: bool
+
+
+class StatisticWithResult(BaseModel):
+    statistic: StatisticOut
+    result: StatisticResult
+
+
+class OrderIn(BaseModel):
+    """Every saved filter (or statistic) of the table, in the order they should appear."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    ids: list[uuid.UUID]

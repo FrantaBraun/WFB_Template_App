@@ -49,6 +49,7 @@ def test_the_colour_schemes_of_the_schema_match_the_logic():
 # One valid request per route (path parameters are filled in): a new route that
 # is not listed here fails test_every_route_is_covered, so it cannot escape
 # the two checks below.
+_STATISTIC = {"name": "Count", "group_by": [{"field": "created_on", "bucket": "month"}], "aggregation": {"fn": "count"}}
 _BODIES: dict[tuple[str, str], dict | None] = {
     ("get", "/repositories"): None,
     ("post", "/repositories"): {"name": "Another"},
@@ -71,6 +72,19 @@ _BODIES: dict[tuple[str, str], dict | None] = {
     ("delete", "/repositories/{repository_slug}/tables/{table_slug}/records/{record_slug}"): None,
     ("post", "/repositories/{repository_slug}/tables/{table_slug}/records/{record_slug}/restore"): None,
     ("delete", "/repositories/{repository_slug}/tables/{table_slug}/records/{record_slug}/permanent"): None,
+    ("get", "/repositories/{repository_slug}/tables/{table_slug}/filters"): None,
+    ("post", "/repositories/{repository_slug}/tables/{table_slug}/filters"): {"name": "Another filter"},
+    ("put", "/repositories/{repository_slug}/tables/{table_slug}/filters-order"): {"ids": []},
+    ("put", "/repositories/{repository_slug}/tables/{table_slug}/filters/{filter_id}"): {"name": "Renamed"},
+    ("delete", "/repositories/{repository_slug}/tables/{table_slug}/filters/{filter_id}"): None,
+    ("get", "/repositories/{repository_slug}/tables/{table_slug}/statistics"): None,
+    ("post", "/repositories/{repository_slug}/tables/{table_slug}/statistics"): _STATISTIC,
+    ("put", "/repositories/{repository_slug}/tables/{table_slug}/statistics-order"): {"ids": []},
+    ("post", "/repositories/{repository_slug}/tables/{table_slug}/statistics-preview"): _STATISTIC,
+    ("get", "/repositories/{repository_slug}/tables/{table_slug}/statistics-results"): None,
+    ("put", "/repositories/{repository_slug}/tables/{table_slug}/statistics/{statistic_id}"): _STATISTIC,
+    ("delete", "/repositories/{repository_slug}/tables/{table_slug}/statistics/{statistic_id}"): None,
+    ("get", "/repositories/{repository_slug}/tables/{table_slug}/statistics/{statistic_id}/result"): None,
     ("post", "/images"): None,
     ("post", "/images/import-url"): {"url": "https://example.com/a.png"},
     ("get", "/images/{image_id}"): None,
@@ -102,6 +116,8 @@ def _request_for(method: str, template: str, repository: dict, table: dict, reco
         .replace("{table_slug}", table["slug"])
         .replace("{record_slug}", record_slug)
         .replace("{image_id}", image_id or str(uuid.uuid4()))
+        .replace("{filter_id}", str(uuid.uuid4()))
+        .replace("{statistic_id}", str(uuid.uuid4()))
     )
     params = None
     if template == "/slug-check":

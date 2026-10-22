@@ -10,8 +10,8 @@ They exist because the application is open to anyone who can register and
 stores their data (images included) in our database:
 
 - max_repositories_per_user / max_tables_per_repository /
-  max_attributes_per_table / max_records_per_table: how much one person may
-  create.
+  max_attributes_per_table / max_records_per_table / max_filters_per_table /
+  max_statistics_per_table: how much one person may create.
 - max_image_bytes: one image, after decoding.
 - max_image_bytes_per_user: all of one person's images together.
 - unattached_image_hours: an uploaded image that no record has claimed after
@@ -43,6 +43,8 @@ class RepositoryConfig(BaseModel):
     max_tables_per_repository: int = Field(default=50, ge=1, le=500)
     max_attributes_per_table: int = Field(default=50, ge=1, le=200)
     max_records_per_table: int = Field(default=10_000, ge=1, le=1_000_000)
+    max_filters_per_table: int = Field(default=50, ge=1, le=500)
+    max_statistics_per_table: int = Field(default=20, ge=1, le=200)
     max_image_bytes: int = Field(default=3 * 1024 * 1024, ge=1024, le=20 * 1024 * 1024)
     max_image_bytes_per_user: int = Field(default=200 * 1024 * 1024, ge=1024)
     unattached_image_hours: int = Field(default=24, ge=1, le=24 * 30)

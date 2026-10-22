@@ -137,3 +137,50 @@ class Image(Base):
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
     data: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class SavedFilter(Base):
+    """A named filter of one table: conditions, sort and the deleted switch, as
+    filters.normalize_filter returns them (see filters.py). Statistics may be
+    based on one; the foreign key from them is deliberately plain (NO ACTION,
+    checked at the end of the statement) rather than RESTRICT, so deleting a table
+    can still cascade to both - deleting a filter a statistic uses is refused by
+    the service with the dependants named."""
+
+    __tablename__ = "module_repository_filters"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    table_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("module_repository_tables.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    definition: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Statistic(Base):
+    """A saved statistic of one table: optionally the records of a saved filter,
+    grouped by one or two dimensions and aggregated (see pivot.py for the shapes of
+    `group_by` and `aggregation`), shown as nothing, a table, a chart or both."""
+
+    __tablename__ = "module_repository_statistics"
+    __table_args__ = (
+        CheckConstraint("display in ('hidden', 'table', 'chart', 'both')", name="ck_module_repository_statistics_display"),
+        CheckConstraint("chart_type in ('bar', 'line', 'pie')", name="ck_module_repository_statistics_chart_type"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    table_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("module_repository_tables.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    filter_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("module_repository_filters.id"), nullable=True, index=True
+    )
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    group_by: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    aggregation: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    display: Mapped[str] = mapped_column(String(10), nullable=False, default="both")
+    chart_type: Mapped[str] = mapped_column(String(10), nullable=False, default="bar")
+    position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
