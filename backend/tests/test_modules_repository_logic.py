@@ -433,3 +433,33 @@ def test_record_name_errors(value, code):
 
 def test_record_name_of_the_maximum_length_is_fine():
     assert len(logic.normalize_record_name("a" * logic.MAX_RECORD_NAME_LENGTH)) == logic.MAX_RECORD_NAME_LENGTH
+
+
+# --- The ids a record holds -----------------------------------------------------
+
+
+def test_reference_and_image_ids_are_found_through_every_kind_of_attribute():
+    other = str(uuid.uuid4())
+    reference = _spec("reference", table_id=TABLE_ID)
+    references = _spec("list", element_type="reference", table_id=TABLE_ID)
+    image = _spec("image")
+    images = _spec("map", element_type="image")
+    text = _spec("text")
+    data = {
+        reference.id: RECORD_ID,
+        references.id: {"0": other},
+        image.id: IMAGE_ID,
+        images.id: {"front": IMAGE_ID, "back": other},
+        text.id: "x",
+    }
+    specs = [reference, references, image, images, text]
+
+    assert logic.reference_ids_in(specs, data) == {RECORD_ID, other}
+    assert logic.image_ids_in(specs, data) == {IMAGE_ID, other}
+
+
+def test_ids_of_attributes_with_no_value_are_not_found():
+    reference = _spec("reference", table_id=TABLE_ID)
+
+    assert logic.reference_ids_in([reference], {}) == set()
+    assert logic.image_ids_in([reference], {reference.id: RECORD_ID}) == set()

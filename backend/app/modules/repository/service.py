@@ -24,7 +24,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from fastapi import HTTPException
-from sqlalchemy import ARRAY, Text, cast, func, select, update
+from sqlalchemy import ARRAY, Text, cast, delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
@@ -32,7 +32,7 @@ from sqlalchemy.orm import InstrumentedAttribute
 from app.models.user import User
 from app.modules.repository import logic
 from app.modules.repository.config import RepositoryConfig
-from app.modules.repository.models import Attribute, Record, Repository, RepositoryTable
+from app.modules.repository.models import Attribute, Image, Record, Repository, RepositoryTable
 from app.modules.repository.schemas import AttributeIn
 
 
@@ -301,6 +301,22 @@ async def records_holding_values(db: AsyncSession, table_id: uuid.UUID, attribut
     return counts
 
 
+async def _images_left_behind(
+    db: AsyncSession, table: RepositoryTable, removed: Sequence[Attribute], kept: Sequence[AttributeIn]
+) -> list[uuid.UUID]:
+    """The images held only through attributes that are being removed - they go
+    with the values. An image that a remaining attribute of the same record
+    still holds stays."""
+    if not any(logic.element_type_of(attribute.type, attribute.config) == "image" for attribute in removed):
+        return []
+    leaving: set[str] = set()
+    staying: set[str] = set()
+    for (data,) in (await db.execute(select(Record.data).where(Record.table_id == table.id))).all():
+        leaving |= logic.image_ids_in(removed, data)
+        staying |= logic.image_ids_in(kept, data)
+    return [uuid.UUID(image_id) for image_id in leaving - staying]
+
+
 async def replace_attributes(
     db: AsyncSession,
     repository: Repository,
@@ -381,6 +397,7 @@ async def replace_attributes(
         if needed:
             raise HTTPException(status_code=409, detail={"purge_required": needed})
 
+    orphaned_images = await _images_left_behind(db, table, [existing[attribute_id] for attribute_id in removed], incoming)
     for attribute_id in removed:
         await db.delete(existing[attribute_id])
     if removed:
@@ -390,6 +407,8 @@ async def replace_attributes(
             .where(Record.table_id == table.id)
             .values(data=Record.data.op("-")(cast([str(attribute_id) for attribute_id in removed], ARRAY(Text))))
         )
+    if orphaned_images:
+        await db.execute(delete(Image).where(Image.id.in_(orphaned_images)))
 
     rows: list[Attribute] = []
     for position, attribute in enumerate(incoming):

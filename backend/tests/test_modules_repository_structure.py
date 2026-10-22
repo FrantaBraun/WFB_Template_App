@@ -6,116 +6,33 @@
 test_modules_repository_records.py) - and that every route of the module is
 closed to anonymous callers and to anyone but the owner.
 
-Mounts just this module's router on a throwaway FastAPI app instead of
-conftest.py's `client` (whether the module is mounted on the real app depends
-on the branch's backend/modules.json - see test_modules_notifications_router.py).
-ASGITransport keeps the JWT dependency chain and db_session on one event loop;
-every test runs in its own rolled-back transaction."""
+The throwaway app, the users and the helpers are in repository_support.py."""
 
 import uuid
 from typing import get_args
 
 import pytest
-from fastapi import FastAPI
-from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 
-from app.database import get_db
-from app.models.user import User
 from app.modules.repository import logic, manifest
-from app.modules.repository.config import RepositoryConfig, get_limits
-from app.modules.repository.models import Attribute, Record, Repository, RepositoryTable
+from app.modules.repository.models import Attribute, Record, RepositoryTable
 from app.modules.repository.router import router as repository_router
 from app.modules.repository.schemas import ColorScheme
-
-BASE = "/api/modules/repository"
-
-_repository_app = FastAPI()
-_repository_app.include_router(repository_router, prefix=BASE)
-
-LIMITS = RepositoryConfig()
-
-
-@pytest.fixture(autouse=True)
-async def _overrides(db_session, rsa_keypair, monkeypatch):
-    _, public_pem = rsa_keypair
-    monkeypatch.setattr("app.security.jwt._public_key", public_pem)
-    _repository_app.dependency_overrides[get_db] = lambda: db_session
-    _repository_app.dependency_overrides[get_limits] = lambda: LIMITS
-    yield
-    _repository_app.dependency_overrides.clear()
-
-
-@pytest.fixture()
-async def client():
-    async with AsyncClient(transport=ASGITransport(app=_repository_app), base_url="http://test") as ac:
-        yield ac
-
-
-@pytest.fixture()
-async def make_user(db_session, make_access_token):
-    async def _make() -> dict:
-        sub = uuid.uuid4()
-        db_session.add(User(auth_sub=sub))
-        await db_session.commit()
-        return {"Authorization": f"Bearer {make_access_token(sub=str(sub))}"}
-
-    return _make
-
-
-@pytest.fixture()
-async def alice(make_user):
-    return await make_user()
-
-
-@pytest.fixture()
-async def bob(make_user):
-    return await make_user()
-
-
-def _limits(**changes) -> None:
-    _repository_app.dependency_overrides[get_limits] = lambda: RepositoryConfig(**changes)
-
-
-def _attribute(attribute_type="text", name="Attribute", **fields) -> dict:
-    body = {"id": str(uuid.uuid4()), "name": name, "type": attribute_type, **fields}
-    return body
-
-
-async def _repo(client, headers, name="My books", **fields) -> dict:
-    resp = await client.post(f"{BASE}/repositories", json={"name": name, **fields}, headers=headers)
-    assert resp.status_code == 201, resp.text
-    return resp.json()
-
-
-async def _table(client, headers, repository, name="Novels", **fields) -> dict:
-    resp = await client.post(f"{BASE}/repositories/{repository}/tables", json={"name": name, **fields}, headers=headers)
-    assert resp.status_code == 201, resp.text
-    return resp.json()
-
-
-async def _put_attributes(client, headers, repository, table, attributes, **params):
-    return await client.put(
-        f"{BASE}/repositories/{repository}/tables/{table}/attributes",
-        json={"attributes": attributes},
-        headers=headers,
-        params=params,
-    )
-
-
-async def _add_record(db_session, table_id, name="Dune", data=None, deleted=False) -> Record:
-    from datetime import datetime, timezone
-
-    record = Record(
-        table_id=uuid.UUID(table_id),
-        name=name,
-        slug=logic.slugify(name) + "-" + uuid.uuid4().hex[:6],
-        data=data or {},
-        deleted_on=datetime.now(timezone.utc) if deleted else None,
-    )
-    db_session.add(record)
-    await db_session.commit()
-    return record
+from tests.repository_support import (  # noqa: F401  (the fixtures are used by name)
+    BASE,
+    _overrides,
+    alice,
+    attribute as _attribute,
+    add_record as _add_record,
+    bob,
+    client,
+    create_repository as _repo,
+    create_table as _table,
+    make_user,
+    put_attributes as _put_attributes,
+    repository_app as _repository_app,
+    set_limits as _limits,
+)
 
 
 def test_manifest_key_matches_its_folder():
@@ -146,6 +63,17 @@ _BODIES: dict[tuple[str, str], dict | None] = {
     ("patch", "/repositories/{repository_slug}/tables/{table_slug}"): {"name": "Renamed"},
     ("put", "/repositories/{repository_slug}/tables/{table_slug}/attributes"): {"attributes": []},
     ("delete", "/repositories/{repository_slug}/tables/{table_slug}"): None,
+    ("post", "/repositories/{repository_slug}/tables/{table_slug}/records-query"): {},
+    ("get", "/repositories/{repository_slug}/tables/{table_slug}/records-search"): None,
+    ("post", "/repositories/{repository_slug}/tables/{table_slug}/records"): {"name": "Another record"},
+    ("get", "/repositories/{repository_slug}/tables/{table_slug}/records/{record_slug}"): None,
+    ("patch", "/repositories/{repository_slug}/tables/{table_slug}/records/{record_slug}"): {"name": "Renamed"},
+    ("delete", "/repositories/{repository_slug}/tables/{table_slug}/records/{record_slug}"): None,
+    ("post", "/repositories/{repository_slug}/tables/{table_slug}/records/{record_slug}/restore"): None,
+    ("delete", "/repositories/{repository_slug}/tables/{table_slug}/records/{record_slug}/permanent"): None,
+    ("post", "/images"): None,
+    ("post", "/images/import-url"): {"url": "https://example.com/a.png"},
+    ("get", "/images/{image_id}"): None,
 }
 
 
@@ -165,18 +93,27 @@ def test_every_route_is_covered():
     assert sorted(_route_table()) == sorted(_BODIES)
 
 
-def _request_for(method: str, template: str, repository: dict, table: dict):
-    path = template.replace("{repository_slug}", repository["slug"]).replace("{table_slug}", table["slug"])
+PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 16
+
+
+def _request_for(method: str, template: str, repository: dict, table: dict, record_slug: str = "any", image_id: str | None = None):
+    path = (
+        template.replace("{repository_slug}", repository["slug"])
+        .replace("{table_slug}", table["slug"])
+        .replace("{record_slug}", record_slug)
+        .replace("{image_id}", image_id or str(uuid.uuid4()))
+    )
     params = None
     if template == "/slug-check":
         params = {"scope": "table", "slug": "free", "repository": repository["slug"]}
-    if method == "delete":
+    if method == "delete" and "/records/" not in template:
         params = {"confirm_name": table["name"] if "{table_slug}" in template else repository["name"]}
     return f"{BASE}{path}", _BODIES[(method, template)], params
 
 
-# Scoped to the caller by construction: they list or create the caller's OWN repositories.
-_OWN = {("get", "/repositories"), ("post", "/repositories")}
+# Scoped to the caller by construction: they list or create the caller's OWN
+# repositories and images.
+_OWN = {("get", "/repositories"), ("post", "/repositories"), ("post", "/images"), ("post", "/images/import-url")}
 
 
 @pytest.mark.parametrize(("method", "template"), sorted(_BODIES))
@@ -190,10 +127,14 @@ async def test_anonymous_requests_are_rejected_on_every_route(client, method, te
 
 @pytest.mark.parametrize(("method", "template"), sorted(set(_BODIES) - _OWN))
 async def test_someone_elses_data_answers_404_on_every_route(client, alice, bob, method, template):
-    """Alice's repository and table exist; Bob asks for them by their real slugs."""
+    """Alice's repository, table, record and image exist; Bob asks for them by their real names."""
     repo = await _repo(client, alice, name="Alice's")
     table = await _table(client, alice, repo["slug"])
-    url, body, params = _request_for(method, template, repo, table)
+    record = (
+        await client.post(f"{BASE}/repositories/{repo['slug']}/tables/{table['slug']}/records", json={"name": "Dune"}, headers=alice)
+    ).json()
+    image = (await client.post(f"{BASE}/images", files={"file": ("a.png", PNG, "image/png")}, headers=alice)).json()
+    url, body, params = _request_for(method, template, repo, table, record["slug"], image["id"])
 
     resp = await client.request(method, url, json=body, params=params, headers=bob)
 
@@ -202,6 +143,9 @@ async def test_someone_elses_data_answers_404_on_every_route(client, alice, bob,
     after = (await client.get(f"{BASE}/repositories/{repo['slug']}", headers=alice)).json()
     assert after["name"] == "Alice's"
     assert [t["slug"] for t in after["tables"]] == [table["slug"]]
+    kept = (await client.get(f"{BASE}/repositories/{repo['slug']}/tables/{table['slug']}/records/{record['slug']}", headers=alice)).json()
+    assert (kept["name"], kept["deleted_on"]) == ("Dune", None)
+    assert (await client.get(f"{BASE}/images/{image['id']}", headers=alice)).status_code == 200
 
 
 async def test_a_users_list_never_contains_someone_elses_repositories(client, alice, bob):

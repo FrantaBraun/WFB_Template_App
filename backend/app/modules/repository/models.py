@@ -5,7 +5,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -113,3 +113,27 @@ class Record(Base):
     data: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     created_on: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     deleted_on: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class Image(Base):
+    """An image of a record, stored as base64 text right here (not as a file).
+    An upload starts with no record (`record_id` NULL, belongs only to its
+    `owner`) and is claimed when a record that holds its id is saved; one that
+    nobody claims is deleted after Config.unattached_image_hours. The record's
+    JSON holds only the image id - lists carry ids, and the bytes are fetched
+    one by one through an authenticated endpoint. Deleting the record (or its
+    table or repository) deletes its images with it."""
+
+    __tablename__ = "module_repository_images"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    record_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("module_repository_records.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    mime: Mapped[str] = mapped_column(String(30), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    data: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

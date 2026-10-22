@@ -381,3 +381,32 @@ def normalize_record_name(value: Any) -> str:
     if len(name) > MAX_RECORD_NAME_LENGTH:
         raise ValueIssue("too_long")
     return name
+
+
+def ids_in(attributes: Sequence[Any], data: Mapping[str, Any], simple_type: str) -> set[str]:
+    """The ids a record's `data` holds through the attributes of one simple type
+    (image or reference): the value itself, or the values of a list or map of
+    that type. `attributes` need `id`, `type` and `config` (rows, AttributeSpec
+    and the request's AttributeIn all do)."""
+    found: set[str] = set()
+    for attribute in attributes:
+        if element_type_of(attribute.type, attribute.config) != simple_type:
+            continue
+        value = data.get(str(attribute.id))
+        if value is None:
+            continue
+        if attribute.type in ("list", "map"):
+            found.update(value.values())
+        else:
+            found.add(value)
+    return found
+
+
+def reference_ids_in(attributes: Sequence[Any], data: Mapping[str, Any]) -> set[str]:
+    """The record ids `data` points at."""
+    return ids_in(attributes, data, "reference")
+
+
+def image_ids_in(attributes: Sequence[Any], data: Mapping[str, Any]) -> set[str]:
+    """The image ids `data` holds."""
+    return ids_in(attributes, data, "image")
