@@ -249,7 +249,7 @@ server {
     listen      80;
     listen      [::]:80;
     server_name ${DOMAIN};
-    return      301 https://$host$request_uri;
+    return      301 https://\$host\$request_uri;
 }
 
 server {
@@ -277,14 +277,21 @@ server {
     # ODSTRANĚNO: Access-Control-Allow-Origin "*";
 
     # Backend – API a Auth
-    location ~ ^/(api|auth|health|redoc|docs|openapi.json)(/|$) {
+    location ~ ^/(api|auth|health|redoc|docs|openapi.json)(/|\$) {
         # limit_req zone=api_limit burst=20 nodelay; # Volitelné omezení rychlosti
 
         proxy_pass         http://127.0.0.1:${BACKEND_PORT};
-        proxy_set_header   Host             $host;
-        proxy_set_header   X-Real-IP        $remote_addr;
-        proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
-        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   Host             \$host;
+        proxy_set_header   X-Real-IP        \$remote_addr;
+        proxy_set_header   X-Forwarded-For  \$proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 60s;
+    }
+
+    # Sitemap pro vyhledávače – píše ji backend (kategorie se mění), roboti ji
+    # hledají na /sitemap.xml; odkaz na ni je v robots.txt (z VITE_APP_URL)
+    location = /sitemap.xml {
+        proxy_pass         http://127.0.0.1:${BACKEND_PORT}/api/modules/boards/sitemap.xml;
         proxy_read_timeout 60s;
     }
 
@@ -299,7 +306,7 @@ server {
     location / {
         root      ${INSTALL_DIR}/frontend;
         index     index.html;
-        try_files $uri $uri/ /index.html;
+        try_files \$uri \$uri/ /index.html;
     }
 }
 NGINX
