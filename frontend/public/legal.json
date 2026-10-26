@@ -11,8 +11,8 @@
     "web": ""
   },
   "service": {
-    "cs": "Provozujeme web ThoughtAuction (Aukce myšlenek), na kterém přihlášení uživatelé anonymně zveřejňují krátké příspěvky na tematických nástěnkách (v kategoriích) a mohou si za úplatu zvýšit jejich hodnotu, a tím i pořadí na nástěnce.",
-    "en": "We operate the ThoughtAuction website, where signed-in users publish short posts anonymously on topic boards (categories) and can pay to raise a post's value, and with it its place on the board."
+    "cs": "Provozujeme web BumpFeel, na kterém přihlášení uživatelé anonymně zveřejňují krátké příspěvky na tematických nástěnkách (v kategoriích) a mohou si za úplatu zvýšit jejich hodnotu, a tím i pořadí na nástěnce.",
+    "en": "We operate the BumpFeel website, where signed-in users publish short posts anonymously on topic boards (categories) and can pay to raise a post's value, and with it its place on the board."
   },
   "dpoEmail": "",
   "effectiveFrom": "",

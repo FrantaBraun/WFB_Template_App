@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import usePageMeta from '../hooks/usePageMeta'
 import CategoriesList from '../modules/boards/CategoriesList'
 
-/** Public landing page: what ThoughtAuction is, and the categories to read or post in. */
+/** Public landing page: what BumpFeel is, and the categories to read or post in. */
 export default function HomePage() {
   const { t } = useTranslation()
   usePageMeta()

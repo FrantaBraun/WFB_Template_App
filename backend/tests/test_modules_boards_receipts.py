@@ -292,7 +292,7 @@ def test_the_page_is_a_complete_html_document():
 def test_the_confirmation_email_says_what_was_bought_when_and_under_which_terms():
     subject, html = documents.render_email(_snapshot(), "cs", terms_url="http://front.test/obchodni-podminky", receipts_url="http://front.test/receipts")
 
-    assert subject == "ThoughtAuction: potvrzení smlouvy a doklad č. 2026-000007"
+    assert subject == "BumpFeel: potvrzení smlouvy a doklad č. 2026-000007"
     assert "Potvrzujeme uzavření smlouvy o placené službě" in html
     assert "„Ownership of attention“ o 70 bodů za 7,00 USD" in html
     assert "dne 2. 10. 2026" in html
@@ -305,7 +305,7 @@ def test_the_confirmation_email_says_what_was_bought_when_and_under_which_terms(
 
 def test_the_english_email_is_a_full_translation():
     subject, html = documents.render_email(_snapshot(language="en"), None, terms_url="http://t", receipts_url="http://r")
-    assert subject == "ThoughtAuction: contract confirmation and document no. 2026-000007"
+    assert subject == "BumpFeel: contract confirmation and document no. 2026-000007"
     assert "We confirm the conclusion of the contract" in html and "raising the value of the post" in html
     assert "Potvrzujeme" not in html
 
@@ -497,7 +497,7 @@ async def test_confirming_a_payment_emails_the_confirmation_and_document_to_the_
     assert len(outbox) == 1
     message = outbox[0]
     assert _to(message) == "alice@example.com"
-    assert _subject(message) == "ThoughtAuction: potvrzení smlouvy a doklad č. " + (await _receipts(db_session))[0].number
+    assert _subject(message) == "BumpFeel: potvrzení smlouvy a doklad č. " + (await _receipts(db_session))[0].number
     html = _html(message)
     assert "Ownership of attention" in html and "70 bodů" in html and "7,00 USD" in html
     assert "http://front.test/obchodni-podminky" in html and "http://front.test/receipts" in html

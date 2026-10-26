@@ -93,7 +93,7 @@ async def resolve_boost(db: AsyncSession, user: User | None, payload: dict) -> P
     return PaymentQuote(
         amount=amount_usd * 100,
         currency=CURRENCY,
-        description=f"ThoughtAuction: raise the value of the post “{title}” by {points} points",
+        description=f"BumpFeel: raise the value of the post “{title}” by {points} points",
         reference=str(post.id),
         return_path=f"/categories/{category.slug}",
         extra={

@@ -20,7 +20,7 @@
     "closeMenu": "Zavřít nabídku"
   },
   "home": {
-    "title": "Aukce myšlenek",
+    "title": "BumpFeel",
     "description": "Zveřejněte myšlenku na nástěnce podle svého výběru. Příspěvky stoupají se souzněním, které získají, a s přibývajícím stářím klesají."
   },
   "login": {
@@ -144,7 +144,7 @@
     "loadError": "Načtení novinek se nezdařilo."
   },
   "nav": {
-    "brand": "Aukce myšlenek"
+    "brand": "BumpFeel"
   },
   "footer": {
     "ecosystem": "WithFBraun",

@@ -12,8 +12,8 @@
 // digital content vs. services, VAT status, delivery, ...) before going
 // live. The module README lists what each page must contain and why.
 //
-// On the ThoughtAuction branch the Terms and Privacy texts are adapted to
-// that application (its content rules, checks, strikes, anonymity of
+// In BumpFeel (the `thoughtauction` branch) the Terms and Privacy texts are
+// adapted to that application (its content rules, checks, strikes, anonymity of
 // authors and the value formula). The numbers they quote come from
 // public/legal.json's `params`, and a backend test
 // (tests/test_modules_boards_legal.py) keeps them equal to what boards

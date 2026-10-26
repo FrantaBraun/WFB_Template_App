@@ -1,10 +1,10 @@
-# ThoughtAuction (Aukce myšlenek)
+# BumpFeel
 
 A website with several publication boards (categories) where anyone can post their own contribution and pay to push it higher up the board.
 
 This repository doesn't ship a single app — it hosts a shared core plus one branch per application, so improvements to the shared foundation are made once and carried into every app instead of being duplicated per app.
 
-## About ThoughtAuction (Aukce myšlenek)
+## About BumpFeel
 
 **Boards and posts**
 

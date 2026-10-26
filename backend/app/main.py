@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
 with open('./version.json', 'r', encoding='utf-8') as f:
     version = json.load(f)
 
-app = FastAPI(title="ThoughtAuction API", version=version['version'], lifespan=lifespan)
+app = FastAPI(title="BumpFeel API", version=version['version'], lifespan=lifespan)
 
 if settings.cors_enabled:
     app.add_middleware(
