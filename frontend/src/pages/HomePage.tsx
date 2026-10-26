@@ -5,13 +5,22 @@
  */
 
 import { useTranslation } from 'react-i18next'
-import usePageMeta from '../hooks/usePageMeta'
+import usePageMeta, { absoluteUrl } from '../hooks/usePageMeta'
 import CategoriesList from '../modules/boards/CategoriesList'
 
 /** Public landing page: what BumpFeel is, and the categories to read or post in. */
 export default function HomePage() {
-  const { t } = useTranslation()
-  usePageMeta()
+  const { t, i18n } = useTranslation()
+  usePageMeta({
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: t('nav.brand'),
+      description: t('meta.description'),
+      url: absoluteUrl('/'),
+      inLanguage: i18n.resolvedLanguage,
+    },
+  })
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12 text-slate-900 dark:text-slate-100">

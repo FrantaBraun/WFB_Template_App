@@ -63,7 +63,7 @@ export default function MyPostsPage() {
   // Rows handed over so far - the next offset, assigned from the page shown.
   const fetched = useRef(0)
 
-  usePageMeta({ title: t('myPosts.title') })
+  usePageMeta({ title: t('myPosts.title'), noindex: true })
 
   useEffect(() => {
     if (loading || !user) return

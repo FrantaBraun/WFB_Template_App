@@ -56,7 +56,7 @@ export default function PaymentsPage() {
   const fetched = useRef(0)
   const language = i18n.resolvedLanguage ?? i18n.language
 
-  usePageMeta({ title: t('payments.title') })
+  usePageMeta({ title: t('payments.title'), noindex: true })
 
   useEffect(() => {
     if (loading || !user) return

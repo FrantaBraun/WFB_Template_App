@@ -8,8 +8,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import usePageMeta from '../../hooks/usePageMeta'
-import { API_BASE, ApiError, CATEGORIES_PATH, fetchJson, useBoardsMe, type Category, type Post } from './api'
+import usePageMeta, { absoluteUrl, clipDescription } from '../../hooks/usePageMeta'
+import { API_BASE, ApiError, CATEGORIES_PATH, categoryPath, fetchJson, useBoardsMe, type Category, type Post } from './api'
 import BlockedNotice from './BlockedNotice'
 import BoostPanel from './BoostPanel'
 import PostForm from './PostForm'
@@ -19,7 +19,8 @@ import { card, chip, primaryButton, secondaryButton } from './styles'
 /** /categories/:slug - the category's description, the form to add a post (signed in), and its posts by value. */
 export default function CategoryPage() {
   const { slug = '' } = useParams()
-  const { t } = useTranslation('boards')
+  const { t, i18n } = useTranslation('boards')
+  const { t: tCore } = useTranslation()
   const { user } = useAuth()
   const me = useBoardsMe()
   const [category, setCategory] = useState<Category | null>(null)
@@ -30,7 +31,33 @@ export default function CategoryPage() {
   const [fresh, setFresh] = useState<Post | null>(null)
   const [showForm, setShowForm] = useState(false)
 
-  usePageMeta({ title: category?.title, description: category?.description.slice(0, 200) })
+  usePageMeta({
+    title: category?.title ?? (state === 'notFound' ? t('category.notFound') : undefined),
+    description: category?.description,
+    // A category that is not there is a page with nothing to index.
+    noindex: state === 'notFound' || state === 'error',
+    jsonLd: category
+      ? [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: category.title,
+            description: clipDescription(category.description),
+            url: absoluteUrl(categoryPath(category.slug)),
+            inLanguage: i18n.resolvedLanguage,
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: tCore('common.home'), item: absoluteUrl('/') },
+              { '@type': 'ListItem', position: 2, name: t('list.title'), item: absoluteUrl(CATEGORIES_PATH) },
+              { '@type': 'ListItem', position: 3, name: category.title, item: absoluteUrl(categoryPath(category.slug)) },
+            ],
+          },
+        ]
+      : undefined,
+  })
 
   useEffect(() => {
     if (showForm && user) {

@@ -35,7 +35,7 @@ export default function ModerationPage() {
   const ruleSlug = params.get('rules') ?? ''
   const [tab, setTab] = useState<Tab>(ruleSlug ? 'rules' : 'posts')
 
-  usePageMeta({ title: t('admin.title') })
+  usePageMeta({ title: t('admin.title'), noindex: true })
 
   function editRules(slug: string) {
     setParams(slug ? { rules: slug } : {}, { replace: true })

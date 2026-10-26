@@ -48,7 +48,7 @@ export default function NewCategoryPage() {
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const [review, setReview] = useState<Assessment | null>(null)
 
-  usePageMeta({ title: t('newCategory.title') })
+  usePageMeta({ title: t('newCategory.title'), noindex: true })
 
   const titleLength = charCount(title)
   const descriptionLength = charCount(description)

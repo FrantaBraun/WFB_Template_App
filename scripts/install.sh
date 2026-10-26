@@ -288,6 +288,13 @@ server {
         proxy_read_timeout 60s;
     }
 
+    # Sitemap pro vyhledávače – píše ji backend (kategorie se mění), roboti ji
+    # hledají na /sitemap.xml; odkaz na ni je v robots.txt (z VITE_APP_URL)
+    location = /sitemap.xml {
+        proxy_pass         http://127.0.0.1:${BACKEND_PORT}/api/modules/boards/sitemap.xml;
+        proxy_read_timeout 60s;
+    }
+
     # Blokace skrytých souborů (.git, .env...)
     location ~ /\. {
         deny all;

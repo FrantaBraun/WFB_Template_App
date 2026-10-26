@@ -11,11 +11,12 @@ import usePageMeta from '../hooks/usePageMeta'
 
 export default function NotFound() {
   const { t } = useTranslation()
-  usePageMeta({ title: t('notFound.pageTitle'), description: t('notFound.pageDescription')})
+  // The server answers 200 for every address (it is one page), so a missing page says so itself.
+  usePageMeta({ title: t('notFound.pageTitle'), description: t('notFound.pageDescription'), noindex: true })
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col px-6 text-slate-900 mt-5 dark:text-slate-100 text-center">
-      <img src="/notFoundSadPanda.png" width="200" height="300" className='mx-auto my-5'></img>
+      <img src="/notFoundSadPanda.png" alt="" width="200" height="300" className='mx-auto my-5'></img>
       <h1 className="mb-6 text-2xl font-semibold tracking-tight">{t('notFound.title')}</h1>
 
       <Link to="/" className="text-slate-900 underline dark:text-slate-100">

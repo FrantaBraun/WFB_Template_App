@@ -3,11 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#7c3aed" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#020617" media="(prefers-color-scheme: dark)" />
     <title>BumpFeel</title>
+    <!--
+      What link previews and crawlers that do not run JavaScript see (the app
+      overrides all of it per page, see src/hooks/usePageMeta.ts). Czech, like
+      <html lang>, and the same text as `meta.description` in the cs locale.
+      %VITE_APP_URL% comes from frontend/.env: an Open Graph image has to be
+      an absolute address.
+    -->
+    <meta name="description" content="Zveřejněte myšlenku na nástěnce podle svého výběru. Příspěvky stoupají s ohlasem, který získají, a s věkem klesají." />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BumpFeel" />
+    <meta property="og:title" content="BumpFeel" />
+    <meta property="og:description" content="Zveřejněte myšlenku na nástěnce podle svého výběru. Příspěvky stoupají s ohlasem, který získají, a s věkem klesají." />
+    <meta property="og:locale" content="cs_CZ" />
+    <meta property="og:image" content="%VITE_APP_URL%/logo.png" />
+    <meta name="twitter:card" content="summary" />
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <h1>BumpFeel</h1>
+      <p>Zveřejněte myšlenku na nástěnce podle svého výběru. Příspěvky stoupají s ohlasem, který získají, a s věkem klesají. Aplikace potřebuje zapnutý JavaScript.</p>
+      <ul>
+        <li><a href="/categories">Kategorie</a></li>
+        <li><a href="/obchodni-podminky">Pravidla a podmínky</a></li>
+        <li><a href="/ochrana-osobnich-udaju">Ochrana osobních údajů</a></li>
+        <li><a href="/contact">Kontakt</a></li>
+      </ul>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

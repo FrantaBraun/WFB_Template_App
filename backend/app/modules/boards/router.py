@@ -27,7 +27,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from sqlalchemy import and_, exists, func, literal, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
@@ -40,7 +40,8 @@ from app.models.user import User
 from app.modules.boards.admin_router import router as admin_router
 from app.modules.boards.config import BoardsConfig, get_config
 from app.modules.boards.deps import get_active_admin, get_active_user, get_optional_user
-from app.modules.boards import documents, history, payments_status, receipts
+from app.modules.boards import documents, history, payments_status, receipts, search
+from app.modules.boards import sitemap as sitemap_module
 from app.modules.boards.models import STATUS_HIDDEN, STATUS_PUBLISHED, Category, Post, Receipt, Resonance
 from app.modules.boards.payments import CURRENCY
 from app.modules.boards.moderation.ai import AiModerator, get_ai_moderator
@@ -273,19 +274,29 @@ async def payments_info(
 
 @router.get("/categories")
 async def list_categories(
+    q: str | None = Query(default=None, max_length=100),
     offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
     config: BoardsConfig = Depends(get_config),
 ) -> CategoryPage:
     """Busiest categories first (most published posts), then by title; the
-    client asks for the next page via offset. A blocked category is not listed."""
+    client asks for the next page via offset. A blocked category is not listed.
+
+    `q` keeps the categories whose title or description contains every word of
+    it, ignoring case and diacritics (search.py); a blank `q` is no search. The
+    order is the same with and without it - a search narrows the list, it does
+    not rank it."""
     post_count = func.count(Post.id)
+    query = (
+        select(Category, post_count)
+        .outerjoin(Post, and_(Post.category_id == Category.id, Post.status == STATUS_PUBLISHED))
+        .where(Category.status == STATUS_PUBLISHED)
+    )
+    if q is not None and q.strip():
+        query = query.where(search.matches(q, Category.search_text))
     rows = (
         await db.execute(
-            select(Category, post_count)
-            .outerjoin(Post, and_(Post.category_id == Category.id, Post.status == STATUS_PUBLISHED))
-            .where(Category.status == STATUS_PUBLISHED)
-            .group_by(Category.id)
+            query.group_by(Category.id)
             .order_by(post_count.desc(), Category.title.asc(), Category.id.asc())
             .offset(offset)
             .limit(config.page_size + 1)
@@ -294,6 +305,34 @@ async def list_categories(
     return CategoryPage(
         items=[category_out(category, count) for category, count in rows[: config.page_size]],
         has_more=len(rows) > config.page_size,
+    )
+
+
+@router.get("/sitemap.xml", include_in_schema=False)
+async def sitemap(db: AsyncSession = Depends(get_db), settings: Settings = Depends(get_settings)) -> Response:
+    """The sitemap for search engines (sitemap.py): public pages and every
+    published category, dated by its newest published post. Served here and
+    mapped to /sitemap.xml by the web server."""
+    paths = sitemap_module.static_paths(load_enabled_module_keys())
+    last_post = func.max(Post.created_at)
+    rows = (
+        await db.execute(
+            select(Category.slug, Category.created_at, last_post)
+            .outerjoin(Post, and_(Post.category_id == Category.id, Post.status == STATUS_PUBLISHED))
+            .where(Category.status == STATUS_PUBLISHED)
+            .group_by(Category.id)
+            .order_by(Category.created_at.asc(), Category.id.asc())
+            .limit(max(sitemap_module.URL_LIMIT - len(paths), 0))
+        )
+    ).all()
+    dated = [
+        (sitemap_module.category_path(slug), max(created_at, newest) if newest else created_at)
+        for slug, created_at, newest in rows
+    ]
+    return Response(
+        content=sitemap_module.build_sitemap(settings.frontend_url, paths, dated),
+        media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=3600"},
     )
 
 

@@ -5,11 +5,12 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, CheckConstraint, DateTime, ForeignKey, Integer, SmallInteger, String, func, text
+from sqlalchemy import JSON, CheckConstraint, DateTime, ForeignKey, Integer, SmallInteger, String, Text, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
+from app.modules.boards.search import build_search_text
 
 # Column sizes are the text limits the API enforces (schemas.py).
 CATEGORY_TITLE_MAX = 120
@@ -32,10 +33,20 @@ STATUS_BLOCKED = "blocked"
 STATUS_REMOVED = "removed"
 
 
+def _category_search_text(context) -> str:
+    """The default of Category.search_text: derived from the title and
+    description being inserted, so a row made any way (the API, a test, a
+    script) is searchable. Title and description are never edited afterwards
+    (there is no endpoint that does), so the insert is the only moment."""
+    values = context.get_current_parameters()
+    return build_search_text(values["title"], values["description"])
+
+
 class Category(Base):
     """One publication board: a title (its slug is generated from it) and a
     short description of what belongs there. created_by_id is kept for
     moderation and never leaves the backend - boards show no authors.
+    search_text is what the public search looks through (search.py).
 
     status is "published" or "blocked" (an administrator took the whole board
     down, with a reason its creator is sent). A blocked category is gone for
@@ -52,6 +63,8 @@ class Category(Base):
     title: Mapped[str] = mapped_column(String(CATEGORY_TITLE_MAX), nullable=False)
     slug: Mapped[str] = mapped_column(String(SLUG_MAX), unique=True, index=True, nullable=False)
     description: Mapped[str] = mapped_column(String(CATEGORY_DESCRIPTION_MAX), nullable=False)
+    # Title and description, lowercased and without diacritics - never exposed.
+    search_text: Mapped[str] = mapped_column(Text, nullable=False, default=_category_search_text)
     created_by_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     # The local violation score (percent) the category's title and description

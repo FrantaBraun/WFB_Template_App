@@ -32,7 +32,7 @@ export default function ReceiptsPage() {
   const [documentError, setDocumentError] = useState(false)
   const language = i18n.resolvedLanguage ?? i18n.language
 
-  usePageMeta({ title: t('receipts.title') })
+  usePageMeta({ title: t('receipts.title'), noindex: true })
 
   useEffect(() => {
     if (loading || !user) return
