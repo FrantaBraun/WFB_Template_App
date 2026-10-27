@@ -26,7 +26,7 @@ from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.user import User
 from app.modules.boards.config import BoardsConfig, get_config
-from app.modules.boards import payments_status, receipts
+from app.modules.boards import limits, payments_status, receipts
 from app.modules.boards.models import (
     STATUS_BLOCKED,
     STATUS_HIDDEN,
@@ -49,6 +49,7 @@ from app.modules.boards.schemas import (
     BlockPostIn,
     BlockPostOut,
     MachineRules,
+    PaymentsOverviewOut,
     PaymentsProblemOut,
     PaymentsStatusOut,
     RetryOut,
@@ -282,6 +283,17 @@ async def payments_status_for_admins(
         enabled=not found,
         problems=[PaymentsProblemOut(code=p.code, missing=list(p.missing)) for p in found],
     )
+
+
+@router.get("/payments-overview")
+async def payments_overview(
+    db: AsyncSession = Depends(get_db), config: BoardsConfig = Depends(get_config)
+) -> PaymentsOverviewOut:
+    """How close the confirmed payments are to the two limits that change a
+    provider's tax position - the Czech VAT registration limit and the EU
+    limit for sales to consumers in other member states (see limits.py).
+    An early warning with deliberately cautious figures, not bookkeeping."""
+    return await limits.build_overview(db, config)
 
 
 # --- Payment documents --------------------------------------------------------

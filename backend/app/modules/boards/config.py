@@ -15,6 +15,8 @@ per-application values that follow the branch, like backend/modules.json
 - payments: what an author may pay to raise a post's value (PaymentsConfig).
 - invoicing: who issues the payment documents and in what language/time zone
   (InvoicingConfig). Payments are refused until the provider is filled in.
+- tax_limits: the figures behind the administrators' early warning about the
+  sales limits that change a provider's tax position (TaxLimitsConfig, limits.py).
 
 The text limits (post title / text, category title / description) are
 fixed in schemas.py and the column sizes in models.py, not configured here:
@@ -148,6 +150,31 @@ class InvoicingConfig(BaseModel):
         return value
 
 
+class TaxLimitsConfig(BaseModel):
+    """The figures limits.py measures the payments against - an early warning,
+    not bookkeeping.
+
+    - vat_registration_czk: the Czech turnover above which a provider has to
+      register for VAT (2 000 000 CZK over twelve calendar months since 2025).
+    - oss_threshold_eur: the EU-wide yearly total of sales of electronic
+      services to consumers in other member states above which the VAT of the
+      customer's country applies (10 000 EUR, this and the previous year).
+    - czk_per_usd, eur_per_usd: the rates the US dollar payments are converted
+      at. Deliberately on the high side, so a warning comes early rather than
+      late; the real tax base uses the Czech National Bank's rate, so check
+      them now and then.
+    - warn_percent: from which share of a limit the page starts to warn.
+    These limits change by law - look at them again when the rules do."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    vat_registration_czk: int = Field(default=2_000_000, ge=1)
+    oss_threshold_eur: int = Field(default=10_000, ge=1)
+    czk_per_usd: float = Field(default=24.0, gt=0)
+    eur_per_usd: float = Field(default=0.95, gt=0)
+    warn_percent: int = Field(default=80, ge=1, le=100)
+
+
 class BoardsConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -158,6 +185,7 @@ class BoardsConfig(BaseModel):
     moderation: ModerationConfig = Field(default_factory=ModerationConfig)
     payments: PaymentsConfig = Field(default_factory=PaymentsConfig)
     invoicing: InvoicingConfig = Field(default_factory=InvoicingConfig)
+    tax_limits: TaxLimitsConfig = Field(default_factory=TaxLimitsConfig)
 
 
 def load_config(path: Path = CONFIG_FILE) -> BoardsConfig:

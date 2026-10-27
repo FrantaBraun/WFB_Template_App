@@ -35,5 +35,12 @@
       "phone": "",
       "web": ""
     }
+  },
+  "tax_limits": {
+    "vat_registration_czk": 2000000,
+    "oss_threshold_eur": 10000,
+    "czk_per_usd": 24.0,
+    "eur_per_usd": 0.95,
+    "warn_percent": 80
   }
 }

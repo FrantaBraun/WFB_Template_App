@@ -4,7 +4,7 @@
 
 import unicodedata
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -208,6 +208,61 @@ class PaymentsStatusOut(BaseModel):
 
     enabled: bool
     problems: list[PaymentsProblemOut]
+
+
+LimitLevel = Literal["ok", "warn", "exceeded"]
+
+
+class CountryTotalOut(BaseModel):
+    """What was paid from one country. `country` is None for payments whose
+    country was never reported (made before it was kept)."""
+
+    country: str | None
+    eu: bool  # a member state other than the Czech Republic
+    payments: int
+    paid_usd_cents: int
+
+
+class VatRegistrationOut(BaseModel):
+    """The turnover over the last twelve calendar months (this one included)
+    against the limit for registering as a VAT payer."""
+
+    window_from: date
+    window_to: date
+    payments: int
+    paid_usd_cents: int
+    estimated_czk: int
+    limit_czk: int
+    percent: float
+    level: LimitLevel
+
+
+class OssYearOut(BaseModel):
+    """One calendar year's sales to the other EU member states against the
+    10 000 EUR limit. `countries` lists every country paid from that year."""
+
+    year: int
+    eu_payments: int
+    eu_paid_usd_cents: int
+    estimated_eur: int
+    limit_eur: int
+    percent: float
+    level: LimitLevel
+    unknown_country_payments: int
+    countries: list[CountryTotalOut]
+
+
+class PaymentsOverviewOut(BaseModel):
+    """For administrators: how close the payments are to the limits that
+    change the provider's tax position. An early warning, not bookkeeping."""
+
+    generated_at: datetime
+    vat_payer: bool
+    warn_percent: int
+    czk_per_usd: float
+    eur_per_usd: float
+    vat_registration: VatRegistrationOut
+    oss_years: list[OssYearOut]  # the previous calendar year first, then the current one
 
 
 class AdminReceiptOut(ReceiptOut):

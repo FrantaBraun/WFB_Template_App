@@ -136,6 +136,54 @@ export interface PaymentsStatus {
   problems: PaymentsProblem[]
 }
 
+export type LimitLevel = 'ok' | 'warn' | 'exceeded'
+
+/** What was paid from one country; `country` is null when it was never reported (payments from before it was kept). */
+export interface CountryTotal {
+  country: string | null
+  /** A member state of the EU other than the Czech Republic. */
+  eu: boolean
+  payments: number
+  paid_usd_cents: number
+}
+
+/** The turnover of the last twelve calendar months against the limit for registering as a VAT payer. */
+export interface VatRegistration {
+  window_from: string
+  window_to: string
+  payments: number
+  paid_usd_cents: number
+  estimated_czk: number
+  limit_czk: number
+  percent: number
+  level: LimitLevel
+}
+
+/** One calendar year's sales to the other EU member states against the 10 000 EUR limit. */
+export interface OssYear {
+  year: number
+  eu_payments: number
+  eu_paid_usd_cents: number
+  estimated_eur: number
+  limit_eur: number
+  percent: number
+  level: LimitLevel
+  unknown_country_payments: number
+  countries: CountryTotal[]
+}
+
+/** For administrators (GET /manage/payments-overview): how close the payments are to the limits that change the provider's tax position. */
+export interface PaymentsOverview {
+  generated_at: string
+  vat_payer: boolean
+  warn_percent: number
+  czk_per_usd: number
+  eur_per_usd: number
+  vat_registration: VatRegistration
+  /** The previous calendar year first, then the current one. */
+  oss_years: OssYear[]
+}
+
 /** Whether authors can pay to raise a post's value on this deployment, and within what limits. */
 export interface PaymentsInfo {
   enabled: boolean

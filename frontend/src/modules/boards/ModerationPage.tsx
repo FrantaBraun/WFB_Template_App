@@ -12,17 +12,19 @@ import usePageMeta from '../../hooks/usePageMeta'
 import { CATEGORIES_PATH, useBoardsMe } from './api'
 import ModerationAccounts from './ModerationAccounts'
 import ModerationCategories from './ModerationCategories'
+import ModerationLimits from './ModerationLimits'
 import ModerationPosts from './ModerationPosts'
 import ModerationRules from './ModerationRules'
 import PaymentsStatusNotice from './PaymentsStatusNotice'
 
-type Tab = 'posts' | 'categories' | 'rules' | 'accounts'
-const TABS: Tab[] = ['posts', 'categories', 'rules', 'accounts']
+type Tab = 'posts' | 'categories' | 'rules' | 'accounts' | 'limits'
+const TABS: Tab[] = ['posts', 'categories', 'rules', 'accounts', 'limits']
 
 /**
  * /moderation - this application's administrators: find and block posts,
  * block or restore categories, edit a category's machine rules, lift account
- * blocks. Anyone else sees
+ * blocks, watch how close the payments are to the sales limits that change
+ * the provider's tax position. Anyone else sees
  * only that they may not be here (the endpoints refuse them anyway). The
  * category being edited lives in the URL (?rules=<slug>), so a post's "edit
  * the category's rules" link and a reload both land on the same editor.
@@ -64,7 +66,7 @@ export default function ModerationPage() {
       ) : (
         <>
           <PaymentsStatusNotice />
-          <div role="tablist" className="mb-6 flex gap-4 border-b border-slate-200 dark:border-slate-800">
+          <div role="tablist" className="mb-6 flex flex-wrap gap-x-4 border-b border-slate-200 dark:border-slate-800">
             {TABS.map((name) => (
               <button
                 key={name}
@@ -85,6 +87,7 @@ export default function ModerationPage() {
           {tab === 'categories' && <ModerationCategories onEditRules={editRules} />}
           {tab === 'rules' && <ModerationRules slug={ruleSlug} onSlugChange={editRules} />}
           {tab === 'accounts' && <ModerationAccounts />}
+          {tab === 'limits' && <ModerationLimits />}
         </>
       )}
     </div>

@@ -285,7 +285,7 @@ const boardsModule: ModuleDefinition = {
         forbidden: 'K moderaci nemáte oprávnění.',
         error: 'Operace se nezdařila.',
         cancel: 'Zrušit',
-        tabs: { posts: 'Příspěvky', categories: 'Kategorie', rules: 'Pravidla kategorií', accounts: 'Zablokované účty' },
+        tabs: { posts: 'Příspěvky', categories: 'Kategorie', rules: 'Pravidla kategorií', accounts: 'Zablokované účty', limits: 'Tržby a limity' },
         status: { published: 'Zveřejněné', hidden: 'Skryté autorem', blocked: 'Zablokované', removed: 'Odstraněné', all: 'Všechny' },
         reason: {
           account_blocked: 'odstraněno se zablokováním účtu autora',
@@ -375,6 +375,39 @@ const boardsModule: ModuleDefinition = {
           empty: 'Žádné zablokované účty.',
           unblock: 'Odblokovat',
           confirmUnblock: 'Odblokovat účet? Dřívější porušení se přestanou počítat, odstraněné příspěvky se ale samy nevrátí – obnovíte je jednotlivě.',
+        },
+        limits: {
+          explain:
+            'Dokud provozovatel není plátcem DPH, DPH se k cenám nepřičítá. Platí to jen do dvou hranic a tady vidíte, jak daleko od nich platby jsou. Je to včasné varování s opatrnými čísly, ne účetnictví.',
+          error: 'Přehled se nepodařilo načíst.',
+          figure: '{{value}} z {{limit}}',
+          ofLimit: '{{percent}} % limitu',
+          level: { ok: 'V pořádku', warn: 'Blíží se limit', exceeded: 'Limit překročen' },
+          vat: {
+            title: 'Registrace k DPH v Česku',
+            payer: 'Poskytovatel je v nastavení (invoicing.provider.vat_payer) označen jako plátce DPH, limit pro registraci se proto nesleduje.',
+            explain:
+              'Obrat za 12 kalendářních měsíců, {{from}} až {{to}}. Po překročení {{limit}} je třeba se zpravidla do 15 dnů po konci měsíce přihlásit k registraci a vystavovat daňové doklady, což tato aplikace neumí. Ověřte s účetní.',
+            paid: 'Zaplaceno {{amount}} (plateb: {{count}}).',
+            note: 'Počítají se všechny platby ze všech zemí. Limit se ale vztahuje na celý obrat osoby včetně jiných činností, které tady nevidíte.',
+          },
+          oss: {
+            title: 'Prodej spotřebitelům v jiných státech EU',
+            explain:
+              'Elektronické služby spotřebitelům v jiných členských státech EU se do {{limit}} za rok zdaňují jako doma. Limit nesmí být překročen v letošním ani loňském roce; nad ním se platí DPH státu zákazníka a je třeba registrace do OSS. Zemi zákazníka bere aplikace z fakturační adresy zadané při platbě.',
+            year: 'Rok {{year}}',
+            sold: 'Do jiných států EU: {{amount}} (plateb: {{count}}, přepočteno na {{estimate}}).',
+            unknown: 'Plateb bez zjištěné země: {{count}} (jsou z doby před jejím ukládáním), do součtu za EU se proto nepočítají.',
+            countries: 'Platby podle zemí',
+            columns: { country: 'Země', payments: 'Plateb', amount: 'Zaplaceno' },
+            euChip: 'EU',
+            unknownCountry: 'Země neznámá',
+            empty: 'V tomto roce zatím žádné platby.',
+            note: 'Počítají se i platby firem z EU, protože aplikace jejich status neověřuje.',
+          },
+          rates:
+            'Přepočet: 1 USD = {{czk}} Kč a {{eur}} EUR. Kurzy jsou v backend/modules/boards.json (tax_limits), záměrně o něco vyšší, aby varování přišlo včas; nejsou účetní. Limity zkontrolujte, když se změní zákon.',
+          generated: 'Stav k {{time}}.',
         },
       },
     },
@@ -610,7 +643,7 @@ const boardsModule: ModuleDefinition = {
         forbidden: 'You are not allowed to moderate.',
         error: 'The operation failed.',
         cancel: 'Cancel',
-        tabs: { posts: 'Posts', categories: 'Categories', rules: 'Category rules', accounts: 'Blocked accounts' },
+        tabs: { posts: 'Posts', categories: 'Categories', rules: 'Category rules', accounts: 'Blocked accounts', limits: 'Sales and limits' },
         status: { published: 'Published', hidden: 'Hidden by the author', blocked: 'Blocked', removed: 'Removed', all: 'All' },
         reason: {
           account_blocked: 'removed when its author was blocked',
@@ -700,6 +733,39 @@ const boardsModule: ModuleDefinition = {
           empty: 'No blocked accounts.',
           unblock: 'Unblock',
           confirmUnblock: 'Unblock this account? Earlier violations stop counting, but removed posts do not come back by themselves - you restore them one by one.',
+        },
+        limits: {
+          explain:
+            'While the provider is not a VAT payer, no VAT is added to the prices. That holds only up to two limits, and this shows how far the payments are from them. It is an early warning with cautious figures, not bookkeeping.',
+          error: 'Could not load the overview.',
+          figure: '{{value}} of {{limit}}',
+          ofLimit: '{{percent}}% of the limit',
+          level: { ok: 'All good', warn: 'Nearing the limit', exceeded: 'Limit exceeded' },
+          vat: {
+            title: 'VAT registration in the Czech Republic',
+            payer: 'The provider is marked as a VAT payer in the settings (invoicing.provider.vat_payer), so the registration limit is not watched.',
+            explain:
+              'Turnover over 12 calendar months, {{from}} to {{to}}. Once it passes {{limit}}, you normally have to apply for VAT registration within 15 days of the end of the month and issue tax documents, which this application cannot do. Check with your accountant.',
+            paid: '{{amount}} paid (payments: {{count}}).',
+            note: 'Every payment from every country is counted. The limit, though, applies to the whole turnover of the person, including other activities you cannot see here.',
+          },
+          oss: {
+            title: 'Sales to consumers in other EU countries',
+            explain:
+              'Electronic services sold to consumers in other EU member states are taxed as at home up to {{limit}} a year. The limit must not be passed in this year or the last; above it the VAT of the customer’s country applies and registration in OSS is needed. The customer’s country is taken from the billing address entered when paying.',
+            year: 'Year {{year}}',
+            sold: 'To other EU countries: {{amount}} (payments: {{count}}, converted to {{estimate}}).',
+            unknown: 'Payments with no country recorded: {{count}} (they date from before it was kept), so they are not in the EU total.',
+            countries: 'Payments by country',
+            columns: { country: 'Country', payments: 'Payments', amount: 'Paid' },
+            euChip: 'EU',
+            unknownCountry: 'Country unknown',
+            empty: 'No payments yet this year.',
+            note: 'Payments from EU businesses are counted too, because the application does not check their status.',
+          },
+          rates:
+            'Conversion: 1 USD = {{czk}} CZK and {{eur}} EUR. The rates are in backend/modules/boards.json (tax_limits), set a little high on purpose so the warning comes early; they are not accounting rates. Check the limits when the law changes.',
+          generated: 'As of {{time}}.',
         },
       },
     },
