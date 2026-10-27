@@ -66,6 +66,11 @@ class PaymentQuote:
     """Frontend path the result page offers as "continue" once paid."""
     extra: dict = field(default_factory=dict)
     """Any additional data the purpose wants stored with the payment."""
+    require_billing_address: bool = False
+    """Make Stripe's checkout ask for the billing address. Set it where the
+    payer's country matters (VAT place of supply, OSS limits, local taxes):
+    the country Stripe reports is then kept in payment.extra["customer_country"]
+    (an ISO 3166-1 alpha-2 code, upper case) once the session is reconciled."""
 
 
 ResolveFn = Callable[[AsyncSession, User | None, dict], Awaitable[PaymentQuote]]
