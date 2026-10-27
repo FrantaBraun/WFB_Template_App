@@ -8,9 +8,17 @@ from urllib.parse import urlsplit
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
+from app.database import get_db
 from app.modules.kontaktni_formular.config import ContactFormConfig, get_contact_form_config
+from app.modules.kontaktni_formular.hooks import (
+    ContactFormHook,
+    ContactHookResult,
+    ContactSubmission,
+    get_contact_form_hooks,
+)
 from app.modules.kontaktni_formular.schemas import ContactDetails, ContactFormRequest, ContactInfoResponse
 from app.security.jwt import get_current_user_claims
 from app.services.auth_client import auth_client
@@ -85,19 +93,50 @@ async def contact_info(
     )
 
 
+async def _run_hooks(
+    hooks: list[ContactFormHook], db: AsyncSession, submission: ContactSubmission
+) -> ContactHookResult:
+    """Calls every hook (see hooks.py) and merges what they return - the
+    first tag / Reply-To wins. A hook that raises is logged and skipped after
+    a rollback, so the session is usable again and the message still goes out."""
+    tag: str | None = None
+    reply_to: str | None = None
+    for hook in hooks:
+        try:
+            result = await hook(db, submission)
+        except Exception:
+            logger.exception("A contact form hook failed - continuing without it")
+            await db.rollback()
+            continue
+        if result is not None:
+            tag = tag or result.subject_tag
+            reply_to = reply_to or result.reply_to
+    return ContactHookResult(subject_tag=tag, reply_to=reply_to)
+
+
+def _tagged(tag: str | None, subject: str) -> str:
+    return f"{tag} - {subject}" if tag else subject
+
+
 @router.post("/submit", status_code=204)
 async def submit_contact_form(
     body: ContactFormRequest,
     credentials: HTTPAuthorizationCredentials | None = Depends(_optional_bearer),
     settings: Settings = Depends(get_settings),
     config: ContactFormConfig = Depends(get_contact_form_config),
+    db: AsyncSession = Depends(get_db),
+    hooks: list[ContactFormHook] = Depends(get_contact_form_hooks),
 ) -> None:
     """Sends the message to Settings.contact_mail and, when the module
     config's send_reply is on, a confirmation email to the sender in the
     language the form was submitted in (body.language, else the config's
     default_language). The sender is identified by their real name when
     signed in, or by their supplied reply_to address (required in that
-    case) when they're not."""
+    case) when they're not.
+
+    Modules that take part through the CONTACT_FORM_RECEIVED hook (e.g.
+    tickets) run first; what they return can prefix the subjects of both mails
+    and redirect the sender's answers (see hooks.ContactHookResult)."""
     if not settings.contact_mail:
         raise RuntimeError(
             "CONTACT_MAIL is not configured - set it in backend/.env before enabling this module."
@@ -119,17 +158,38 @@ async def submit_contact_form(
         reply_to = body.reply_to
         sender_name = body.reply_to
 
+    outcome = await _run_hooks(
+        hooks,
+        db,
+        ContactSubmission(
+            subject=body.subject,
+            message=body.message,
+            sender_name=sender_name,
+            reply_to=reply_to,
+            language=body.language,
+            signed_in=claims is not None,
+        ),
+    )
+
     try:
         email_body = (
             f"Contact form message:\nFrom: {sender_name} <{reply_to}>\n"
             f"Language: {body.language or '-'}\n\n{body.message}"
         )
-        await send_email(body.subject, [settings.contact_mail], email_body, settings=settings)
+        await send_email(
+            _tagged(outcome.subject_tag, body.subject), [settings.contact_mail], email_body, settings=settings
+        )
         if config.send_reply:
             reply_subject, reply_body = config.reply_template_for(body.language).render(
                 sender_name=sender_name, reply_to=reply_to, subject=body.subject, message=body.message
             )
-            await send_email(reply_subject, [reply_to], reply_body, settings=settings)
+            await send_email(
+                _tagged(outcome.subject_tag, reply_subject),
+                [reply_to],
+                reply_body,
+                settings=settings,
+                reply_to=[outcome.reply_to] if outcome.reply_to else None,
+            )
     except Exception as exc:
         logger.exception("Failed to send contact form email")
         raise HTTPException(status_code=502, detail="Failed to send message") from exc
