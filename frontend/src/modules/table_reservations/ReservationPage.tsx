@@ -405,7 +405,7 @@ function ReservationForm({ info, onDone }: { info: Info; onDone: (created: Creat
             {availability.reason && ` ${availability.reason}`}
           </p>
         ) : times.length === 0 ? (
-          <p role="status" className={mutedClass}>{noTimesText()}</p>
+          <p role="status" className={mutedClass + ' font-bold p-3 border border-red-800 rounded-lg bg-red-100 dark:bg-purple-100'}>{noTimesText()}</p>
         ) : (
           <div role="radiogroup" aria-label={t('form.timeTitle')} className="flex flex-wrap gap-2">
             {times.map((time) => (
