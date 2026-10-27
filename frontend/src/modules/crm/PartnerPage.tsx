@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import usePageMeta from '../../hooks/usePageMeta'
+import ModuleSlot from '../ModuleSlot'
 import {
   API_BASE,
   CRM_PATH,
@@ -151,6 +152,9 @@ function PartnerDetail({ partnerId }: { partnerId: string }) {
           </ul>
         )}
       </section>
+
+      {/* Slot "crm.partner", context { partner }: other modules add their own section about this partner (the tickets module lists its tickets). */}
+      <ModuleSlot name="crm.partner" context={{ partner }} />
     </div>
   )
 }
