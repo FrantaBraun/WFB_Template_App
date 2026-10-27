@@ -83,17 +83,17 @@ export default function HomePage() {
 
         <section>
           <h2 className="text-2xl font-semibold tracking-tight">{t('home.principles.title')}</h2>
-          <ul className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
             {principles.map((principle) => (
-              <li key={principle.title} className="border-l-4 border-violet-300 pl-4 dark:border-violet-700">
-                <h3 className="font-semibold">{principle.title}</h3>
-                <p className={`mt-1 ${mutedText}`}>{principle.text}</p>
+              <li key={principle.title} className={`${card} border-l-4 border-l-violet-300 dark:border-l-violet-700`}>
+                <h3 className="text-lg font-semibold">{principle.title}</h3>
+                <p className={`mt-2 ${mutedText}`}>{principle.text}</p>
               </li>
             ))}
           </ul>
         </section>
 
-        <section>
+        <section className={`${card} sm:p-8`}>
           <h2 className="text-2xl font-semibold tracking-tight">{t('home.instant.title')}</h2>
           <div className={`mt-4 max-w-2xl space-y-3 ${mutedText}`}>
             {instantParagraphs.map((paragraph) => (
@@ -119,7 +119,7 @@ export default function HomePage() {
         {projects && projects.length > 0 && (
           <section>
             <h2 className="text-2xl font-semibold tracking-tight">{t('home.portfolio.title')}</h2>
-            <p className={`mt-3 max-w-2xl ${mutedText}`}>{t('home.portfolio.intro')}</p>
+            <p className={`${card} mt-4 max-w-2xl py-4 ${mutedText}`}>{t('home.portfolio.intro')}</p>
             <ul className="mt-6 grid gap-4 sm:grid-cols-3">
               {projects.map((project) => (
                 <li key={project.slug}>
