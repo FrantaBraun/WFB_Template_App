@@ -447,3 +447,100 @@ async def test_webhook_on_paid_failure_rolls_back_and_500s(db_session, paid_call
     assert resp.status_code == 500
     await db_session.refresh(payment)
     assert payment.status == "pending"
+
+
+# --- the payer's country (tax place of supply) -----------------------------------
+
+
+@pytest.fixture()
+def country_purposes():
+    """One purpose that asks Stripe for the billing address and one that does
+    not; yields the list of countries on_paid saw on the payments."""
+    seen: list[str | None] = []
+
+    async def resolve_asking(db, user, payload):
+        return PaymentQuote(amount=1000, currency="usd", description="Boost", require_billing_address=True)
+
+    async def resolve_plain(db, user, payload):
+        return PaymentQuote(amount=1000, currency="usd", description="Boost")
+
+    async def on_paid(db, payment):
+        seen.append(payment.extra.get("customer_country"))
+
+    for key, resolve in (("test_asking", resolve_asking), ("test_plain", resolve_plain)):
+        register_purpose(PaymentPurpose(key=key, resolve=resolve, on_paid=on_paid, require_user=False))
+    yield seen
+    for key in ("test_asking", "test_plain"):
+        unregister_purpose(key)
+
+
+def _paid_session(payment_id, customer_details) -> dict:
+    return {**_session(payment_id, status="complete", payment_status="paid"), "customer_details": customer_details}
+
+
+@respx.mock
+async def test_checkout_asks_for_the_billing_address_only_when_the_purpose_wants_it(client, country_purposes):
+    route = respx.post(f"{STRIPE_URL}/v1/checkout/sessions").mock(
+        side_effect=lambda request: Response(200, json=_session(uuid.uuid4(), session_id=f"cs_{uuid.uuid4().hex}"))
+    )
+
+    await client.post(f"{BASE}/checkout", json={"purpose": "test_asking"})
+    await client.post(f"{BASE}/checkout", json={"purpose": "test_plain"})
+
+    asking, plain = (parse_qs(call.request.content.decode()) for call in route.calls)
+    assert asking["billing_address_collection"] == ["required"]
+    assert "billing_address_collection" not in plain
+
+
+async def test_webhook_keeps_the_billing_country_and_on_paid_sees_it(client, db_session, country_purposes):
+    payment = await _seed_payment(db_session, purpose="test_asking")
+    payment.extra = {"consents": ["terms"]}
+    await db_session.commit()
+    event = {
+        "type": "checkout.session.completed",
+        "data": {"object": _paid_session(payment.id, {"email": "a@example.com", "address": {"country": "DE"}})},
+    }
+
+    body, headers = _signed(event)
+    resp = await client.post(f"{BASE}/webhook", content=body, headers=headers)
+
+    assert resp.status_code == 200
+    await db_session.refresh(payment)
+    assert payment.status == "paid"
+    assert payment.extra == {"consents": ["terms"], "customer_country": "DE"}
+    assert country_purposes == ["DE"]
+
+
+@respx.mock
+async def test_status_poll_keeps_the_billing_country_too(client, db_session, country_purposes):
+    payment = await _seed_payment(db_session, purpose="test_asking")
+    respx.get(f"{STRIPE_URL}/v1/checkout/sessions/{payment.stripe_session_id}").mock(
+        return_value=Response(200, json=_paid_session(payment.id, {"address": {"country": "fr"}}))
+    )
+
+    resp = await client.get(f"{BASE}/payments/{payment.id}")
+
+    assert resp.json()["status"] == "paid"
+    await db_session.refresh(payment)
+    assert payment.extra["customer_country"] == "FR"  # normalised to upper case
+
+
+@pytest.mark.parametrize(
+    "customer_details",
+    [None, {}, {"address": None}, {"address": {}}, {"address": {"country": None}}, {"address": {"country": "Germany"}},
+     {"address": {"country": "D"}}, {"address": {"country": 49}}],
+    ids=["none", "empty", "no-address", "empty-address", "null-country", "name-not-code", "one-letter", "not-a-string"],
+)
+async def test_webhook_stores_no_country_unless_it_is_a_country_code(client, db_session, country_purposes, customer_details):
+    payment = await _seed_payment(db_session, purpose="test_asking")
+    body, headers = _signed(
+        {"type": "checkout.session.completed", "data": {"object": _paid_session(payment.id, customer_details)}}
+    )
+
+    resp = await client.post(f"{BASE}/webhook", content=body, headers=headers)
+
+    assert resp.status_code == 200
+    await db_session.refresh(payment)
+    assert payment.status == "paid"
+    assert "customer_country" not in payment.extra
+    assert country_purposes == [None]
