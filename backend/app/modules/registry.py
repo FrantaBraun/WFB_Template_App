@@ -14,12 +14,14 @@ mounted; toggling a key in backend/modules.json is a pure config change, it
 never touches the DB schema.
 """
 
+import asyncio
 import importlib
 import json
 import logging
 import pkgutil
-from collections.abc import Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from pathlib import Path
+from typing import Any
 
 import app.modules as modules_pkg
 from app.config import BASE_DIR
@@ -129,6 +131,47 @@ def check_module_dependencies(
             logger.warning(problem)
             problems.append(problem)
     return problems
+
+
+def get_enabled_hooks(name: str, enabled_keys: Iterable[str] | None = None) -> list[Callable[..., Awaitable[Any]]]:
+    """The hooks called `name` of every *enabled* module that declares one, in
+    module-key order (so the order doesn't depend on discovery order). A
+    module that is merely present but switched off contributes nothing -
+    toggling modules.json is a pure config change. `enabled_keys` defaults to
+    the current modules.json; the module that owns the hook documents what its
+    callables receive and return."""
+    keys = set(load_enabled_module_keys() if enabled_keys is None else enabled_keys)
+    manifests = sorted(get_enabled_modules(keys), key=lambda m: m.key)
+    return [manifest.hooks[name] for manifest in manifests if name in manifest.hooks]
+
+
+def start_background_tasks(enabled_keys: Iterable[str]) -> list[asyncio.Task]:
+    """Start every enabled module's `background_tasks` as asyncio tasks (call
+    from the running event loop, i.e. the application's lifespan). A task
+    that fails is logged by its own wrapper and ends - it never reaches the
+    loop as an unhandled error, and never stops the application."""
+    tasks = []
+    for manifest in sorted(get_enabled_modules(enabled_keys), key=lambda m: m.key):
+        for function in manifest.background_tasks:
+            tasks.append(asyncio.create_task(_run_background_task(manifest.key, function)))
+    return tasks
+
+
+async def _run_background_task(key: str, function: Callable[[], Awaitable[None]]) -> None:
+    try:
+        await function()
+    except asyncio.CancelledError:
+        raise
+    except Exception:
+        logger.exception("Background task %s of module %r stopped", getattr(function, "__name__", function), key)
+
+
+async def stop_background_tasks(tasks: Iterable[asyncio.Task]) -> None:
+    """Cancel the tasks start_background_tasks returned and wait for them."""
+    tasks = list(tasks)
+    for task in tasks:
+        task.cancel()
+    await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def import_all_module_models() -> None:

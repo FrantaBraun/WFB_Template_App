@@ -13,7 +13,12 @@ from app.api.router import api_router
 from app.config import get_settings
 from app.database import engine
 from app.logging_config import configure_logging
-from app.modules.registry import load_enabled_module_keys, run_startup_hooks
+from app.modules.registry import (
+    load_enabled_module_keys,
+    run_startup_hooks,
+    start_background_tasks,
+    stop_background_tasks,
+)
 from app.services.auth_client import auth_client
 
 settings = get_settings()
@@ -25,12 +30,16 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI startup/shutdown hook: lets every enabled module run its own
-    startup check, and on shutdown closes the shared AuthClient's HTTP
+    startup check, starts the background tasks of every enabled module (and
+    stops them again on shutdown), then closes the shared AuthClient's HTTP
     connection and disposes the DB engine's connection pool."""
     logger.info("Application startup")
-    run_startup_hooks(load_enabled_module_keys())
+    enabled_keys = load_enabled_module_keys()
+    run_startup_hooks(enabled_keys)
+    background_tasks = start_background_tasks(enabled_keys)
     yield
     logger.info("Application shutdown")
+    await stop_background_tasks(background_tasks)
     await auth_client.aclose()
     await engine.dispose()
 
