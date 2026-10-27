@@ -69,6 +69,14 @@ export const en: typeof cs = {
         },
       ],
     },
+    instant: {
+      title: 'A website from one sentence, or a tailor-made solution?',
+      paragraphs: [
+        'Websites generated from a single sentence in a few seconds look tempting. But the looks are the smallest part of the work. Such a website does not know your business, does not connect to the tools you already use, and when something goes wrong, there is nobody to turn to.',
+        'I use artificial intelligence in my work too – it speeds it up and keeps projects cheaper. But I treat it as a tool, not as a replacement for judgement. First we get to know how you do business, I design the solution to your requirements, deploy it into live operation and hand it over documented.',
+        'After launch I do not leave you on your own: the service fee covers full operation, security fixes and small changes on request. Behind the solution stands a person who understands it.',
+      ],
+    },
     ai: {
       title: 'Modern tools, AI included – used wisely',
       paragraphs: [

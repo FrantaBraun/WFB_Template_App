@@ -26,6 +26,7 @@ export default function HomePage() {
 
   const services = t('home.services.items', { returnObjects: true }) as TextItem[]
   const principles = t('home.principles.items', { returnObjects: true }) as TextItem[]
+  const instantParagraphs = t('home.instant.paragraphs', { returnObjects: true }) as string[]
   const aiParagraphs = t('home.ai.paragraphs', { returnObjects: true }) as string[]
 
   const sameAs = [contact?.details.github_url, contact?.details.linkedin_url].filter(Boolean)
@@ -90,6 +91,15 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-semibold tracking-tight">{t('home.instant.title')}</h2>
+          <div className={`mt-4 max-w-2xl space-y-3 ${mutedText}`}>
+            {instantParagraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
         </section>
 
         <section className={`${card} sm:p-8`}>

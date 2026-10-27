@@ -68,6 +68,14 @@ export const cs = {
         }
       ],
     },
+    instant: {
+      title: 'Web z jedné věty, nebo řešení na míru?',
+      paragraphs: [
+        'Weby, které se vygenerují za pár vteřin z jedné věty, vypadají lákavě. Vzhled je ale nejmenší část práce. Takový web nezná váš provoz, nepropojí se s nástroji, které už používáte, a když se něco pokazí, nemáte se na koho obrátit.',
+        'Umělou inteligenci při práci využívám také – urychluje mi ji a zlevňuje zakázky. Beru ji ale jako nástroj, ne jako náhradu úsudku. Nejdřív se seznámíme s tím, jak podnikáte, navrhnu řešení podle vašich požadavků, nasadím ho do ostrého provozu a předám ho zdokumentované.',
+        'Po spuštění vás nenechám bez opory: servisní poplatek zahrnuje plný provoz, bezpečnostní opravy i drobné úpravy na vaši žádost. Za řešením stojí člověk, který mu rozumí.',
+      ],
+    },
     ai: {
       title: 'Moderní nástroje, bezpečně, včetně AI – s rozumem',
       paragraphs: [
