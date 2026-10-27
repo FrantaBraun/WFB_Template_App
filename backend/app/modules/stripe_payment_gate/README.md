@@ -84,6 +84,7 @@ register_purpose(PaymentPurpose(key="order", resolve=resolve, on_paid=on_paid))
 ```
 
 - `require_user=False` povolí platbu i nepřihlášeným (např. dar).
+- `PaymentQuote(require_billing_address=True)` nechá Stripe Checkout vyžádat fakturační adresu. Země, kterou Stripe nahlásí, se po sesouhlasení platby uloží do `stripe_payments.extra["customer_country"]` (dvoupísmenný ISO kód, velkými písmeny; vidí ji i `on_paid`). Je to podklad pro určení místa plnění, limity OSS (10 000 EUR) a zahraniční daně; výchozí je `False`, takže ostatní účely se nemění. Kdo ji zapne, má v textu o ochraně údajů uvést, že se země uchovává.
 - Výjimka v `on_paid` vrátí celou transakci zpět, webhook odpoví `500` a Stripe ho zopakuje – `on_paid` proto musí být idempotentní vůči vlastním vedlejším efektům mimo DB (e-maily posílejte až po úspěchu, nebo si hlídejte stav).
 - Platbu lze zahájit i z Pythonu: `service.create_payment(db, settings, purpose_key=..., payload=..., user=...)`.
 
