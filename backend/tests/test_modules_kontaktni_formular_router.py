@@ -31,6 +31,7 @@ from httpx import Response
 import app.security.jwt as jwt_module
 from app.config import Settings, get_settings
 from app.modules.kontaktni_formular.config import ContactFormConfig, get_contact_form_config
+from app.modules.kontaktni_formular.hooks import ContactHookResult, get_contact_form_hooks
 from app.modules.kontaktni_formular.router import router as contact_router
 from app.services.email import _connection_config
 
@@ -63,9 +64,13 @@ def _contact_config(**overrides) -> ContactFormConfig:
 
 @pytest.fixture(autouse=True)
 def override_contact_config():
+    # No hooks either: which modules take part in a submission is per-branch
+    # config (backend/modules.json); the hook tests below set their own.
     _contact_app.dependency_overrides[get_contact_form_config] = lambda: _contact_config()
+    _contact_app.dependency_overrides[get_contact_form_hooks] = lambda: []
     yield
     _contact_app.dependency_overrides.pop(get_contact_form_config, None)
+    _contact_app.dependency_overrides.pop(get_contact_form_hooks, None)
 
 
 def _subject(message) -> str:
@@ -396,3 +401,103 @@ def test_info_rejects_an_overlong_language(client, use_info_settings):
     use_info_settings()
 
     assert client.get("/api/modules/kontaktni_formular/info", params={"language": "x" * 36}).status_code == 422
+
+
+# --- Hooks of other modules (see hooks.py) -----------------------------------
+
+
+@pytest.fixture()
+def use_hooks():
+    def _use(*hooks):
+        _contact_app.dependency_overrides[get_contact_form_hooks] = lambda: list(hooks)
+
+    return _use
+
+
+def test_a_hook_receives_the_submission_before_any_mail_is_sent(client, override_settings, use_hooks):
+    seen = []
+
+    async def hook(db, submission):
+        seen.append(submission)
+
+    use_hooks(hook)
+    mail = FastMail(_connection_config(override_settings))
+    with mail.record_messages() as outbox:
+        resp = _submit_anonymous(client, language="en")
+
+    assert resp.status_code == 204
+    assert len(outbox) == 2
+    [submission] = seen
+    assert (submission.subject, submission.message) == ("Dotaz", "Ahoj, mam otazku.")
+    assert (submission.reply_to, submission.sender_name, submission.language) == (
+        "host@example.com",
+        "host@example.com",
+        "en",
+    )
+    assert submission.signed_in is False
+
+
+def test_a_hook_result_tags_both_subjects_and_redirects_the_reply(client, override_settings, use_hooks):
+    async def hook(db, submission):
+        return ContactHookResult(subject_tag="[Ticket#100253]", reply_to="tickets@example.com")
+
+    use_hooks(hook)
+    mail = FastMail(_connection_config(override_settings))
+    with mail.record_messages() as outbox:
+        _submit_anonymous(client)
+
+    owner, [reply] = _split_outbox(outbox)
+    assert _subject(owner) == "[Ticket#100253] - Dotaz"
+    assert _subject(reply) == "[Ticket#100253] - Děkujeme za zprávu: Dotaz"
+    assert "tickets@example.com" in str(reply["Reply-To"])
+    assert owner["Reply-To"] is None
+
+
+def test_without_a_hook_result_the_mails_are_untouched(client, override_settings, use_hooks):
+    async def hook(db, submission):
+        return None
+
+    use_hooks(hook)
+    mail = FastMail(_connection_config(override_settings))
+    with mail.record_messages() as outbox:
+        _submit_anonymous(client)
+
+    owner, [reply] = _split_outbox(outbox)
+    assert _subject(owner) == "Dotaz"
+    assert _subject(reply) == "Děkujeme za zprávu: Dotaz"
+    assert reply["Reply-To"] is None
+
+
+def test_a_failing_hook_does_not_stop_the_message(client, override_settings, use_hooks, caplog):
+    async def broken(db, submission):
+        raise RuntimeError("boom")
+
+    async def working(db, submission):
+        return ContactHookResult(subject_tag="[Ticket#7]")
+
+    use_hooks(broken, working)
+    mail = FastMail(_connection_config(override_settings))
+    with mail.record_messages() as outbox:
+        resp = _submit_anonymous(client)
+
+    assert resp.status_code == 204
+    owner, [reply] = _split_outbox(outbox)
+    assert _subject(owner) == "[Ticket#7] - Dotaz"
+    assert "A contact form hook failed" in caplog.text
+
+
+def test_the_first_hook_tag_wins(client, override_settings, use_hooks):
+    async def first(db, submission):
+        return ContactHookResult(subject_tag="[A]")
+
+    async def second(db, submission):
+        return ContactHookResult(subject_tag="[B]", reply_to="b@example.com")
+
+    use_hooks(first, second)
+    mail = FastMail(_connection_config(override_settings))
+    with mail.record_messages() as outbox:
+        _submit_anonymous(client)
+
+    owner, [reply] = _split_outbox(outbox)
+    assert _subject(owner) == "[A] - Dotaz"
+    assert "b@example.com" in str(reply["Reply-To"])
