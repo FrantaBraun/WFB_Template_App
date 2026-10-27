@@ -26,6 +26,10 @@ const cs = {
   effectiveFrom: 'Platné od {{effectiveFrom}}',
   vatPayer: 'Plátce DPH',
   notVatPayer: 'Neplátce DPH',
+  foreignPriceVatPayer:
+    'U uživatelů z jiných států může být cena zatížena daní z přidané hodnoty podle státu uživatele; konečná cena se vždy zobrazí před zaplacením.',
+  foreignPriceNotVatPayer:
+    'Cena je pro uživatele ze všech států stejná a konečná; poskytovatel jako neplátce DPH k ní DPH ani jinou daň nepřičítá.',
   nav: {
     about: 'O nás',
     terms: 'Pravidla a podmínky',
@@ -201,7 +205,7 @@ const cs = {
         title: '14. Uživatelé z jiných států',
         paragraphs: [
           'Služba je určena uživatelům z České republiky, jiných členských států EU i ze zemí mimo EU. Smlouva se řídí českým právem. Je-li uživatel spotřebitelem s obvyklým bydlištěm v jiném státě, nezbavuje ho tato volba ochrany, kterou mu poskytují kogentní ustanovení práva státu jeho bydliště.',
-          'U uživatelů z jiných států může být cena zatížena daní z přidané hodnoty podle státu uživatele; konečná cena se vždy zobrazí před zaplacením.',
+          '{{foreignPriceNote}}',
         ],
       },
       {
@@ -249,7 +253,7 @@ const cs = {
           'Vazba obsahu na váš účet: u každého příspěvku a kategorie neveřejně uchováváme, z jakého účtu a kdy vznikl.',
           'Souznění: záznam, že váš účet vyjádřil souznění s příspěvkem. Je neveřejný; zobrazuje se jen počet a nikdo, ani autor příspěvku, nevidí, kdo souznil.',
           'Údaje z moderace: výsledek automatické kontroly obsahu (procenta a nalezené důvody), rozhodnutí administrátora o zablokování příspěvku včetně důvodu, oznámení, která jsme vám v aplikaci poslali, a stav účtu (zablokován, od kdy a proč).',
-          'Údaje o platbách: předmět, částka, měna, stav a identifikátory platby, vystavený doklad (číslo, datum a údaje na něm uvedené) a e-mail, na který byl odeslán. Údaje o platební kartě zpracovává výhradně Stripe – my je nevidíme ani neukládáme.',
+          'Údaje o platbách: předmět, částka, měna, stav a identifikátory platby, vystavený doklad (číslo, datum a údaje na něm uvedené) a e-mail, na který byl odeslán. Ke každé platbě uchováváme také zemi z fakturační adresy, kterou zadáte u Stripe (potřebujeme ji k určení, kde se poskytnutá služba zdaňuje); zbytek adresy zůstává jen u Stripe. Údaje o platební kartě zpracovává výhradně Stripe – my je nevidíme ani neukládáme.',
           'Komunikace: obsah zpráv z kontaktního formuláře a e-mailů, které nám zašlete (např. námitky, dotazy).',
           'Technické údaje: IP adresa, čas a typ požadavku v provozních záznamech serveru.',
         ],
@@ -362,6 +366,10 @@ const en: typeof cs = {
   effectiveFrom: 'Effective from {{effectiveFrom}}',
   vatPayer: 'VAT registered',
   notVatPayer: 'Not VAT registered',
+  foreignPriceVatPayer:
+    'For users from other countries, the price may include value added tax of the user’s country; the final price is always shown before payment.',
+  foreignPriceNotVatPayer:
+    'The price is the same and final for users from every country; as the provider is not VAT registered, no VAT or other tax is added to it.',
   nav: {
     about: 'About us',
     terms: 'Terms and conditions',
@@ -537,7 +545,7 @@ const en: typeof cs = {
         title: '14. Users outside the Czech Republic',
         paragraphs: [
           'The service is intended for users from the Czech Republic, other EU member states and countries outside the EU. The contract is governed by Czech law. Where the user is a consumer habitually resident in another country, this choice of law does not deprive them of the protection afforded by the mandatory provisions of the law of their country of residence.',
-          'For users from other countries, the price may include value added tax of the user’s country; the final price is always shown before payment.',
+          '{{foreignPriceNote}}',
         ],
       },
       {
@@ -583,7 +591,7 @@ const en: typeof cs = {
           'The link between content and your account: for every post and category we keep, non-publicly, which account it came from and when.',
           'Resonance: a record that your account resonated with a post. It is not public; only the count is shown, and nobody, not even the post’s author, can see who resonated.',
           'Moderation data: the result of the automatic content check (percentages and the reasons found), an administrator’s decision to block a post including the reason, the notifications we sent you in the app, and your account’s status (blocked, since when and why).',
-          'Payment data: subject, amount, currency, status and identifiers of the payment, the document issued (its number, date and the details stated on it) and the email address it was sent to. Card details are processed exclusively by Stripe - we never see or store them.',
+          'Payment data: subject, amount, currency, status and identifiers of the payment, the document issued (its number, date and the details stated on it) and the email address it was sent to. For each payment we also keep the country of the billing address you give to Stripe (we need it to determine where the service is taxed); the rest of the address stays with Stripe only. Card details are processed exclusively by Stripe - we never see or store them.',
           'Communication: the content of contact-form messages and emails you send us (e.g. objections, questions).',
           'Technical data: IP address, time and type of request in the server’s operational logs.',
         ],

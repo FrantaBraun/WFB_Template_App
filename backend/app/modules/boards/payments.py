@@ -96,6 +96,10 @@ async def resolve_boost(db: AsyncSession, user: User | None, payload: dict) -> P
         description=f"BumpFeel: raise the value of the post “{title}” by {points} points",
         reference=str(post.id),
         return_path=f"/categories/{category.slug}",
+        # The payer's country decides where this service is taxed and whether the EU
+        # limit for sales to consumers has been passed (limits.py), so Stripe is made
+        # to ask for the billing address and the country lands in payment.extra.
+        require_billing_address=True,
         extra={
             "post_id": str(post.id),
             "amount_usd": amount_usd,

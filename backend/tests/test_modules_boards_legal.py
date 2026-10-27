@@ -25,6 +25,7 @@ from app.modules.boards.models import (
 )
 
 LEGAL_FILE = BASE_DIR.parent / "frontend" / "public" / "legal.json"
+LEGAL_SOURCES = BASE_DIR.parent / "frontend" / "src" / "modules" / "stripe_payment_gate"
 
 pytestmark = pytest.mark.skipif(not LEGAL_FILE.exists(), reason="the frontend is not checked out next to the backend")
 
@@ -99,3 +100,16 @@ def test_the_issuer_on_the_documents_is_the_provider_the_legal_pages_name():
     for language in ("cs", "en"):
         in_legal = registration if isinstance(registration, str) else registration.get(language, "")
         assert in_legal == document.registration.get(language, ""), f"registration ({language})"
+
+
+def test_the_terms_sentence_on_other_countries_follows_the_providers_vat_status():
+    """A provider that is not a VAT payer adds no VAT, so the terms must not say
+    the price may carry the user's country's VAT - the sentence is chosen by
+    `provider.vatPayer` (legalVars), not hardcoded in either language."""
+    locales = (LEGAL_SOURCES / "legalLocales.ts").read_text(encoding="utf-8")
+    legal_ts = (LEGAL_SOURCES / "legal.ts").read_text(encoding="utf-8")
+    assert locales.count("'{{foreignPriceNote}}'") == 2  # Czech and English terms
+    assert "foreignPriceNote: provider.vatPayer" in legal_ts
+    for key in ("foreignPriceVatPayer", "foreignPriceNotVatPayer"):
+        assert locales.count(f"  {key}:") == 2  # a text for each language
+

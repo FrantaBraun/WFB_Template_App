@@ -117,6 +117,10 @@ export function legalVars(config: LegalConfig, lang: string, t: (key: string) =>
     vatStatement: provider.vatPayer
       ? t('stripe_payment_gate:legal.vatPayer')
       : t('stripe_payment_gate:legal.notVatPayer'),
+    // the terms' sentence on users from other countries depends on it: a non-payer adds no VAT
+    foreignPriceNote: provider.vatPayer
+      ? t('stripe_payment_gate:legal.foreignPriceVatPayer')
+      : t('stripe_payment_gate:legal.foreignPriceNotVatPayer'),
     effectiveFrom: config.effectiveFrom
       ? new Date(config.effectiveFrom).toLocaleDateString(lang)
       : dash,

@@ -217,6 +217,29 @@ async def test_a_boost_is_priced_server_side_in_dollars_for_the_authors_own_post
     assert quote.return_path == "/categories/philosophy"
     assert "Attention" in quote.description and "50 points" in quote.description
     assert quote.extra == {"post_id": str(post.id), "amount_usd": 5, "points": 50, "language": "cs"}
+    assert quote.require_billing_address is True  # the payer's country is a tax fact
+
+
+@respx.mock
+async def test_the_checkout_asks_for_the_billing_address_and_the_country_is_kept_with_the_payment(client, db_session, alice):
+    category = await _category(db_session, alice)
+    post = await _post(db_session, alice, category)
+
+    started = await _checkout(client, alice, post, 5)
+
+    assert started.status_code == 200
+    form = parse_qs(respx.calls.last.request.content.decode())
+    assert form["billing_address_collection"] == ["required"]
+    payment_id = started.json()["payment_id"]
+    session = {**_session(payment_id, session_id=LAST_SESSION["id"]), "customer_details": {"address": {"country": "DE"}}}
+    body, headers = _signed({"id": "evt_1", "type": "checkout.session.completed", "data": {"object": session}})
+
+    confirmed = await client.post(f"{STRIPE}/webhook", content=body, headers=headers)
+
+    assert confirmed.status_code == 200
+    payment = await db_session.get(StripePayment, uuid.UUID(payment_id))
+    await db_session.refresh(payment)
+    assert payment.extra["customer_country"] == "DE"
 
 
 @pytest.mark.parametrize(
