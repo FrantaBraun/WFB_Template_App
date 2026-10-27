@@ -57,6 +57,7 @@ async def create_checkout_session(
     success_url: str,
     cancel_url: str,
     customer_email: str | None = None,
+    billing_address_collection: str | None = None,
 ) -> dict:
     """POST /v1/checkout/sessions (form-encoded, as Stripe's API requires).
     payment_id doubles as the Idempotency-Key, so a retried request for the
@@ -75,6 +76,8 @@ async def create_checkout_session(
     }
     if customer_email:
         data["customer_email"] = customer_email
+    if billing_address_collection:
+        data["billing_address_collection"] = billing_address_collection
     async with _client(settings) as client:
         resp = await client.post(
             "/v1/checkout/sessions", data=data, headers={"Idempotency-Key": payment_id}
