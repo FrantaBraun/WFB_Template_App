@@ -13,6 +13,7 @@ from app.api.router import api_router
 from app.config import get_settings
 from app.database import engine
 from app.logging_config import configure_logging
+from app.modules.registry import load_enabled_module_keys, start_background_tasks, stop_background_tasks
 from app.services.auth_client import auth_client
 from app.services.scheduler import shutdown_scheduler, start_scheduler
 
@@ -26,15 +27,18 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """FastAPI startup/shutdown hook: starts/stops the automatic recheck
     scheduler (guarded by settings.scheduler_enabled, so tests can disable
-    it) and closes the shared AuthClient's HTTP connection and disposes the
-    DB engine's connection pool on shutdown. The scheduler is stopped before
-    either of those, since its job uses the DB engine - it must not still be
-    running once that engine is disposed."""
+    it) and the background tasks of every enabled module, and closes the
+    shared AuthClient's HTTP connection and disposes the DB engine's
+    connection pool on shutdown. The scheduler and the module tasks are
+    stopped before either of those, since their jobs use the DB engine - they
+    must not still be running once that engine is disposed."""
     logger.info("Application startup")
     if settings.scheduler_enabled:
         start_scheduler()
+    background_tasks = start_background_tasks(load_enabled_module_keys())
     yield
     logger.info("Application shutdown")
+    await stop_background_tasks(background_tasks)
     if settings.scheduler_enabled:
         shutdown_scheduler()
     await auth_client.aclose()

@@ -62,6 +62,24 @@ class Settings(BaseSettings):
     # warning in the log) when both are.
     booking_notify_mail: str = ""
 
+    # Tickets module (app/modules/tickets) - the IMAP mailbox it reads new
+    # requests and customers' answers from. Reading is off while the host is
+    # empty (the module then works from the form and the contact form only).
+    # The password is a secret and, like every per-server value, lives in
+    # .env. tickets_poll_seconds is the pause between two checks of the
+    # mailbox; 0 turns the periodic check off (the "check now" button still
+    # works). tickets_mailbox_address is the address customers' answers must
+    # reach - it goes into Reply-To of every mail the module sends; when
+    # empty, the IMAP username is used if it is an address, else MAIL_FROM.
+    tickets_imap_host: str = ""
+    tickets_imap_port: int = 993
+    tickets_imap_ssl: bool = True
+    tickets_imap_username: str = ""
+    tickets_imap_password: str = ""
+    tickets_imap_folder: str = "INBOX"
+    tickets_poll_seconds: int = 120
+    tickets_mailbox_address: str = ""
+
     # Stripe payment gate module (app/modules/stripe_payment_gate) - empty
     # by default; the module's endpoints fail loudly (503) until both keys
     # are set, rather than half-working. stripe_api_url is only overridden
