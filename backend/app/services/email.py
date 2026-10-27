@@ -32,11 +32,27 @@ async def send_email(
     *,
     subtype: MessageType = MessageType.plain,
     settings: Settings | None = None,
+    reply_to: list[str] | None = None,
+    attachments: list | None = None,
+    headers: dict[str, str] | None = None,
     **connection_overrides: object,
 ) -> None:
     """Send an email. Connection defaults come from .env (MAIL_*) and can be
-    overridden per call via connection_overrides, e.g. MAIL_FROM="other@x.com"."""
+    overridden per call via connection_overrides, e.g. MAIL_FROM="other@x.com".
+
+    `reply_to` sets the Reply-To header (where an answer should go when that
+    isn't the sending address), `attachments` takes what fastapi-mail does
+    (starlette UploadFiles, paths or dicts) and `headers` extra headers such
+    as Message-ID or In-Reply-To. All three default to none, i.e. a message
+    exactly as before."""
     resolved_settings = settings or get_settings()
     config = _connection_config(resolved_settings, **connection_overrides)
-    message = MessageSchema(subject=subject, recipients=recipients, body=body, subtype=subtype)
+    extra: dict[str, object] = {}
+    if reply_to:
+        extra["reply_to"] = reply_to
+    if attachments:
+        extra["attachments"] = attachments
+    if headers:
+        extra["headers"] = headers
+    message = MessageSchema(subject=subject, recipients=recipients, body=body, subtype=subtype, **extra)
     await FastMail(config).send_message(message)
