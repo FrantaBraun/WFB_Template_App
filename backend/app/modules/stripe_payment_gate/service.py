@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 RESULT_PATH = "/platba/vysledek"
 
 _CURRENCY_RE = re.compile(r"^[a-z]{3}$")
+_COUNTRY_RE = re.compile(r"^[A-Z]{2}$")
 
 
 def result_url(settings: Settings, payment_id: uuid.UUID, *, canceled: bool = False) -> str:
@@ -106,6 +107,7 @@ async def create_payment(
             success_url=result_url(settings, payment.id),
             cancel_url=result_url(settings, payment.id, canceled=True),
             customer_email=customer_email,
+            billing_address_collection="required" if quote.require_billing_address else None,
         )
     except Exception:
         await db.rollback()
@@ -113,6 +115,17 @@ async def create_payment(
     payment.stripe_session_id = session["id"]
     await db.commit()
     return payment, session["url"]
+
+
+def customer_country_of(session: dict) -> str | None:
+    """The country Stripe reports for the payer's billing address, as an
+    upper-case ISO 3166-1 alpha-2 code - None when it is absent or not one
+    (it is a tax fact, so nothing unrecognisable is stored)."""
+    address = (session.get("customer_details") or {}).get("address") or {}
+    country = address.get("country")
+    if isinstance(country, str) and _COUNTRY_RE.match(country.strip().upper()):
+        return country.strip().upper()
+    return None
 
 
 def _payment_id_of(session: dict) -> uuid.UUID | None:
@@ -148,6 +161,11 @@ async def sync_from_session(db: AsyncSession, session: dict, *, failed: bool = F
 
     if session.get("payment_intent"):
         payment.stripe_payment_intent_id = session["payment_intent"]
+    country = customer_country_of(session)
+    if country:
+        # Before on_paid, so the purpose sees it. Reassigned, not mutated:
+        # the JSON column does not track changes inside the dict.
+        payment.extra = {**(payment.extra or {}), "customer_country": country}
 
     if failed:
         payment.status = STATUS_FAILED
