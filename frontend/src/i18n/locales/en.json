@@ -24,6 +24,7 @@
     "description": "This is a default template for building further applications. It contains no functional logic — just a ready-made environment to start building on."
   },
   "login": {
+    "forgotPassword": "Forgot password?",
     "pageTitle": "Sign in",
     "pageDescription": "Sign in to your account.",
     "title": "Sign in",
@@ -55,6 +56,17 @@
     "failed": "Registration failed"
   },
   "account": {
+    "passwordCard": {
+      "title": "Change password",
+      "currentLabel": "Current password",
+      "newLabel": "New password",
+      "confirmLabel": "Confirm new password",
+      "submit": "Update password",
+      "submitting": "Saving…",
+      "mismatch": "The new passwords do not match.",
+      "success": "Password changed.",
+      "error": "The password could not be changed. Check the current password."
+    },
     "pageTitle": "Account",
     "pageDescription": "Manage your account details.",
     "accountCard": {
@@ -197,5 +209,34 @@
     "pageDescription" : "The page you asked for does not exist.",
     "title" : "The page was not Found",
     "backToHomePage" : "Back to the Home Page"
+  },
+  "forgotPassword": {
+    "pageTitle": "Reset password",
+    "pageDescription": "Request a link to reset your password.",
+    "title": "Reset password",
+    "intro": "Enter your email and we will send you a link to set a new password.",
+    "emailLabel": "Email address",
+    "submit": "Send reset link",
+    "submitting": "Sending…",
+    "sentTitle": "Check your inbox",
+    "sentText": "If an account exists for {{email}}, we have sent a link to reset its password. The link expires after a while.",
+    "failed": "The reset link could not be sent. Please try again.",
+    "backToLogin": "Back to sign in"
+  },
+  "resetPassword": {
+    "pageTitle": "Set new password",
+    "pageDescription": "Choose a new password for your account.",
+    "title": "Set new password",
+    "newPasswordLabel": "New password",
+    "confirmLabel": "Confirm password",
+    "submit": "Update password",
+    "submitting": "Saving…",
+    "mismatch": "The passwords do not match.",
+    "missingToken": "This link is incomplete. Request a new reset link.",
+    "failed": "The password could not be changed. The link may have expired - request a new one.",
+    "doneTitle": "Password changed",
+    "doneText": "You can now sign in with your new password.",
+    "signIn": "Sign in",
+    "requestNew": "Request a new link"
   }
 }
