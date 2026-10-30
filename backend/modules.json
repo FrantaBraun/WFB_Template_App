@@ -1,3 +1,3 @@
 {
-  "enabled": ["crm", "freelancer", "kontaktni_formular", "portfolio"]
+  "enabled": ["crm", "freelancer", "kontaktni_formular", "portfolio", "tickets"]
 }
