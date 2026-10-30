@@ -104,7 +104,7 @@ function PartnersList() {
 /** /crm - the partner list, with search. */
 export default function PartnersPage() {
   const { t } = useTranslation('crm')
-  usePageMeta({ title: t('partners.title') })
+  usePageMeta({ title: t('partners.title'), noindex: true })
   return (
     <CrmGate>
       <PartnersList />

@@ -13,6 +13,7 @@ warn() { echo -e "${YELLOW}WARN: $*${NC}"; }
 # ── Sanity checks ─────────────────────────────────────────────────────────────
 [[ $EUID -eq 0 ]] || die "Run as root (sudo $0)"
 command -v curl     &>/dev/null || die "curl is required"
+command -v unzip    &>/dev/null || die "unzip is required"
 command -v python3  &>/dev/null || die "python3 is required"
 command -v pg_dump  &>/dev/null || die "pg_dump is required"
 command -v psql     &>/dev/null || die "psql is required"
@@ -32,20 +33,28 @@ DB_BAK="${BACKUP_DIR}/db-${DATE}.sql.gz"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-ftp_latest_file() {
-    local remote_path="$1" prefix="$2"
-    curl -sf --ftp-pasv -u "${FTP_USER}:${FTP_PASS}" \
-        "ftp://${FTP_HOST}:${FTP_PORT}${remote_path}/" \
-        --list-only \
-        | grep "^${prefix}" | sort | tail -1
+# The builds are read from the directories on this machine that build.py's
+# FTP/SFTP upload lands in (the FTP/SFTP server runs here); nothing is downloaded.
+require_release_dirs() {
+    local var
+    for var in BACKEND_RELEASES_DIR FRONTEND_RELEASES_DIR; do
+        [[ "${!var:-}" = /* ]] \
+            || die "${var} is not set to an absolute path in ${CONFIG_FILE}.\nThe builds are read from the directories on this machine that the FTP/SFTP upload lands in - see deploy.config.sh.example."
+    done
 }
 
-ftp_download() {
-    local remote_path="$1" local_file="$2"
-    info "  Downloading ftp://${FTP_HOST}${remote_path} …"
-    curl -sf --ftp-pasv -u "${FTP_USER}:${FTP_PASS}" \
-        "ftp://${FTP_HOST}:${FTP_PORT}${remote_path}" \
-        -o "$local_file" || die "FTP download failed: $remote_path"
+# Prints the path of the newest <prefix>*.zip in a release directory: the one
+# uploaded last (by modification time - the names of a STABLE and a SNAPSHOT
+# build do not sort against each other, and 1.10.0 sorts before 1.9.0). It must
+# be a whole zip, so an upload that is still running stops the script here
+# instead of half way through unpacking.
+latest_archive() {
+    local dir="$1" prefix="$2" newest
+    [[ -d "$dir" ]] || die "Release directory not found: $dir"
+    newest="$(find "$dir" -maxdepth 1 -type f -name "${prefix}*.zip" -printf '%T@ %p\n' | sort -rn | sed -n '1s/^[^ ]* //p')"
+    [[ -n "$newest" ]] || die "No ${prefix}*.zip archive found in $dir"
+    unzip -tq "$newest" > /dev/null || die "Not a complete zip archive (is an upload still running?): $newest"
+    printf '%s\n' "$newest"
 }
 
 parse_db_url() {
@@ -159,11 +168,22 @@ rollback() {
 # ── Steps ─────────────────────────────────────────────────────────────────────
 CURRENT_DIR="$(pwd)"
 
-step "1/8  Stop service"
+# Everything that can fail on the archives happens before the service is stopped:
+# an old config, a missing release directory, no archive or a half-uploaded one
+# must not leave the application down.
+step "Locate the new archives"
+require_release_dirs
+# The message of a failed lookup is printed by latest_archive itself.
+BACKEND_ARCHIVE="$(latest_archive "$BACKEND_RELEASES_DIR" "backend-")" || exit 1
+FRONTEND_ARCHIVE="$(latest_archive "$FRONTEND_RELEASES_DIR" "frontend-")" || exit 1
+info "Backend:  ${BACKEND_ARCHIVE}"
+info "Frontend: ${FRONTEND_ARCHIVE}"
+
+step "1/7  Stop service"
 systemctl stop ${APP_SERVICE_NAME}
 info "${APP_SERVICE_NAME} stopped."
 
-step "2/8  Backup database"
+step "2/7  Backup database"
 mkdir -p "$BACKUP_DIR"
 parse_db_url
 info "  pg_dump ${DB_NAME} → ${DB_BAK}"
@@ -171,25 +191,16 @@ PGPASSWORD="$DB_PASS" pg_dump \
     -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" \
     | gzip > "$DB_BAK"
 
-step "3/8  Backup application files"
+step "3/7  Backup application files"
 info "  backend/ → ${BACKEND_BAK}"
 tar -czf "$BACKEND_BAK"  -C "$INSTALL_DIR" backend
 info "  frontend/ → ${FRONTEND_BAK}"
 tar -czf "$FRONTEND_BAK" -C "$INSTALL_DIR" frontend
 
-step "4/8  Download new archives from FTP"
+step "4/7  Extract archives"
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-BACKEND_FILE=$(ftp_latest_file "$FTP_BACKEND_PATH" "backend-") \
-    || die "No backend archive found on FTP."
-FRONTEND_FILE=$(ftp_latest_file "$FTP_FRONTEND_PATH" "frontend-") \
-    || die "No frontend archive found on FTP."
-
-ftp_download "${FTP_BACKEND_PATH}/${BACKEND_FILE}"   "${TMP_DIR}/backend.zip"
-ftp_download "${FTP_FRONTEND_PATH}/${FRONTEND_FILE}" "${TMP_DIR}/frontend.zip"
-
-step "5/8  Extract archives"
 # Preserve .env and the uploads dir it points at – neither is shipped in the
 # archive, so without this both would be silently wiped on every deploy.
 cp "${INSTALL_DIR}/backend/.env" "${TMP_DIR}/.env.bak"
@@ -198,8 +209,8 @@ backup_uploads_dir "${TMP_DIR}/uploads.bak"
 
 rm -rf "${INSTALL_DIR}/backend" "${INSTALL_DIR}/frontend"
 mkdir -p "${INSTALL_DIR}/backend" "${INSTALL_DIR}/frontend"
-unzip -q "${TMP_DIR}/backend.zip"  -d "${INSTALL_DIR}/backend"
-unzip -q "${TMP_DIR}/frontend.zip" -d "${INSTALL_DIR}/frontend"
+unzip -q "$BACKEND_ARCHIVE"  -d "${INSTALL_DIR}/backend"
+unzip -q "$FRONTEND_ARCHIVE" -d "${INSTALL_DIR}/frontend"
 
 cp "${TMP_DIR}/.env.bak" "${INSTALL_DIR}/backend/.env"
 restore_uploads_dir "${TMP_DIR}/uploads.bak"
@@ -207,17 +218,14 @@ if [[ -n "$UPLOADS_DIR_RESOLVED" ]]; then
     info "  Uploads dir preserved: ${UPLOADS_DIR_RESOLVED}"
 fi
 
-info "Backend:  ${BACKEND_FILE}"
-info "Frontend: ${FRONTEND_FILE}"
-
-step "6/8  Update Python dependencies"
+step "5/7  Update Python dependencies"
 install_python_deps
 
-step "7/8  File permissions"
+step "6/7  File permissions"
 chown -R "${APP_USER}:${APP_GROUP}" "${INSTALL_DIR}/backend" "${INSTALL_DIR}/frontend"
 chmod -R o-rwx "${INSTALL_DIR}/backend"
 
-step "8/8  Database migrations + health check"
+step "7/7  Database migrations + health check"
 cd "${INSTALL_DIR}/backend"
 .venv/bin/alembic upgrade heads
 cd "$INSTALL_DIR"

@@ -28,7 +28,7 @@ function buildGoogleLoginUrl() {
  */
 export default function Login() {
   const { t } = useTranslation()
-  usePageMeta({ title: t('login.pageTitle'), description: t('login.pageDescription') })
+  usePageMeta({ title: t('login.pageTitle'), description: t('login.pageDescription'), noindex: true })
   const { login } = useAuth()
   const location = useLocation()
   const [identifier, setIdentifier] = useState('')

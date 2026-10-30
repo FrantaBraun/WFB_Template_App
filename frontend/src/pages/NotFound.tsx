@@ -11,7 +11,10 @@ import usePageMeta from '../hooks/usePageMeta'
 
 export default function NotFound() {
   const { t } = useTranslation()
-  usePageMeta({ title: t('notFound.pageTitle'), description: t('notFound.pageDescription')})
+  // The server answers 200 for every unknown address (the SPA's index.html), so
+  // this page is a soft 404 to a crawler; noindex is how Google asks an SPA to
+  // keep its error views out of the index.
+  usePageMeta({ title: t('notFound.pageTitle'), description: t('notFound.pageDescription'), noindex: true })
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col px-6 text-slate-900 mt-5 dark:text-slate-100 text-center">

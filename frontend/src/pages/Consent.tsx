@@ -26,7 +26,7 @@ interface GroupInfo {
  */
 export default function Consent() {
   const { t } = useTranslation()
-  usePageMeta({ title: t('consent.pageTitle'), description: t('consent.pageDescription') })
+  usePageMeta({ title: t('consent.pageTitle'), description: t('consent.pageDescription'), noindex: true })
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const { loadUser } = useAuth()

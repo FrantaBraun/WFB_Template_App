@@ -58,6 +58,7 @@ from app.modules.tickets.schemas import (
 )
 from app.security.jwt import get_current_user_claims
 from app.services.sanitize import sanitize_html
+from app.services.sql import like_pattern
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +71,6 @@ MAX_PAGE_SIZE = 100
 
 def _refuse(status_code: int, code: str) -> HTTPException:
     return HTTPException(status_code=status_code, detail=code)
-
-
-def _like_pattern(text: str) -> str:
-    escaped = text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-    return f"%{escaped}%"
 
 
 async def _get_ticket(db: AsyncSession, number: int) -> Ticket:
@@ -193,7 +189,7 @@ async def list_tickets(
         filters.append(Ticket.partner_id == partner_id)
     if q and q.strip():
         text = q.strip()
-        pattern = _like_pattern(text)
+        pattern = like_pattern(text)
         conditions = [
             Ticket.subject.ilike(pattern, escape="\\"),
             Ticket.requester_name.ilike(pattern, escape="\\"),

@@ -84,7 +84,7 @@ function ManageList() {
 /** /events/manage - every event of every article, for editors. */
 export default function ManageEventsPage() {
   const { t } = useTranslation('event_calendar')
-  usePageMeta({ title: t('manage.title') })
+  usePageMeta({ title: t('manage.title'), noindex: true })
   return (
     <EditorGate>
       <ManageList />

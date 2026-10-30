@@ -19,16 +19,27 @@ backend  = "/releases/backend"
 frontend = "/releases/frontend"
 scripts  = "/releases/auth"
 
-[sftp]
-host     = "ftp.withfbraun.com"
-port     = 22
-user     = "tvůj-ssh-účet"
-key_file = "~/.ssh/id_rsa"
-
-[sftp.paths]
-backend  = "/skutečná/cesta/releases/backend"
-frontend = "/skutečná/cesta/releases/frontend"
-scripts  = "/skutečná/cesta/releases/auth"
+# Upload over SFTP instead of FTP: uncomment this section and build.py uses it
+# (the [ftp] section is then used only for paths that [sftp.paths] does not set).
+# It runs the OpenSSH `sftp` command (Windows 10/11, Linux and macOS have it) in
+# batch mode, so the login is a key - no password is kept here: `key_file`, or
+# else the ssh agent or the default keys in ~/.ssh. Run
+# `ssh -p <port> <user>@<host>` once by hand first: that records the server's
+# host key, which a batch can not confirm. Needs no passive FTP data ports, so
+# it works where the firewall only lets 22 through.
+# [sftp]
+# host     = "ftp.example.com"
+# port     = 22
+# user     = "ssh-user"
+# key_file = "~/.ssh/id_ed25519"      # optional
+#
+# # Where the zips go, as the SSH account sees the server's disk - e.g. the real
+# # directory behind the FTP account's root. Optional: a target that is not
+# # listed here uses its [ftp.paths] entry.
+# [sftp.paths]
+# backend  = "/home/ftp-user/releases/backend"
+# frontend = "/home/ftp-user/releases/frontend"
+# scripts  = "/home/ftp-user/releases/auth"
 
 [build]
 output_dir  = "dist"      # relative to repo root, or absolute

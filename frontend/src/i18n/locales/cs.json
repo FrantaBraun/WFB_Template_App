@@ -1,4 +1,7 @@
 {
+  "meta": {
+    "description": "Webová aplikace postavená na sdíleném jádru With FBraun."
+  },
   "common": {
     "save": "Uložit",
     "saving": "Ukládání…",
@@ -191,6 +194,7 @@
   },
   "notFound" : {
     "pageTitle" : "Nenalezeno",
+    "pageDescription" : "Požadovaná stránka neexistuje.",
     "title" : "Stránka nenalezena",
     "backToHomePage" : "Zpět na domovskou stránku"
   }
