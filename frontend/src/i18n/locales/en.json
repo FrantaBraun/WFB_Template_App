@@ -1,6 +1,6 @@
 {
   "meta": {
-    "description": "A web application built on the shared With FBraun core."
+    "description": "Create your own databases: tables with attributes you define, records with images and links, saved filters and statistics with charts. Only you see your data."
   },
   "common": {
     "save": "Save",
@@ -20,7 +20,8 @@
     "closeMenu": "Close menu"
   },
   "home": {
-    "title": "HomeRepository",
+    "metaTitle": "Your own databases: tables, filters, statistics",
+    "title": "Databases you define yourself",
     "description": "Build your own databases: define object types and their attributes, store records and follow statistics.",
     "features": {
       "types": {
@@ -38,6 +39,40 @@
       "private": {
         "title": "Private and colourful",
         "text": "Only you see your data, and every repository has a colour scheme of its own."
+      }
+    },
+    "how": {
+      "title": "How it works",
+      "steps": {
+        "repository": {
+          "title": "Create a repository",
+          "text": "A repository is your database. Give it a name, a description and a colour scheme."
+        },
+        "tables": {
+          "title": "Define tables and attributes",
+          "text": "In each table you choose your own attributes – text, number, yes/no, date, image, a reference to another record, a list or a map – and which of them are required."
+        },
+        "records": {
+          "title": "Store records and follow them",
+          "text": "Browse, filter and sort records, name the filters you use often, and have statistics drawn as tables and charts."
+        }
+      }
+    },
+    "examples": {
+      "title": "What you can keep in it",
+      "items": {
+        "collections": {
+          "title": "Collections and home inventories",
+          "text": "Books, films, records, tools or household items – with a photo, a note and the date you got them."
+        },
+        "overviews": {
+          "title": "Records and overviews",
+          "text": "Expenses, jobs, gifts or workouts: filter by period and get sums and averages by month."
+        },
+        "links": {
+          "title": "Linked tables",
+          "text": "Point from one record to another: a book to its author, a loan to a friend."
+        }
       }
     },
     "signIn": "Sign in",

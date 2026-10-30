@@ -1,6 +1,6 @@
 {
   "meta": {
-    "description": "Webová aplikace postavená na sdíleném jádru With FBraun."
+    "description": "Vytvořte si vlastní databáze: tabulky s vlastními atributy, záznamy s obrázky a odkazy, uložené filtry a statistiky s grafy. Data vidíte jen vy."
   },
   "common": {
     "save": "Uložit",
@@ -20,7 +20,8 @@
     "closeMenu": "Zavřít nabídku"
   },
   "home": {
-    "title": "HomeRepository",
+    "metaTitle": "Vlastní databáze: tabulky, filtry, statistiky",
+    "title": "Vlastní databáze, které si nadefinujete sami",
     "description": "Vytvořte si vlastní databáze: nadefinujte typy objektů a jejich atributy, ukládejte záznamy a sledujte statistiky.",
     "features": {
       "types": {
@@ -38,6 +39,40 @@
       "private": {
         "title": "Soukromé a barevné",
         "text": "Data vidíte jen vy a každý repozitář má vlastní barevné schéma."
+      }
+    },
+    "how": {
+      "title": "Jak to funguje",
+      "steps": {
+        "repository": {
+          "title": "Založte repozitář",
+          "text": "Repozitář je vaše databáze. Dejte mu název, popis a barevné schéma."
+        },
+        "tables": {
+          "title": "Nadefinujte tabulky a atributy",
+          "text": "V každé tabulce určíte vlastní atributy – text, číslo, ano/ne, datum, obrázek, odkaz na jiný záznam, seznam nebo mapu – a které z nich jsou povinné."
+        },
+        "records": {
+          "title": "Ukládejte záznamy a sledujte je",
+          "text": "Záznamy listujte, filtrujte a řaďte, filtry, které používáte často, si pojmenujte a ze statistik si nechte vykreslit tabulky a grafy."
+        }
+      }
+    },
+    "examples": {
+      "title": "Co si do ní dáte",
+      "items": {
+        "collections": {
+          "title": "Sbírky a domácí evidence",
+          "text": "Knihy, filmy, desky, nářadí nebo vybavení domácnosti – s fotkou, poznámkou a datem pořízení."
+        },
+        "overviews": {
+          "title": "Evidence a přehledy",
+          "text": "Výdaje, zakázky, dárky nebo cvičení: filtrujte podle období a nechte si spočítat součty a průměry po měsících."
+        },
+        "links": {
+          "title": "Propojené tabulky",
+          "text": "Odkaz z jednoho záznamu na jiný: třeba kniha odkazuje na autora a půjčka na kamaráda."
+        }
       }
     },
     "signIn": "Přihlásit se",

@@ -1,0 +1,69 @@
+<!doctype html>
+<!--
+  Part of the With FBraun project template.
+  Author: František Braun <frantisek.braun95@gmail.com>
+  Freely available as a template for building custom applications.
+
+  The source of public/og-image.png, the share image link previews show (1200 x 630).
+  Draw it again after editing this file (Edge or Chrome, from the frontend folder):
+
+    msedge --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1 \
+      --window-size=1200,630 --screenshot=public/og-image.png file:///<absolute path>/design/og-image.html
+
+  No words besides the name and tagline: the card is drawn as skeleton rows, so
+  the one image serves both languages. Series colours are the application's chart palette.
+-->
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <title>HomeRepository</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1200px; height: 630px; overflow: hidden; }
+      body {
+        font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+        color: #f8fafc;
+        background: linear-gradient(135deg, #0b1220 0%, #172554 100%);
+        position: relative;
+      }
+      .text { position: absolute; left: 80px; top: 0; bottom: 0; width: 560px; display: flex; flex-direction: column; justify-content: center; }
+      .name { font-size: 70px; font-weight: 700; letter-spacing: -2px; line-height: 1; }
+      .tagline { margin-top: 28px; font-size: 32px; line-height: 1.35; color: #cbd5e1; }
+      .tagline span { display: block; color: #93c5fd; }
+      .card {
+        position: absolute; right: 70px; top: 90px; width: 440px; height: 450px;
+        background: #ffffff; border-radius: 24px; box-shadow: 0 30px 70px rgba(2, 6, 23, 0.55); overflow: hidden;
+      }
+      .card .head { height: 64px; background: #2a78d6; display: flex; align-items: center; padding: 0 28px; gap: 12px; }
+      .card .head i { display: block; height: 14px; border-radius: 7px; background: rgba(255, 255, 255, 0.85); }
+      .rows { padding: 22px 28px 0; }
+      .row { display: flex; gap: 16px; align-items: center; height: 38px; border-bottom: 1px solid #e2e8f0; }
+      .row i { display: block; height: 12px; border-radius: 6px; background: #cbd5e1; }
+      .row i.strong { background: #64748b; }
+      .chart { position: absolute; left: 28px; right: 28px; bottom: 28px; height: 130px; display: flex; align-items: flex-end; gap: 14px; }
+      .chart b { flex: 1; border-radius: 8px 8px 0 0; }
+    </style>
+  </head>
+  <body>
+    <div class="text">
+      <div class="name">HomeRepository</div>
+      <div class="tagline">Vlastní databáze<span>Your own databases</span></div>
+    </div>
+    <div class="card">
+      <div class="head"><i style="width: 120px"></i><i style="width: 80px"></i><i style="width: 100px"></i></div>
+      <div class="rows">
+        <div class="row"><i class="strong" style="width: 130px"></i><i style="width: 90px"></i><i style="width: 70px"></i></div>
+        <div class="row"><i class="strong" style="width: 100px"></i><i style="width: 120px"></i><i style="width: 50px"></i></div>
+        <div class="row"><i class="strong" style="width: 150px"></i><i style="width: 70px"></i><i style="width: 80px"></i></div>
+        <div class="row"><i class="strong" style="width: 90px"></i><i style="width: 100px"></i><i style="width: 60px"></i></div>
+      </div>
+      <div class="chart">
+        <b style="height: 60%; background: #2a78d6"></b>
+        <b style="height: 90%; background: #eb6834"></b>
+        <b style="height: 45%; background: #1baf7a"></b>
+        <b style="height: 75%; background: #eda100"></b>
+        <b style="height: 55%; background: #6250d6"></b>
+      </div>
+    </div>
+  </body>
+</html>
