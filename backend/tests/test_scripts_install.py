@@ -20,7 +20,11 @@ INSTALL_SH = Path(__file__).resolve().parents[2] / "scripts" / "install.sh"
 BOARDS_PROXY = "/api/modules/boards/sitemap.xml"
 BOARDS_TEST = 'if [[ -d "${INSTALL_DIR}/backend/app/modules/boards" ]]; then'
 
-pytestmark = pytest.mark.skipif(shutil.which("bash") is None, reason="bash is not available")
+# The bash on PATH, by its full path: a bare "bash" is looked up by Windows in System32
+# first, which is the WSL launcher (another file system), not Git's bash.
+BASH = shutil.which("bash")
+
+pytestmark = pytest.mark.skipif(BASH is None, reason="bash is not available")
 
 
 def _text() -> str:
@@ -29,7 +33,7 @@ def _text() -> str:
 
 
 def _bash(script: str, *flags: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["bash", *flags], input=script.encode("utf-8"), capture_output=True)
+    return subprocess.run([BASH, *flags], input=script.encode("utf-8"), capture_output=True)
 
 
 def test_the_script_is_valid_bash():
