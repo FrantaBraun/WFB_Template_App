@@ -32,6 +32,7 @@ import ftplib
 import json
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -148,6 +149,24 @@ _DEPLOY_CONFIG_EXAMPLE = SCRIPTS_DIR / "deploy.config.sh.example"
 _SCRIPT_FILES          = ["install.sh", "upgrade.sh", "./../backend/.env"]
 
 
+def _bundle_file(z: zipfile.ZipFile, src: Path, arcname: str) -> None:
+    """Add src to the scripts zip as the Linux server wants it, not as this
+    machine stores it: LF line endings and Unix permissions.
+
+    A Windows checkout keeps text files with CRLF (core.autocrlf), and the
+    server then refuses install.sh with "/bin/bash^M: bad interpreter"; in
+    deploy.config.sh and .env, which the scripts read line by line, every value
+    would end in a carriage return. `z.write` would also record the Windows
+    file mode, so nothing unpacked would be executable. Scripts get 755, the two
+    files with secrets 600."""
+    mode = 0o755 if arcname.endswith(".sh") and arcname != "deploy.config.sh" else 0o600
+    info = zipfile.ZipInfo.from_file(src, arcname)
+    info.compress_type = zipfile.ZIP_DEFLATED
+    info.create_system = 3                      # Unix: only then does unzip apply the mode below
+    info.external_attr = (stat.S_IFREG | mode) << 16
+    z.writestr(info, src.read_bytes().replace(b"\r\n", b"\n"))
+
+
 def build_scripts(output_path: Path) -> None:
     """Bundle the deployment scripts (install.sh, upgrade.sh), the local
     deploy config, and the current backend/.env - the target server needs
@@ -170,9 +189,9 @@ def build_scripts(output_path: Path) -> None:
             arcname = src.name   # store as bare filename, no path traversal
             if not src.exists():
                 sys.exit(f"File not found: {src}")
-            z.write(src, arcname)
+            _bundle_file(z, src, arcname)
             print(f"    + {arcname}")
-        z.write(config_src, "deploy.config.sh")
+        _bundle_file(z, config_src, "deploy.config.sh")
         print(f"    + deploy.config.sh  (from {config_label})")
 
     size_kb = output_path.stat().st_size // 1024
