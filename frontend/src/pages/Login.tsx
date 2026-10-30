@@ -83,9 +83,14 @@ export default function Login() {
             required
             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           />
+          <div className="mt-1 text-right">
+            <Link to="/forgot-password" className="text-sm text-slate-600 underline dark:text-slate-400">
+              {t('login.forgotPassword')}
+            </Link>
+          </div>
         </div>
 
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error &&<p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <button
           type="submit"
