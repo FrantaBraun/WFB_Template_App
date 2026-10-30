@@ -32,6 +32,31 @@ export function clipDescription(text: string, max = DESCRIPTION_MAX): string {
   return `${words.replace(/[\s.,;:!?\-–—]+$/, '')}…`
 }
 
+interface ShareDefaults {
+  image: string
+  card: string
+}
+
+let shareDefaults: ShareDefaults | undefined
+
+/**
+ * The share image and the card type index.html carries, read once before the
+ * first page overwrites them: an application that ships its own (an absolute
+ * og:image, summary_large_image) keeps it on every page, the others get the
+ * logo as a small card. Link-preview bots never run this hook, so what they
+ * show is whatever index.html says; this keeps a client that does run it in
+ * agreement with them.
+ */
+function readShareDefaults(): ShareDefaults {
+  if (!shareDefaults) {
+    shareDefaults = {
+      image: document.head.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.content || `${window.location.origin}/logo.png`,
+      card: document.head.querySelector<HTMLMetaElement>('meta[name="twitter:card"]')?.content || 'summary',
+    }
+  }
+  return shareDefaults
+}
+
 function upsertMeta(attribute: 'name' | 'property', key: string, content: string) {
   let element = document.head.querySelector<HTMLMetaElement>(`meta[${attribute}="${key}"]`)
   if (!element) {
@@ -109,6 +134,7 @@ export default function usePageMeta({
     const fullTitle = title ? `${title} — ${brand}` : brand
     const text = clipDescription(description || defaultDescription)
     const url = absoluteUrl(pathname)
+    const share = readShareDefaults()
 
     document.documentElement.lang = language
     document.title = fullTitle
@@ -122,12 +148,15 @@ export default function usePageMeta({
     upsertMeta('property', 'og:description', text)
     upsertMeta('property', 'og:url', url)
     upsertMeta('property', 'og:locale', OG_LOCALES[language] ?? language)
-    upsertMeta('property', 'og:image', absoluteUrl('/logo.png'))
+    upsertMeta('property', 'og:image', share.image)
     upsertMeta('property', 'og:image:alt', brand)
-    upsertMeta('name', 'twitter:card', 'summary')
+
+    upsertMeta('name', 'twitter:card', share.card)
+    upsertMeta('name', 'twitter:image', share.image)
     upsertMeta('name', 'twitter:title', fullTitle)
     upsertMeta('name', 'twitter:description', text)
-    upsertMeta('name', 'twitter:image', absoluteUrl('/logo.png'))
     setJsonLd(jsonLdText)
-  }, [title, description, noindex, language, brand, defaultDescription, pathname, jsonLdText])
+
+
+  }, [title, description, noindex, language, brand, defaultDescription, pathname])
 }
