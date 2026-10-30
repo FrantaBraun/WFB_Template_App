@@ -1,0 +1,5 @@
+# Shell scripts run on Linux: keep them LF in the working tree even where
+# core.autocrlf would give a Windows checkout CRLF (a CRLF install.sh fails with
+# "/bin/bash^M: bad interpreter"). build.py's scripts bundle normalizes anyway.
+*.sh text eol=lf
+*.sh.example text eol=lf
