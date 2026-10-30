@@ -13,7 +13,7 @@ warn() { echo -e "${YELLOW}WARN: $*${NC}"; }
 
 # ── Sanity checks ─────────────────────────────────────────────────────────────
 [[ $EUID -eq 0 ]] || die "Run as root (sudo $0)"
-command -v curl     &>/dev/null || die "curl is required"
+command -v unzip    &>/dev/null || die "unzip is required"
 command -v python3  &>/dev/null || die "python3 is required"
 command -v psql     &>/dev/null || die "psql is required"
 command -v nginx    &>/dev/null || die "nginx is required"
@@ -28,21 +28,28 @@ source "$CONFIG_FILE"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-# Returns the name of the latest file on FTP matching a prefix (sorted lexicographically).
-ftp_latest_file() {
-    local remote_path="$1" prefix="$2"
-    curl -sf --ftp-pasv -u "${FTP_USER}:${FTP_PASS}" \
-        "ftp://${FTP_HOST}:${FTP_PORT}${remote_path}/" \
-        --list-only \
-        | grep "^${prefix}" | sort | tail -1
+# The builds are read from the directories on this machine that build.py's
+# FTP/SFTP upload lands in (the FTP/SFTP server runs here); nothing is downloaded.
+require_release_dirs() {
+    local var
+    for var in BACKEND_RELEASES_DIR FRONTEND_RELEASES_DIR; do
+        [[ "${!var:-}" = /* ]] \
+            || die "${var} is not set to an absolute path in ${CONFIG_FILE}.\nThe builds are read from the directories on this machine that the FTP/SFTP upload lands in - see deploy.config.sh.example."
+    done
 }
 
-ftp_download() {
-    local remote_path="$1" local_file="$2"
-    info "  Downloading ftp://${FTP_HOST}${remote_path} …"
-    curl -sf --ftp-pasv -u "${FTP_USER}:${FTP_PASS}" \
-        "ftp://${FTP_HOST}:${FTP_PORT}${remote_path}" \
-        -o "$local_file" || die "FTP download failed: $remote_path"
+# Prints the path of the newest <prefix>*.zip in a release directory: the one
+# uploaded last (by modification time - the names of a STABLE and a SNAPSHOT
+# build do not sort against each other, and 1.10.0 sorts before 1.9.0). It must
+# be a whole zip, so an upload that is still running stops the script here
+# instead of half way through unpacking.
+latest_archive() {
+    local dir="$1" prefix="$2" newest
+    [[ -d "$dir" ]] || die "Release directory not found: $dir"
+    newest="$(find "$dir" -maxdepth 1 -type f -name "${prefix}*.zip" -printf '%T@ %p\n' | sort -rn | sed -n '1s/^[^ ]* //p')"
+    [[ -n "$newest" ]] || die "No ${prefix}*.zip archive found in $dir"
+    unzip -tq "$newest" > /dev/null || die "Not a complete zip archive (is an upload still running?): $newest"
+    printf '%s\n' "$newest"
 }
 
 # Parse DATABASE_URL from backend/.env into DB_USER DB_PASS DB_HOST DB_PORT DB_NAME.
@@ -90,6 +97,9 @@ install_python_deps() {
 
 CURRENT_DIR="$(pwd)"
 
+# Fail before anything is created if the config still has the old FTP settings.
+require_release_dirs
+
 step "1/10  System user"
 if ! getent group "$APP_GROUP" &>/dev/null; then
     groupadd --system "$APP_GROUP"
@@ -102,20 +112,16 @@ else
     warn "User $APP_USER already exists – skipping."
 fi
 
-step "2/10  Download archives from FTP"
+step "2/10  Locate archives"
 mkdir -p "$INSTALL_DIR"
 
 cd "$INSTALL_DIR"
-TMP_DIR=$(mktemp -d)
-trap 'rm -rf "$TMP_DIR"' EXIT
 
-BACKEND_FILE=$(ftp_latest_file "$FTP_BACKEND_PATH" "backend-") \
-    || die "No backend archive found on FTP under ${FTP_BACKEND_PATH}"
-FRONTEND_FILE=$(ftp_latest_file "$FTP_FRONTEND_PATH" "frontend-") \
-    || die "No frontend archive found on FTP under ${FTP_FRONTEND_PATH}"
-
-ftp_download "${FTP_BACKEND_PATH}/${BACKEND_FILE}"  "${TMP_DIR}/backend.zip"
-ftp_download "${FTP_FRONTEND_PATH}/${FRONTEND_FILE}" "${TMP_DIR}/frontend.zip"
+# The message of a failed lookup is printed by latest_archive itself.
+BACKEND_ARCHIVE="$(latest_archive "$BACKEND_RELEASES_DIR" "backend-")" || exit 1
+FRONTEND_ARCHIVE="$(latest_archive "$FRONTEND_RELEASES_DIR" "frontend-")" || exit 1
+info "Backend:  ${BACKEND_ARCHIVE}"
+info "Frontend: ${FRONTEND_ARCHIVE}"
 
 step "3/10  Extract archives"
 # No uploads dir to preserve on a first install (nothing has been uploaded
@@ -123,10 +129,8 @@ step "3/10  Extract archives"
 # upgrade.sh is what carries an existing uploads dir across later deploys.
 rm -rf "${INSTALL_DIR}/backend" "${INSTALL_DIR}/frontend"
 mkdir -p "${INSTALL_DIR}/backend" "${INSTALL_DIR}/frontend"
-unzip -q "${TMP_DIR}/backend.zip"  -d "${INSTALL_DIR}/backend"
-unzip -q "${TMP_DIR}/frontend.zip" -d "${INSTALL_DIR}/frontend"
-info "Backend:  ${BACKEND_FILE}"
-info "Frontend: ${FRONTEND_FILE}"
+unzip -q "$BACKEND_ARCHIVE"  -d "${INSTALL_DIR}/backend"
+unzip -q "$FRONTEND_ARCHIVE" -d "${INSTALL_DIR}/frontend"
 
 cp "${CURRENT_DIR}/.env" "${INSTALL_DIR}/backend/.env" \
     || die "Copy .env to ${INSTALL_DIR}/backend/.env before running install."
