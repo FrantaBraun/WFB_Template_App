@@ -248,6 +248,7 @@
   },
     "notFound" : {
     "pageTitle" : "Not Found",
+    "pageDescription" : "The page you asked for does not exist.",
     "title" : "The page was not Found",
     "backToHomePage" : "Back to the Home Page"
   }

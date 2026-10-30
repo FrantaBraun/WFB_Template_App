@@ -1,13 +1,16 @@
 # Deployment configuration — copy to deploy.config.sh and fill in your values.
 # deploy.config.sh is gitignored (contains credentials).
 
-# ── FTP ──────────────────────────────────────────────────────────────────────
-FTP_HOST="ftp.example.com"
-FTP_PORT=21
-FTP_USER="ftp-user"
-FTP_PASS="secret"
-FTP_BACKEND_PATH="/releases/backend"
-FTP_FRONTEND_PATH="/releases/frontend"
+# ── Release archives ─────────────────────────────────────────────────────────
+# install.sh and upgrade.sh download nothing: the FTP/SFTP server that scripts/build.py
+# uploads to runs on this machine, and they unpack the newest backend-*.zip and
+# frontend-*.zip from these directories (newest by modification time, after
+# checking that it is a whole zip). Absolute paths on THIS disk - for FTP the FTP
+# user's root plus the [ftp.paths] entry of build.config.toml, for SFTP its
+# [sftp.paths] entry. The user running the scripts (root) must be able to read them.
+# The old FTP_HOST / FTP_USER / FTP_PASS / FTP_*_PATH settings are no longer used.
+BACKEND_RELEASES_DIR="/home/ftp-user/releases/backend"
+FRONTEND_RELEASES_DIR="/home/ftp-user/releases/frontend"
 
 # ── Application ───────────────────────────────────────────────────────────────
 # If this app's backend/.env defines UPLOADS_DIR, upgrade.sh reads it from
