@@ -17,6 +17,8 @@ Usage:
 Tags must follow the convention:  B-x.y.z  (backend)  /  F-x.y.z  (frontend)
 The 'scripts' target has no tag — it always bundles the current filesystem state.
 Configuration is read from scripts/build.config.toml (see build.config.toml.example).
+The zips are uploaded over FTP/FTPS ([ftp]), or over SFTP with the OpenSSH `sftp`
+command when the config has an [sftp] section (a key login, no password in the file).
 
 STABLE backend/frontend builds also seal that component's release_news.json:
 accumulated `unreleased` entries move into a new release dated today, tagged
@@ -300,6 +302,90 @@ def upload_ftp(local_path: Path, remote_dir: str, cfg: dict) -> None:
     print(f"  Upload complete.")
 
 
+# ─── SFTP upload ──────────────────────────────────────────────────────────────
+
+def _sftp_quote(value: str) -> str:
+    """A value as one argument of an sftp batch command: double-quoted, with
+    quotes and backslashes escaped."""
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _sftp_batch(remote_dir: str, file_name: str) -> str:
+    """The sftp batch that makes remote_dir one path segment at a time (a
+    leading '-' lets a directory that already exists pass) and puts file_name,
+    taken from the working directory, into it."""
+    parts = [part for part in remote_dir.split("/") if part]
+    prefix = "/" if remote_dir.startswith("/") else ""
+    lines = []
+    current = prefix
+    for part in parts:
+        current += part
+        lines.append(f"-mkdir {_sftp_quote(current)}")
+        current += "/"
+    remote_file = f"{prefix}{'/'.join(parts)}/{file_name}" if parts else f"{prefix}{file_name}"
+    lines.append(f"put {_sftp_quote(file_name)} {_sftp_quote(remote_file)}")
+    return "\n".join(lines) + "\n"
+
+
+def _sftp_command(sc: dict) -> list[str]:
+    """The OpenSSH `sftp` command line for cfg["sftp"]: batch mode (it can not
+    ask for a password, so the login is a key - `key_file`, else the ssh agent
+    or the default keys), the commands are read from stdin."""
+    exe = shutil.which("sftp")
+    if not exe:
+        sys.exit("The 'sftp' command (the OpenSSH client) is not on PATH, but the config has an [sftp] section.")
+    command = [exe, "-b", "-", "-P", str(sc.get("port", 22)),
+               "-o", "BatchMode=yes", "-o", "ConnectTimeout=30", "-o", "ServerAliveInterval=30"]
+    if sc.get("key_file"):
+        command += ["-i", Path(sc["key_file"]).expanduser().as_posix(), "-o", "IdentitiesOnly=yes"]
+    command.append(f"{sc['user']}@{sc['host']}")
+    return command
+
+
+def upload_sftp(local_path: Path, remote_dir: str, cfg: dict) -> None:
+    """Upload a built zip to remote_dir over SFTP with the OpenSSH `sftp`
+    command, per cfg["sftp"] (host/port/user/key_file - see
+    build.config.toml.example). No password is kept in the config: the login
+    is a key."""
+    sc = cfg["sftp"]
+    print(f"  Uploading → sftp://{sc['host']}{remote_dir}/{local_path.name} …")
+
+    # bytes, not text: in text mode Windows would send CRLF, which sftp reads as part of the path
+    result = subprocess.run(
+        _sftp_command(sc),
+        input=_sftp_batch(remote_dir, local_path.name).encode("utf-8"),
+        cwd=local_path.parent,
+    )
+    if result.returncode != 0:
+        sys.exit(
+            f"sftp failed (exit code {result.returncode}).\n"
+            f"Check, by hand, that `ssh -p {sc.get('port', 22)} {sc['user']}@{sc['host']}` logs in without asking for "
+            "a password (run it once: it also records the server's host key, which a batch can not confirm), "
+            f"and that {remote_dir} is writable for that user."
+        )
+    print("  Upload complete.")
+
+
+def remote_dir_for(cfg: dict, target: str) -> str:
+    """Where a target's zip goes: [sftp.paths] when uploading over SFTP and it
+    has the target (the SSH account can see the server's disk differently from
+    the FTP account, e.g. outside the FTP root), else [ftp.paths]."""
+    sections = ["sftp", "ftp"] if "sftp" in cfg else ["ftp"]
+    for section in sections:
+        path = cfg.get(section, {}).get("paths", {}).get(target)
+        if path:
+            return path
+    sys.exit(f"No remote directory for '{target}' in {CONFIG_FILE.name}: set it under [{sections[0]}.paths].")
+
+
+def upload(local_path: Path, remote_dir: str, cfg: dict) -> None:
+    """Upload over SFTP when the config has an [sftp] section, otherwise over FTP/FTPS."""
+    if "sftp" in cfg:
+        upload_sftp(local_path, remote_dir, cfg)
+    else:
+        upload_ftp(local_path, remote_dir, cfg)
+
+
 # ─── CLI ──────────────────────────────────────────────────────────────────────
 
 def resolve_ref(mode: str, target: str, tag: str | None) -> str:
@@ -345,7 +431,7 @@ def main() -> None:
                         help="Specific tag (e.g. B-1.2.3 or F-1.2.3). "
                              "Only for STABLE backend/frontend; incompatible with scripts and all.")
     parser.add_argument("--no-upload", action="store_true",
-                        help="Build locally without FTP upload.")
+                        help="Build locally without uploading.")
     parser.add_argument("--output-dir", type=Path, metavar="DIR",
                         help="Override output directory from config.")
     args = parser.parse_args()
@@ -386,16 +472,13 @@ def main() -> None:
 
         if target == "backend":
             build_backend(ref, zip_path)
-            remote_dir = cfg["ftp"]["paths"]["backend"]
         elif target == "frontend":
             build_frontend(ref, zip_path, cfg)
-            remote_dir = cfg["ftp"]["paths"]["frontend"]
         else:  # scripts
             build_scripts(zip_path)
-            remote_dir = cfg["ftp"]["paths"]["scripts"]
 
         if not args.no_upload:
-            upload_ftp(zip_path, remote_dir, cfg)
+            upload(zip_path, remote_dir_for(cfg, target), cfg)
         else:
             print(f"  Upload skipped (--no-upload).")
 
