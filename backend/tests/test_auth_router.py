@@ -6,6 +6,7 @@
 proxied to a mocked auth.withfbraun.com and asserting the BFF's own
 consent_required -> 403 conversion and bearer-auth requirements."""
 
+import json
 import uuid
 
 import respx
@@ -329,4 +330,108 @@ def test_reject_consent_success(client):
 
 def test_grant_consent_requires_bearer(client):
     resp = client.post("/api/auth/consent/g1/grant")
+    assert resp.status_code in (401, 403)
+
+
+@respx.mock
+def test_password_reset_request_sends_link_to_this_app(client):
+    route = respx.post(f"{AUTH_URL}/api/auth/password-reset/request").mock(return_value=Response(204))
+
+    resp = client.post("/api/auth/password-reset/request", json={"email": "a@example.com"})
+
+    assert resp.status_code == 204
+    sent = json.loads(route.calls.last.request.content)
+    assert sent["email"] == "a@example.com"
+    assert sent["reset_url"].endswith("/reset-password")
+
+
+@respx.mock
+def test_password_reset_request_forwards_upstream_error(client):
+    respx.post(f"{AUTH_URL}/api/auth/password-reset/request").mock(
+        return_value=Response(429, json={"detail": "Too many requests"})
+    )
+
+    resp = client.post("/api/auth/password-reset/request", json={"email": "a@example.com"})
+
+    assert resp.status_code == 429
+    assert resp.json()["detail"] == "Too many requests"
+
+
+def test_password_reset_request_rejects_invalid_email(client):
+    resp = client.post("/api/auth/password-reset/request", json={"email": "not-an-email"})
+    assert resp.status_code == 422
+
+
+@respx.mock
+def test_password_reset_confirm_success(client):
+    route = respx.post(f"{AUTH_URL}/api/auth/password-reset/confirm").mock(return_value=Response(204))
+
+    resp = client.post(
+        "/api/auth/password-reset/confirm",
+        json={"token": "tok", "new_password": "newpassword1"},
+    )
+
+    assert resp.status_code == 204
+    assert json.loads(route.calls.last.request.content) == {"token": "tok", "new_password": "newpassword1"}
+
+
+@respx.mock
+def test_password_reset_confirm_expired_token(client):
+    respx.post(f"{AUTH_URL}/api/auth/password-reset/confirm").mock(
+        return_value=Response(400, json={"detail": "Invalid or expired token"})
+    )
+
+    resp = client.post(
+        "/api/auth/password-reset/confirm",
+        json={"token": "old", "new_password": "newpassword1"},
+    )
+
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Invalid or expired token"
+
+
+def test_password_reset_confirm_rejects_short_password(client):
+    resp = client.post("/api/auth/password-reset/confirm", json={"token": "tok", "new_password": "short"})
+    assert resp.status_code == 422
+
+
+@respx.mock
+def test_change_password_success(client):
+    route = respx.post(f"{AUTH_URL}/api/auth/me/change-password").mock(return_value=Response(204))
+
+    resp = client.post(
+        "/api/auth/me/change-password",
+        json={"current_password": "oldpassword", "new_password": "newpassword1"},
+        headers={"Authorization": "Bearer token"},
+    )
+
+    assert resp.status_code == 204
+    assert route.calls.last.request.headers["Authorization"] == "Bearer token"
+    assert json.loads(route.calls.last.request.content) == {
+        "current_password": "oldpassword",
+        "new_password": "newpassword1",
+    }
+
+
+@respx.mock
+def test_change_password_wrong_current_password(client):
+    respx.post(f"{AUTH_URL}/api/auth/me/change-password").mock(
+        return_value=Response(400, json={"detail": "Current password is incorrect"})
+    )
+
+    resp = client.post(
+        "/api/auth/me/change-password",
+        json={"current_password": "wrong", "new_password": "newpassword1"},
+        headers={"Authorization": "Bearer token"},
+    )
+
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Current password is incorrect"
+
+
+def test_change_password_requires_bearer(client):
+    resp = client.post(
+        "/api/auth/me/change-password",
+        json={"current_password": "oldpassword", "new_password": "newpassword1"},
+    )
     assert resp.status_code in (401, 403)

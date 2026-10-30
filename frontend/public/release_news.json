@@ -1,5 +1,7 @@
 {
     "unreleased": [
+        "Forgotten password: the sign-in page links to a form that e-mails a reset link, and the link opens a page where a new password is set (with a confirmation field; the link works once and expires)",
+        "The Account page has a Change password card: current password, new password and its confirmation, saved on its own without touching the profile",
         "Let an application ship its own share image: the page-meta hook now keeps the og:image and twitter:card that index.html carries on every page (and sets twitter:image to match) instead of always writing the logo as a small card; without them in index.html nothing changes",
         "Keep the not-found page out of search results: the server answers every unknown address with the app's index.html (status 200), so crawlers saw it as a soft 404. The page now asks not to be indexed, and its description (a missing translation that printed the raw key into the page) is written in Czech and English",
         "Fix a visible seam in the page background on pages taller than the screen: the background gradient repeated, so the dark end of one repeat met the light start of the next. It now covers the first screen once and the page continues in its last colour, in the light and the dark theme",

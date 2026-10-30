@@ -2,7 +2,7 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class EmailParams(BaseModel):
@@ -70,3 +70,26 @@ class UserDataUpdate(BaseModel):
     user_data object, not a partial merge."""
 
     user_data: dict | None = None
+
+
+class PasswordResetRequestBody(BaseModel):
+    """Body for POST /api/auth/password-reset/request - the auth service mails
+    a link to this app's reset page, which carries the token."""
+
+    email: EmailStr
+
+
+class PasswordResetConfirmBody(BaseModel):
+    """Body for POST /api/auth/password-reset/confirm - the token from the
+    e-mail link and the new password chosen on this app's reset page."""
+
+    token: str
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class ChangePasswordBody(BaseModel):
+    """Body for POST /api/auth/me/change-password - the signed-in user's
+    current password, then the new one."""
+
+    current_password: str
+    new_password: str = Field(min_length=8, max_length=128)

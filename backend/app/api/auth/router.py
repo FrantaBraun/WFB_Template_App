@@ -9,14 +9,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.api.auth.schemas import (
+    ChangePasswordBody,
     LoginRequest,
     LogoutRequest,
+    PasswordResetConfirmBody,
+    PasswordResetRequestBody,
     RefreshRequest,
     RegisterRequest,
     UserDataUpdate,
     UserUpdate,
 )
 from app.api.deps import get_current_user
+from app.config import get_settings
 from app.models.user import User
 from app.security.jwt import bearer_scheme
 from app.services.auth_client import auth_client
@@ -78,6 +82,45 @@ async def logout(
     this app doesn't persist sessions of its own."""
     try:
         await auth_client.logout(access_token=credentials.credentials, refresh_token=body.refresh_token)
+    except httpx.HTTPStatusError as exc:
+        _raise_for_response(exc.response)
+
+
+@router.post("/password-reset/request", status_code=204)
+async def request_password_reset(body: PasswordResetRequestBody) -> None:
+    """Asks the auth service to e-mail a reset link. The link leads to this
+    app's own /reset-password page (FRONTEND_URL), which collects the new
+    password and calls /password-reset/confirm. The service answers the same
+    way whether or not the address is registered, so this does too."""
+    reset_url = f"{get_settings().frontend_url.rstrip('/')}/reset-password"
+    try:
+        await auth_client.request_password_reset(email=body.email, reset_url=reset_url)
+    except httpx.HTTPStatusError as exc:
+        _raise_for_response(exc.response)
+
+
+@router.post("/password-reset/confirm", status_code=204)
+async def confirm_password_reset(body: PasswordResetConfirmBody) -> None:
+    """Sets the new password for the token from the reset e-mail."""
+    try:
+        await auth_client.confirm_password_reset(token=body.token, new_password=body.new_password)
+    except httpx.HTTPStatusError as exc:
+        _raise_for_response(exc.response)
+
+
+@router.post("/me/change-password", status_code=204)
+async def change_password(
+    body: ChangePasswordBody,
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+) -> None:
+    """Changes the signed-in user's password; the auth service checks the
+    current one. Identity lives upstream, so nothing changes locally."""
+    try:
+        await auth_client.change_password(
+            access_token=credentials.credentials,
+            current_password=body.current_password,
+            new_password=body.new_password,
+        )
     except httpx.HTTPStatusError as exc:
         _raise_for_response(exc.response)
 

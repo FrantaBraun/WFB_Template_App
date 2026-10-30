@@ -24,6 +24,7 @@
     "description": "Toto je výchozí šablona pro tvorbu dalších aplikací. Neobsahuje žádnou funkční logiku — jen předpřipravené prostředí, na kterém lze začít stavět."
   },
   "login": {
+    "forgotPassword": "Zapomenuté heslo?",
     "pageTitle": "Přihlášení",
     "pageDescription": "Přihlaste se ke svému účtu.",
     "title": "Přihlášení",
@@ -55,6 +56,17 @@
     "failed": "Registrace se nezdařila"
   },
   "account": {
+    "passwordCard": {
+      "title": "Změna hesla",
+      "currentLabel": "Současné heslo",
+      "newLabel": "Nové heslo",
+      "confirmLabel": "Potvrzení nového hesla",
+      "submit": "Změnit heslo",
+      "submitting": "Ukládám…",
+      "mismatch": "Nová hesla se neshodují.",
+      "success": "Heslo bylo změněno.",
+      "error": "Heslo se nepodařilo změnit. Zkontrolujte současné heslo."
+    },
     "pageTitle": "Účet",
     "pageDescription": "Spravujte údaje svého účtu.",
     "accountCard": {
@@ -197,5 +209,34 @@
     "pageDescription" : "Požadovaná stránka neexistuje.",
     "title" : "Stránka nenalezena",
     "backToHomePage" : "Zpět na domovskou stránku"
+  },
+  "forgotPassword": {
+    "pageTitle": "Obnovení hesla",
+    "pageDescription": "Vyžádejte si odkaz pro obnovení hesla.",
+    "title": "Obnovení hesla",
+    "intro": "Zadejte svůj e-mail a pošleme vám odkaz pro nastavení nového hesla.",
+    "emailLabel": "E-mailová adresa",
+    "submit": "Odeslat odkaz",
+    "submitting": "Odesílám…",
+    "sentTitle": "Zkontrolujte svou schránku",
+    "sentText": "Pokud je pro {{email}} vytvořen účet, poslali jsme na něj odkaz pro obnovení hesla. Odkaz po chvíli vyprší.",
+    "failed": "Odkaz se nepodařilo odeslat. Zkuste to prosím znovu.",
+    "backToLogin": "Zpět na přihlášení"
+  },
+  "resetPassword": {
+    "pageTitle": "Nastavení nového hesla",
+    "pageDescription": "Zvolte nové heslo pro svůj účet.",
+    "title": "Nastavení nového hesla",
+    "newPasswordLabel": "Nové heslo",
+    "confirmLabel": "Potvrzení hesla",
+    "submit": "Změnit heslo",
+    "submitting": "Ukládám…",
+    "mismatch": "Hesla se neshodují.",
+    "missingToken": "Odkaz je neúplný. Vyžádejte si nový odkaz pro obnovení hesla.",
+    "failed": "Heslo se nepodařilo změnit. Odkaz mohl vypršet - vyžádejte si nový.",
+    "doneTitle": "Heslo bylo změněno",
+    "doneText": "Nyní se můžete přihlásit novým heslem.",
+    "signIn": "Přihlásit se",
+    "requestNew": "Vyžádat nový odkaz"
   }
 }

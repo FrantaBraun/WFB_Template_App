@@ -212,6 +212,9 @@ def no_key_client():
         lambda c: c.reject_consent(group_id="g1", access_token="a"),
         lambda c: c.get_group_attributes(group_id="g1", access_token="a"),
         lambda c: c.update_group_attributes(group_id="g1", access_token="a", user_data={}),
+        lambda c: c.request_password_reset(email="a@example.com"),
+        lambda c: c.confirm_password_reset(token="t", new_password="password123"),
+        lambda c: c.change_password(access_token="a", current_password="old", new_password="password123"),
     ],
 )
 async def test_every_method_requires_api_key(no_key_client, call):
