@@ -24,6 +24,8 @@ APP_USER="app-auth"
 APP_GROUP="app-services"
 APP_SERVICE_NAME="app-auth.service"
 APP_SERVICE_DESC="Authentication with FBraun"
+FRONTEND_URL="https://"
+BACKEND_URL="http://"
 
 # ── nginx ─────────────────────────────────────────────────────────────────────
 NGINX_SITES_CONF="/etc/nginx/conf.d"
