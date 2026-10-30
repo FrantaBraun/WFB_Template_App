@@ -138,8 +138,8 @@ cp "${CURRENT_DIR}/.env" "${INSTALL_DIR}/backend/.env" \
 # Disable CORS in production (frontend and backend are served from the same domain)
 sed -i -e 's/CORS_ENABLED\=true/CORS_ENABLED=false/g' "${CURRENT_DIR}/.env"
 sed -i -e 's/GOOGLE_REDIRECT_URI\=http:\/\/localhost:8000\/auth\/google\/callback/GOOGLE_REDIRECT_URI\=https:\/\/auth.withfbraun.com\/auth\/google\/callback/g' "${CURRENT_DIR}/.env"
-sed -i -e 's/APP_BASE_URL\=http:\/\/localhost:8000/APP_BASE_URL\=https:\/\/auth.withfbraun.com/g' "${CURRENT_DIR}/.env"
-sed -i -e 's/FRONTEND_URL\=http:\/\/localhost:5174/FRONTEND_URL\=https:\/\/auth.withfbraun.com/g' "${CURRENT_DIR}/.env"
+sed -i -e "s#APP_BASE_URL=http://localhost:8000#APP_BASE_URL=${BACKEND_URL}#g" "${CURRENT_DIR}/.env"
+sed -i -e "s#FRONTEND_URL=http://localhost:5174#FRONTEND_URL=${FRONTEND_URL}#g" "${CURRENT_DIR}/.env"
 
 step "4/10  PostgreSQL database"
 [[ -f "${INSTALL_DIR}/backend/.env" ]] \
