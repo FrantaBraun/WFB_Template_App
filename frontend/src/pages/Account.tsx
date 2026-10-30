@@ -8,6 +8,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import ChangePasswordCard from '../components/ChangePasswordCard'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import usePageMeta from '../hooks/usePageMeta'
@@ -315,6 +316,8 @@ export default function Account() {
           {profileSaving ? t('common.saving') : t('common.save')}
         </button>
       </form>
+
+      <ChangePasswordCard />
 
       {/* Deliberately not inside the Profile <form> above: this toggle saves
           instantly (see ThemeToggle), unlike the rest of the profile fields

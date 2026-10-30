@@ -15,6 +15,8 @@ import Account from "./pages/Account"
 import Consent from "./pages/Consent"
 import ConsentRejected from "./pages/ConsentRejected"
 import Login from "./pages/Login"
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
 import Register from "./pages/Register"
 import OAuthCallback from "./pages/OAuthCallback"
 import Version from "./pages/Version"
@@ -52,6 +54,8 @@ function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       {isRegistrationAllowed && <Route path="/register" element={<Register />} />}
       <Route path="/account" element={<Account />} />
       <Route path="/teams" element={<Teams />} />
