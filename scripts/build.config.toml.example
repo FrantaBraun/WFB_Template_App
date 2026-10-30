@@ -19,6 +19,17 @@ backend  = "/releases/backend"
 frontend = "/releases/frontend"
 scripts  = "/releases/auth"
 
+[sftp]
+host     = "ftp.withfbraun.com"
+port     = 22
+user     = "tvůj-ssh-účet"
+key_file = "~/.ssh/id_rsa"
+
+[sftp.paths]
+backend  = "/skutečná/cesta/releases/backend"
+frontend = "/skutečná/cesta/releases/frontend"
+scripts  = "/skutečná/cesta/releases/auth"
+
 [build]
 output_dir  = "dist"      # relative to repo root, or absolute
 # npm_command = "npm"     # override if npm is not on PATH
