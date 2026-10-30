@@ -20,6 +20,7 @@
     "closeMenu": "Zavřít nabídku"
   },
   "login": {
+    "forgotPassword": "Zapomenuté heslo?",
     "pageTitle": "Přihlášení",
     "pageDescription": "Přihlaste se ke svému účtu.",
     "title": "Přihlášení",
@@ -51,6 +52,17 @@
     "failed": "Registrace se nezdařila"
   },
   "account": {
+    "passwordCard": {
+      "title": "Změna hesla",
+      "currentLabel": "Současné heslo",
+      "newLabel": "Nové heslo",
+      "confirmLabel": "Potvrzení nového hesla",
+      "submit": "Změnit heslo",
+      "submitting": "Ukládám…",
+      "mismatch": "Nová hesla se neshodují.",
+      "success": "Heslo bylo změněno.",
+      "error": "Heslo se nepodařilo změnit. Zkontrolujte současné heslo."
+    },
     "pageTitle": "Účet",
     "pageDescription": "Spravujte údaje svého účtu.",
     "accountCard": {
@@ -249,5 +261,34 @@
     "directionsTitle": "Jak se k nám dostanete",
     "directions": "Od náměstí jsou to pěšky čtyři minuty, autobusová zastávka je přímo před domem. Parkovat můžete na nedalekém parkovišti u nádraží.",
     "demoNotice": "Toto je ukázkový web pro portfolio. Hostinec U Zlatého chmele neexistuje a všechny údaje na tomto webu (adresa, telefon, e-mail, provozovatel, IČO i příběh) jsou smyšlené. E-mailová adresa na doméně example.com nikdy nikam nedojde."
+  },
+  "forgotPassword": {
+    "pageTitle": "Obnovení hesla",
+    "pageDescription": "Vyžádejte si odkaz pro obnovení hesla.",
+    "title": "Obnovení hesla",
+    "intro": "Zadejte svůj e-mail a pošleme vám odkaz pro nastavení nového hesla.",
+    "emailLabel": "E-mailová adresa",
+    "submit": "Odeslat odkaz",
+    "submitting": "Odesílám…",
+    "sentTitle": "Zkontrolujte svou schránku",
+    "sentText": "Pokud je pro {{email}} vytvořen účet, poslali jsme na něj odkaz pro obnovení hesla. Odkaz po chvíli vyprší.",
+    "failed": "Odkaz se nepodařilo odeslat. Zkuste to prosím znovu.",
+    "backToLogin": "Zpět na přihlášení"
+  },
+  "resetPassword": {
+    "pageTitle": "Nastavení nového hesla",
+    "pageDescription": "Zvolte nové heslo pro svůj účet.",
+    "title": "Nastavení nového hesla",
+    "newPasswordLabel": "Nové heslo",
+    "confirmLabel": "Potvrzení hesla",
+    "submit": "Změnit heslo",
+    "submitting": "Ukládám…",
+    "mismatch": "Hesla se neshodují.",
+    "missingToken": "Odkaz je neúplný. Vyžádejte si nový odkaz pro obnovení hesla.",
+    "failed": "Heslo se nepodařilo změnit. Odkaz mohl vypršet - vyžádejte si nový.",
+    "doneTitle": "Heslo bylo změněno",
+    "doneText": "Nyní se můžete přihlásit novým heslem.",
+    "signIn": "Přihlásit se",
+    "requestNew": "Vyžádat nový odkaz"
   }
 }
