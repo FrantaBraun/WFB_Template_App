@@ -10,6 +10,31 @@ import { useLocation } from 'react-router-dom'
 
 const OG_LOCALES: Record<string, string> = { cs: 'cs_CZ', en: 'en_US' }
 
+interface ShareDefaults {
+  image: string
+  card: string
+}
+
+let shareDefaults: ShareDefaults | undefined
+
+/**
+ * The share image and the card type index.html carries, read once before the
+ * first page overwrites them: an application that ships its own (an absolute
+ * og:image, summary_large_image) keeps it on every page, the others get the
+ * logo as a small card. Link-preview bots never run this hook, so what they
+ * show is whatever index.html says; this keeps a client that does run it in
+ * agreement with them.
+ */
+function readShareDefaults(): ShareDefaults {
+  if (!shareDefaults) {
+    shareDefaults = {
+      image: document.head.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.content || `${window.location.origin}/logo.png`,
+      card: document.head.querySelector<HTMLMetaElement>('meta[name="twitter:card"]')?.content || 'summary',
+    }
+  }
+  return shareDefaults
+}
+
 function upsertMeta(attribute: 'name' | 'property', key: string, content: string) {
   let element = document.head.querySelector<HTMLMetaElement>(`meta[${attribute}="${key}"]`)
   if (!element) {
@@ -72,7 +97,9 @@ export default function usePageMeta({
     upsertMeta('property', 'og:description', text)
     upsertMeta('property', 'og:url', url)
     upsertMeta('property', 'og:locale', OG_LOCALES[language] ?? language)
-    upsertMeta('property', 'og:image', `${window.location.origin}/logo.png`)
-    upsertMeta('name', 'twitter:card', 'summary')
+    const share = readShareDefaults()
+    upsertMeta('property', 'og:image', share.image)
+    upsertMeta('name', 'twitter:card', share.card)
+    upsertMeta('name', 'twitter:image', share.image)
   }, [title, description, noindex, language, brand, defaultDescription, pathname])
 }

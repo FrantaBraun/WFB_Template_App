@@ -194,6 +194,7 @@
   },
   "notFound" : {
     "pageTitle" : "Nenalezeno",
+    "pageDescription" : "Požadovaná stránka neexistuje.",
     "title" : "Stránka nenalezena",
     "backToHomePage" : "Zpět na domovskou stránku"
   }
