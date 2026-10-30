@@ -34,11 +34,18 @@ body {
     'Segoe UI',
     Roboto,
     sans-serif;
-  background: radial-gradient(circle at top, #f8fafc, #e2e8f0 60%);
+  /* The gradient is laid over the first screen once and the page carries on in
+     its last colour. Left to repeat (the default), it tiled every screen-height
+     on a taller page, and each tile's dark end met the next one's light start
+     as a visible seam. */
+  background-color: #e2e8f0;
+  background-image: radial-gradient(circle at top, #f8fafc, #e2e8f0 60%);
+  background-repeat: no-repeat;
 }
 
 .dark body {
-  background: radial-gradient(circle at top, #1e293b, #020617 60%);
+  background-color: #020617;
+  background-image: radial-gradient(circle at top, #1e293b, #020617 60%);
 }
 
 ::selection {
