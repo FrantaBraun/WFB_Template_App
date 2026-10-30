@@ -349,6 +349,8 @@ def upload_sftp(local_path: Path, remote_dir: str, cfg: dict) -> None:
     is a key."""
     sc = cfg["sftp"]
     print(f"  Uploading → sftp://{sc['host']}{remote_dir}/{local_path.name} …")
+    # every directory of the path is created and sftp reports the ones that exist already
+    print("  (a 'remote mkdir ...: Failure' line below only means that directory is already there)")
 
     # bytes, not text: in text mode Windows would send CRLF, which sftp reads as part of the path
     result = subprocess.run(
