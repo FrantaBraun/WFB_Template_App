@@ -1,5 +1,7 @@
 {
     "unreleased": [
+        "Forgotten password: the sign-in page links to a form that e-mails a reset link, and the link opens a page where a new password is set (with a confirmation field; the link works once and expires)",
+        "The Account page has a Change password card: current password, new password and its confirmation, saved on its own without touching the profile",
         "Put all the text of the freelancer home page on cards (the principles, the new section on generated websites and the portfolio intro), so it reads against white instead of the page's gradient background, in the light and the dark theme",
         "Add a section to the freelancer home page, between \"How I work\" and the AI section, that answers the websites generated from a single sentence in seconds: why a tailor-made, documented and serviced solution is a different thing. Czech and English",
         "Let an application ship its own share image: the page-meta hook now keeps the og:image and twitter:card that index.html carries on every page (and sets twitter:image to match) instead of always writing the logo as a small card; without them in index.html nothing changes",
