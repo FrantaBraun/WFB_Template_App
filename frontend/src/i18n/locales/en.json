@@ -190,11 +190,6 @@
     "backToEditor": "Back to the editor",
     "mentionNoResults": "No results"
   },
-  "notFound": {
-    "pageTitle": "Not Found",
-    "title": "The page was not Found",
-    "backToHomePage": "Back to the Home Page"
-  },
   "home": {
     "eyebrow": "A traditional Czech inn since {{year}}",
     "tagline": "Beef sirloin in cream sauce like your grandmother's, eight beers on tap and a lunch menu every weekday. Come and sit down.",
@@ -248,5 +243,11 @@
     "directionsTitle": "How to find us",
     "directions": "It is a four-minute walk from the square, and the bus stop is right in front of the house. You can park in the car park near the station.",
     "demoNotice": "This is a demo website for a portfolio. Hostinec U Zlatého chmele does not exist and everything on this site (the address, phone number, e-mail, operator, company ID and the story) is made up. An e-mail address on example.com is never delivered anywhere."
+  },
+  "notFound": {
+    "pageTitle": "Not Found",
+    "pageDescription": "The page you asked for does not exist.",
+    "title": "The page was not Found",
+    "backToHomePage": "Back to the Home Page"
   }
 }
