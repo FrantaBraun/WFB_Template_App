@@ -138,6 +138,38 @@ class AuthClient:
         r.raise_for_status()
         return r.json()
 
+    async def request_password_reset(
+        self, *, email: str, reset_url: str | None = None
+    ) -> None:
+        """POST /api/auth/password-reset/request - the auth service mails a
+        reset link; reset_url is where that link leads (its ?token= is added
+        upstream). Omitted, the service uses its own configured default."""
+        self._require_api_key()
+        payload: dict = {"email": email}
+        if reset_url:
+            payload["reset_url"] = reset_url
+        r = await self._http.post("/api/auth/password-reset/request", json=payload)
+        r.raise_for_status()
+
+    async def confirm_password_reset(self, *, token: str, new_password: str) -> None:
+        self._require_api_key()
+        r = await self._http.post(
+            "/api/auth/password-reset/confirm",
+            json={"token": token, "new_password": new_password},
+        )
+        r.raise_for_status()
+
+    async def change_password(
+        self, *, access_token: str, current_password: str, new_password: str
+    ) -> None:
+        self._require_api_key()
+        r = await self._http.post(
+            "/api/auth/me/change-password",
+            json={"current_password": current_password, "new_password": new_password},
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        r.raise_for_status()
+
     async def get_public_key(self) -> str:
         self._require_api_key()
         r = await self._http.get("/api/auth/public-key")
