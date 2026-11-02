@@ -22,6 +22,7 @@ import OAuthCallback from "./pages/OAuthCallback"
 import Version from "./pages/Version"
 import ReleaseNews from "./pages/ReleaseNews"
 import Teams from "./pages/Teams"
+import AuthorMessages from "./pages/AuthorMessages"
 import TeamDetail from "./pages/TeamDetail"
 import AcceptInvitation from "./pages/AcceptInvitation"
 import ApiDocs from "./pages/ApiDocs"
@@ -59,6 +60,7 @@ function App() {
       {isRegistrationAllowed && <Route path="/register" element={<Register />} />}
       <Route path="/account" element={<Account />} />
       <Route path="/teams" element={<Teams />} />
+      <Route path="/messages" element={<AuthorMessages />} />
       <Route path="/teams/invitations/:token" element={<AcceptInvitation />} />
       <Route path="/teams/:id" element={<TeamDetail />} />
       <Route path="/api-docs" element={<ApiDocs />} />

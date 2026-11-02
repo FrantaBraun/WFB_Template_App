@@ -438,11 +438,46 @@
       }
     }
   },
+  "author": {
+    "title": "Autor",
+    "nameLabel": "Jméno",
+    "teamLabel": "Vlastnící tým",
+    "unknownName": "Neznámý autor",
+    "you": "vy",
+    "contact": {
+      "open": "Napsat autorovi",
+      "signIn": "Přihlaste se",
+      "signInSuffix": "a můžete autorovi napsat.",
+      "labelDocument": "Vaše zpráva pro {{name}} k této dokumentaci",
+      "labelCollection": "Vaše zpráva pro {{name}} k této kolekci",
+      "privacyNote": "Autor dostane vaši zprávu e-mailem i jako oznámení v aplikaci, a to spolu s vaším jménem a e-mailovou adresou, aby vám mohl odpovědět.",
+      "send": "Odeslat zprávu",
+      "sending": "Odesílám…",
+      "sent": "Vaše zpráva byla autorovi odeslána e-mailem i jako oznámení v aplikaci.",
+      "sentInAppOnly": "Vaše zpráva byla autorovi doručena jako oznámení v aplikaci. E-mail se odeslat nepodařilo.",
+      "rateLimited": "Za poslední hodinu bylo odesláno příliš mnoho zpráv. Zkuste to prosím později.",
+      "error": "Zprávu se nepodařilo odeslat. Zkuste to prosím znovu."
+    },
+    "messages": {
+      "pageTitle": "Zprávy od uživatelů",
+      "pageDescription": "Zprávy, které vám jiní uživatelé poslali jako autorovi dokumentace nebo kolekce.",
+      "empty": "Zatím vám nikdo nenapsal.",
+      "loadError": "Zprávy se nepodařilo načíst.",
+      "loadMore": "Zobrazit starší zprávy",
+      "from": "Od: {{name}}",
+      "unknownSender": "Uživatel",
+      "aboutDocument": "K dokumentaci",
+      "aboutCollection": "Ke kolekci",
+      "reply": "Odpovědět e-mailem"
+    }
+  },
   "notifications": {
     "bell": {
       "title": "Oznámení",
       "empty": "Zatím žádná oznámení.",
-      "itemText": "Nová verze {{version}}"
+      "itemText": "Nová verze {{version}}",
+      "messageText": "Zpráva od {{sender}} k „{{title}}“",
+      "allMessages": "Všechny zprávy"
     },
     "banner": {
       "text": "Nová verze k dispozici: {{versions}}",

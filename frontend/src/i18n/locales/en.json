@@ -438,11 +438,46 @@
       }
     }
   },
+  "author": {
+    "title": "Author",
+    "nameLabel": "Name",
+    "teamLabel": "Owning team",
+    "unknownName": "Unknown author",
+    "you": "you",
+    "contact": {
+      "open": "Contact the author",
+      "signIn": "Sign in",
+      "signInSuffix": "to write to the author.",
+      "labelDocument": "Your message to {{name}} about this documentation",
+      "labelCollection": "Your message to {{name}} about this collection",
+      "privacyNote": "The author receives your message by e-mail and as a notification in the app, together with your name and e-mail address so they can reply.",
+      "send": "Send message",
+      "sending": "Sending…",
+      "sent": "Your message was sent to the author by e-mail and as a notification in the app.",
+      "sentInAppOnly": "Your message was delivered to the author as a notification in the app. No e-mail could be sent.",
+      "rateLimited": "You have sent too many messages recently. Please try again later.",
+      "error": "The message could not be sent. Please try again."
+    },
+    "messages": {
+      "pageTitle": "Messages from users",
+      "pageDescription": "Messages other users sent you as the author of a documentation or collection.",
+      "empty": "Nobody has written to you yet.",
+      "loadError": "Failed to load your messages.",
+      "loadMore": "Show older messages",
+      "from": "From {{name}}",
+      "unknownSender": "A user",
+      "aboutDocument": "About the documentation",
+      "aboutCollection": "About the collection",
+      "reply": "Reply by e-mail"
+    }
+  },
   "notifications": {
     "bell": {
       "title": "Notifications",
       "empty": "No notifications yet.",
-      "itemText": "New version {{version}}"
+      "itemText": "New version {{version}}",
+      "messageText": "Message from {{sender}} about {{title}}",
+      "allMessages": "All messages"
     },
     "banner": {
       "text": "New version available: {{versions}}",

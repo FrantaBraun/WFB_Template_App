@@ -8,6 +8,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch, apiUpload } from '../api/client'
+import AuthorCard, { type AuthorData } from '../components/AuthorCard'
 import ResultDialog from '../components/ResultDialog'
 import VersionBanner from '../components/VersionBanner'
 import usePageMeta from '../hooks/usePageMeta'
@@ -38,6 +39,7 @@ interface ApiDocumentDetailData {
   current_version: ApiDocumentCurrentVersionData | null
   can_edit: boolean
   is_subscribed: boolean | null
+  author: AuthorData
 }
 
 /** What POST .../recheck and .../upload-version answer: the document plus what the check found. */
@@ -507,6 +509,8 @@ export default function ApiDocDetail() {
           </p>
         )}
       </div>
+
+      <AuthorCard author={doc.author} contactPath={`/api/api-docs/${doc.id}/contact-author`} kind="document" />
 
       {doc.can_edit && (
         <>

@@ -8,6 +8,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import AuthorCard, { type AuthorData } from '../components/AuthorCard'
 import usePageMeta from '../hooks/usePageMeta'
 
 interface CollectionDetailData {
@@ -20,6 +21,7 @@ interface CollectionDetailData {
   created_at: string
   can_edit: boolean
   is_subscribed: boolean | null
+  author: AuthorData
 }
 
 interface ApiDocumentSummaryData {
@@ -372,6 +374,12 @@ export default function CollectionDetail() {
           {t('knowledgeBase.browseLink')}
         </Link>
       </div>
+
+      <AuthorCard
+        author={collection.author}
+        contactPath={`/api/collections/${collection.id}/contact-author`}
+        kind="collection"
+      />
 
       {collection.can_edit && (
         <>

@@ -10,11 +10,23 @@ import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { useOnNotificationsRefresh } from '../utils/notificationsRefresh'
 
+interface NotificationMessageData {
+  id: string
+  sender_name: string | null
+  target_kind: 'document' | 'collection'
+  target_id: string
+  target_title: string
+  preview: string
+}
+
+/** kind "new_version" fills documentation_id / document_title / version, "author_message" fills message. */
 interface NotificationItemData {
   id: string
-  documentation_id: string
-  document_title: string
-  version: string
+  kind: 'new_version' | 'author_message'
+  documentation_id: string | null
+  document_title: string | null
+  version: string | null
+  message: NotificationMessageData | null
   is_read: boolean
   created_at: string
 }
@@ -149,22 +161,50 @@ export default function NotificationBell() {
             <ul className="divide-y divide-slate-200 dark:divide-slate-800">
               {items.map((item) => (
                 <li key={item.id}>
-                  <Link
-                    to={`/api-docs/${item.documentation_id}`}
-                    onClick={() => setOpen(false)}
-                    className="block rounded-lg px-2 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                  >
-                    <p className="font-medium text-slate-900 dark:text-slate-100">{item.document_title}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {t('notifications.bell.itemText', { version: item.version })}
-                      {' · '}
-                      {formatDateTime(item.created_at, i18n.language)}
-                    </p>
-                  </Link>
+                  {item.kind === 'author_message' && item.message ? (
+                    <Link
+                      to="/messages"
+                      onClick={() => setOpen(false)}
+                      className="block rounded-lg px-2 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    >
+                      <p className="break-words font-medium text-slate-900 dark:text-slate-100">
+                        {t('notifications.bell.messageText', {
+                          sender: item.message.sender_name ?? t('author.messages.unknownSender'),
+                          title: item.message.target_title,
+                        })}
+                      </p>
+                      <p className="line-clamp-2 break-words text-xs text-slate-600 dark:text-slate-300">
+                        {item.message.preview}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {formatDateTime(item.created_at, i18n.language)}
+                      </p>
+                    </Link>
+                  ) : (
+                    <Link
+                      to={`/api-docs/${item.documentation_id}`}
+                      onClick={() => setOpen(false)}
+                      className="block rounded-lg px-2 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    >
+                      <p className="font-medium text-slate-900 dark:text-slate-100">{item.document_title}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {t('notifications.bell.itemText', { version: item.version })}
+                        {' · '}
+                        {formatDateTime(item.created_at, i18n.language)}
+                      </p>
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
           )}
+          <Link
+            to="/messages"
+            onClick={() => setOpen(false)}
+            className="mt-1 block rounded-lg border-t border-slate-200 px-2 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/50"
+          >
+            {t('notifications.bell.allMessages')}
+          </Link>
         </div>
       )}
     </div>
