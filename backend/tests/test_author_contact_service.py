@@ -90,6 +90,7 @@ async def test_author_info_has_name_and_team_but_no_address(db_session):
     assert info.user_id == author.id
     assert info.display_name == "Ada"
     assert info.team_name == "Core Platform"
+    assert info.accepts_messages is True
     assert not hasattr(info, "email")
 
 
@@ -310,3 +311,41 @@ async def test_exactly_one_target_is_required(db_session):
             await send_author_message(
                 db_session, sender=sender, author_user_id=author.id, body="Hi", settings=author_settings(), **kwargs
             )
+
+
+async def test_author_info_reports_a_switched_off_author(db_session):
+    author = await make_user(db_session, accept_author_messages=False)
+    team = await make_team(db_session)
+
+    info = await get_author_info(db_session, created_by_user_id=author.id, team_id=team.id)
+
+    assert info.accepts_messages is False
+
+
+async def test_author_who_switched_messages_off_gets_nothing(db_session):
+    author = await make_user(db_session, email="author@example.com", accept_author_messages=False)
+    sender = await make_user(db_session, email="sender@example.com")
+    doc = await make_document(db_session, await make_team(db_session), author)
+    settings = author_settings()
+
+    mail = FastMail(_connection_config(settings))
+    with mail.record_messages() as outbox:
+        with pytest.raises(AuthorContactError) as exc_info:
+            await send_author_message(
+                db_session, sender=sender, author_user_id=author.id, body="Hi", document=doc, settings=settings
+            )
+
+    assert exc_info.value.code == "not_accepting"
+    assert outbox == []
+    assert (
+        await db_session.scalar(
+            select(func.count()).select_from(AuthorMessage).where(AuthorMessage.sender_user_id == sender.id)
+        )
+        == 0
+    )
+    assert (
+        await db_session.scalar(
+            select(func.count()).select_from(Notification).where(Notification.user_id == author.id)
+        )
+        == 0
+    )

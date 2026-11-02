@@ -27,8 +27,9 @@ PREVIEW_LENGTH = 140
 
 class AuthorContactError(Exception):
     """A message that must not be sent. code is "own_target" (the sender is
-    the author) or "rate_limited" (too many messages in the last hour); the
-    API layer turns them into 422 and 429."""
+    the author), "not_accepting" (the author has switched messages off) or
+    "rate_limited" (too many messages in the last hour); the API layer turns
+    them into 422, 403 and 429."""
 
     def __init__(self, code: str, message: str) -> None:
         super().__init__(message)
@@ -38,11 +39,13 @@ class AuthorContactError(Exception):
 @dataclass(frozen=True)
 class AuthorInfo:
     """What other users may learn about the author of a document or
-    collection: the name and the owning team - never the e-mail address."""
+    collection: the name, the owning team and whether they accept messages -
+    never the e-mail address."""
 
     user_id: UUID
     display_name: str | None
     team_name: str | None
+    accepts_messages: bool
 
 
 def display_name(user: User | None) -> str | None:
@@ -78,6 +81,7 @@ async def get_author_info(db: AsyncSession, *, created_by_user_id: UUID, team_id
         user_id=created_by_user_id,
         display_name=display_name(author),
         team_name=team.name if team is not None else None,
+        accepts_messages=author is not None and author.accept_author_messages,
     )
 
 
@@ -171,9 +175,11 @@ async def send_author_message(
 
     if sender.id == author_user_id:
         raise AuthorContactError("own_target", "You are the author - there is nobody to write to.")
+    author = await db.get(User, author_user_id)
+    if author is None or not author.accept_author_messages:
+        raise AuthorContactError("not_accepting", "The author does not accept messages.")
     await _enforce_rate_limit(db, sender, resolved_settings)
 
-    author = await db.get(User, author_user_id)
     message = AuthorMessage(
         sender_user_id=sender.id,
         recipient_user_id=author_user_id,

@@ -27,6 +27,7 @@ async def build_author_out(
     return AuthorOut(
         display_name=info.display_name,
         team_name=info.team_name,
+        accepts_messages=info.accepts_messages,
         is_self=viewer is not None and viewer.id == created_by_user_id,
     )
 
@@ -54,6 +55,6 @@ async def contact_author(
             settings=settings,
         )
     except AuthorContactError as exc:
-        status = 429 if exc.code == "rate_limited" else 422
+        status = {"rate_limited": 429, "not_accepting": 403}.get(exc.code, 422)
         raise HTTPException(status_code=status, detail=str(exc)) from exc
     return ContactAuthorResult(id=stored.id, email_sent=stored.email_sent)

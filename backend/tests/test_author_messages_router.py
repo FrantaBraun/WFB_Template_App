@@ -85,7 +85,12 @@ async def test_document_detail_shows_name_and_team_but_never_the_address(db_sess
     response = await _request(db_session, "GET", f"/api/api-docs/{doc.id}")  # anonymous, public
 
     assert response.status_code == 200
-    assert response.json()["author"] == {"display_name": "Ada", "team_name": "Core Platform", "is_self": False}
+    assert response.json()["author"] == {
+        "display_name": "Ada",
+        "team_name": "Core Platform",
+        "accepts_messages": True,
+        "is_self": False,
+    }
     assert "secret-author@example.com" not in response.text
 
 
@@ -122,7 +127,12 @@ async def test_collection_detail_has_the_author_block_too(db_session, make_acces
     response = await _request(db_session, "GET", f"/api/collections/{collection.id}")
 
     assert response.status_code == 200
-    assert response.json()["author"] == {"display_name": "Ada", "team_name": "Billing", "is_self": False}
+    assert response.json()["author"] == {
+        "display_name": "Ada",
+        "team_name": "Billing",
+        "accepts_messages": True,
+        "is_self": False,
+    }
     assert "secret-author@example.com" not in response.text
 
 
@@ -492,3 +502,80 @@ async def test_opening_the_bell_marks_message_notifications_read(db_session, mak
     assert read_all.status_code == 204
     assert after.json()["unread_count"] == 0
     assert after.json()["items"][0]["is_read"] is True
+
+
+# --- an author who has switched messages off ----------------------------------------
+
+
+async def test_detail_says_when_the_author_does_not_accept_messages(db_session):
+    author = await make_user(db_session, email="author@example.com", nickname="Ada", accept_author_messages=False)
+    team = await make_team(db_session)
+    doc = await make_document(db_session, team, author)
+    collection = await make_collection(db_session, team, author)
+
+    doc_detail = await _request(db_session, "GET", f"/api/api-docs/{doc.id}")
+    collection_detail = await _request(db_session, "GET", f"/api/collections/{collection.id}")
+
+    assert doc_detail.json()["author"]["accepts_messages"] is False
+    assert collection_detail.json()["author"]["accepts_messages"] is False
+    assert doc_detail.json()["author"]["display_name"] == "Ada"  # still shown, only contact is off
+
+
+@pytest.mark.parametrize("target", ["api-docs", "collections"])
+async def test_contact_is_refused_with_403_and_leaves_nothing_behind(db_session, make_access_token, target):
+    author = await make_user(db_session, email="author@example.com", accept_author_messages=False)
+    sender = await make_user(db_session, email="sender@example.com")
+    team = await make_team(db_session)
+    item = (
+        await make_document(db_session, team, author)
+        if target == "api-docs"
+        else await make_collection(db_session, team, author)
+    )
+    settings = author_settings()
+
+    mail = FastMail(_connection_config(settings))
+    with mail.record_messages() as outbox:
+        response = await _request(
+            db_session,
+            "POST",
+            f"/api/{target}/{item.id}/contact-author",
+            token=_token(make_access_token, sender),
+            json={"message": "Hi"},
+            settings=settings,
+        )
+
+    assert response.status_code == 403
+    assert outbox == []
+    assert await _count_messages(db_session, sender) == 0
+    assert (
+        await db_session.scalar(
+            select(func.count()).select_from(Notification).where(Notification.user_id == author.id)
+        )
+        == 0
+    )
+
+
+async def test_switching_messages_back_on_makes_contact_work_again(db_session, make_access_token):
+    author = await make_user(db_session, email="author@example.com", accept_author_messages=False)
+    sender = await make_user(db_session, email="sender@example.com")
+    doc = await make_document(db_session, await make_team(db_session), author)
+    token = _token(make_access_token, sender)
+    path = f"/api/api-docs/{doc.id}/contact-author"
+
+    refused = await _request(db_session, "POST", path, token=token, json={"message": "Hi"})
+    author.accept_author_messages = True
+    await db_session.flush()
+    accepted = await _request(db_session, "POST", path, token=token, json={"message": "Hi"})
+
+    assert (refused.status_code, accepted.status_code) == (403, 201)
+
+
+async def test_messages_received_earlier_stay_readable_after_switching_off(db_session, make_access_token):
+    me = await make_user(db_session, email="me@example.com", accept_author_messages=False)
+    sender = await make_user(db_session, email="sender@example.com")
+    doc = await make_document(db_session, await make_team(db_session), me)
+    await _store(db_session, sender, me, doc=doc, body="from before")
+
+    response = await _request(db_session, "GET", "/api/author-messages", token=_token(make_access_token, me))
+
+    assert [item["body"] for item in response.json()] == ["from before"]

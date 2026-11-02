@@ -16,12 +16,15 @@ class AuthorOut(BaseModel):
     (app/api/api_docs/schemas.py, app/api/collections/schemas.py). Only what
     anyone who may see the document may learn: a name (null when the author
     has neither a nickname nor a username on file) and the owning team's
-    name - never the e-mail address. is_self is computed against the caller,
-    so the UI never offers someone to write to themselves; it is false for an
-    anonymous caller."""
+    name - never the e-mail address. accepts_messages is false once the
+    author has switched messages off (User.accept_author_messages): the UI
+    then offers no form and the contact endpoints answer 403. is_self is
+    computed against the caller, so the UI never offers someone to write to
+    themselves; it is false for an anonymous caller."""
 
     display_name: str | None
     team_name: str | None
+    accepts_messages: bool
     is_self: bool
 
 

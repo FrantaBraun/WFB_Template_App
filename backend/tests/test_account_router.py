@@ -75,3 +75,37 @@ async def test_patch_account_cannot_self_promote_to_admin(db_session, make_acces
     assert resp.status_code == 200
     assert resp.json()["is_admin"] is False
     assert resp.json()["nickname"] == "Frantisek"
+
+
+async def test_accept_author_messages_defaults_to_on_and_can_be_switched(
+    db_session, make_access_token, rsa_keypair, monkeypatch
+):
+    _, public_pem = rsa_keypair
+    monkeypatch.setattr("app.security.jwt._public_key", public_pem)
+    sub = str(uuid.uuid4())
+
+    first = await _account_request(db_session, make_access_token, "GET", sub=sub)
+    off = await _account_request(
+        db_session, make_access_token, "PATCH", sub=sub, json={"accept_author_messages": False}
+    )
+    nickname_only = await _account_request(
+        db_session, make_access_token, "PATCH", sub=sub, json={"nickname": "Ada"}
+    )
+    on = await _account_request(db_session, make_access_token, "PATCH", sub=sub, json={"accept_author_messages": True})
+
+    assert first.json()["accept_author_messages"] is True
+    assert off.json()["accept_author_messages"] is False
+    assert nickname_only.json()["accept_author_messages"] is False  # an omitted field is left alone
+    assert nickname_only.json()["nickname"] == "Ada"
+    assert on.json()["accept_author_messages"] is True
+
+
+async def test_accept_author_messages_cannot_be_set_to_null(db_session, make_access_token, rsa_keypair, monkeypatch):
+    _, public_pem = rsa_keypair
+    monkeypatch.setattr("app.security.jwt._public_key", public_pem)
+
+    resp = await _account_request(
+        db_session, make_access_token, "PATCH", json={"accept_author_messages": None}
+    )
+
+    assert resp.status_code == 422

@@ -42,6 +42,12 @@ class User(Base):
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     login: Mapped[str | None] = mapped_column(String(255), nullable=True)
     nickname: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # Whether other users may write to this user as the author of a document
+    # or collection (app/services/author_contact.py). Genuinely local data,
+    # edited through /api/account/me.
+    accept_author_messages: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=text("true")
+    )
     is_admin: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false")
     )

@@ -16,6 +16,7 @@ class AccountOut(BaseModel):
 
     id: uuid.UUID
     nickname: str | None
+    accept_author_messages: bool
     is_admin: bool
     created_at: datetime
     updated_at: datetime
@@ -31,3 +32,5 @@ class AccountUpdate(BaseModel):
     against the database, never through this endpoint."""
 
     nickname: str | None = None
+    # Not nullable (the column is NOT NULL): an explicit null is a 422, an omitted field is left untouched.
+    accept_author_messages: bool = True

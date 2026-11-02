@@ -441,8 +441,9 @@ async def contact_document_author(
     """Any signed-in user who can currently see the document - public, or
     their own team's - may write to the person who created it: an in-app
     notification plus an e-mail (Reply-To is the sender's address). 404 for a
-    document the caller cannot see, 422 for the author themselves, 429 past
-    the hourly limit (app/services/author_contact.py)."""
+    document the caller cannot see, 422 for the author themselves, 403 when
+    the author has switched messages off, 429 past the hourly limit
+    (app/services/author_contact.py)."""
     doc, _ = await _require_visible_document(db, document_id, current_user)
     return await contact_author(db, settings, sender=current_user, message=body.message, document=doc)
 

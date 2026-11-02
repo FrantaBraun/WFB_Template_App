@@ -23,6 +23,7 @@ async def test_create_user_sets_defaults(db_session):
     assert user.updated_at is not None
     assert user.nickname is None
     assert user.is_admin is False
+    assert user.accept_author_messages is True
 
 
 async def test_nickname_persists(db_session):
