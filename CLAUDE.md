@@ -14,6 +14,8 @@ U dokumentace načtené z odkazu lze nastavit periodu automatické kontroly (den
 
 Dokumentace, kolekce i integrace mají od začátku vlastnící tým – sdílení v rámci týmu je součástí návrhu, nejen budoucí rozšíření. Autor může dokumentaci nebo kolekci označit jako veřejnou, kdy ji může prohlížet (ne editovat) kdokoliv v aplikaci; přihlášený uživatel se navíc může k dokumentaci nebo kolekci přihlásit k odběru, i když není členem vlastnícího týmu. O nové verzi se posílá e-mail všem se sdíleným přístupem a odběratelům, spolu s in-app notifikací (seznam pod ikonou zvonečku v hlavičce) a bannerem přímo na stránce dané dokumentace.
 
+Autor dokumentace nebo kolekce (`created_by_user_id`) je na jejich detailu vidět jako karta „Autor“ – jméno (přezdívka, jinak uživatelské jméno z JWT claimu `login`, cachované v `User.login`; nikdy e-mail ani skutečné jméno) a vlastnící tým. Přihlášený uživatel, který dokumentaci/kolekci vidí (veřejnou nebo z vlastního týmu), může autorovi napsat (`POST .../contact-author`, 1–2000 znaků, čistý text): zpráva se uloží (`AuthorMessage`), autorovi přibude in-app notifikace (`Notification.kind = "author_message"`, bez `documentation_id`, takže ji banner u dokumentace nezapočítá) a odejde mu e-mail s adresou odesílatele v `Reply-To` (UI na to před odesláním upozorňuje; selhání e-mailu zprávu nikdy neruší, hlásí se jako `email_sent: false`). Autor sám sobě psát nemůže (422) a jeden uživatel smí odeslat nejvýše `AUTHOR_MESSAGE_MAX_PER_HOUR` zpráv za hodinu (429). Přijaté zprávy čte autor na `/messages` (`GET /api/author-messages`), kam vede i zvonek. Notifikace jsou jen autorovi, ne celému týmu.
+
 Forked from `core` by the `new-app` skill on 2026-09-10.
 
 ## Repository purpose

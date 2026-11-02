@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     scheduler_enabled: bool = True
     recheck_scan_interval_minutes: int = 60
 
+    # Messages to the author of a document or collection
+    # (app/services/author_contact.py) - the most one user may send in any
+    # rolling hour, counted from the stored messages (the app has no rate
+    # limiting of its own). 0 turns the limit off.
+    author_message_max_per_hour: int = 5
+
     # Feature modules (see app/modules/) are deliberately NOT configured
     # here: which ones are mounted is set in the git-tracked
     # backend/modules.json, so it follows the branch rather than .env.

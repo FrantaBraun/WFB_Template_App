@@ -24,9 +24,9 @@ _optional_bearer = HTTPBearer(auto_error=False)
 
 async def _resolve_current_user(claims: dict, db: AsyncSession) -> User:
     """Resolve the local User row for a verified JWT's claims, creating it on
-    first sight, and keeping the cached email fresh from the claim if it has
-    changed since the last login (see app/models/user.py for why email is
-    cached at all). Shared by get_current_user and get_current_user_optional
+    first sight, and keeping the cached email and login (username) fresh from
+    the claims if they have changed since the last login (see
+    app/models/user.py for why they are cached at all). Shared by get_current_user and get_current_user_optional
     so both resolve a User identically once claims are verified - they only
     differ in how an unverifiable/missing token is handled.
 
@@ -48,8 +48,14 @@ async def _resolve_current_user(claims: dict, db: AsyncSession) -> User:
         user = result.scalar_one()
 
     email = claims.get("email")
-    if email != user.email:
+    login = claims.get("login")
+    # A token without the login claim keeps the cached one (a username is
+    # never cleared), unlike the email, which follows the claim either way.
+    login_changed = login is not None and login != user.login
+    if email != user.email or login_changed:
         user.email = email
+        if login_changed:
+            user.login = login
         await db.commit()
         # updated_at has onupdate=func.now(): once an ORM UPDATE touches it,
         # SQLAlchemy marks it expired rather than assuming a value, since the

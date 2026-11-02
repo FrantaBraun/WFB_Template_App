@@ -8,6 +8,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.api.author_messages.schemas import AuthorOut
+
 
 class CollectionCreate(BaseModel):
     team_id: uuid.UUID
@@ -44,7 +46,7 @@ class CollectionDetail(BaseModel):
     collections/router.py's _build_detail, which computes it from the same
     current_user already used for can_edit. Mirrors
     app/api/api_docs/schemas.py's ApiDocumentDetail one level up the domain
-    model."""
+    model, author included."""
 
     id: uuid.UUID
     team_id: uuid.UUID
@@ -55,6 +57,7 @@ class CollectionDetail(BaseModel):
     created_at: datetime
     can_edit: bool
     is_subscribed: bool | None
+    author: AuthorOut
 
 
 class KnowledgeBasePageCreate(BaseModel):

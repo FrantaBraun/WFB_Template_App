@@ -68,3 +68,30 @@ async def test_email_refreshed_when_claim_changes_on_later_login(db_session):
 
     assert second.id == first.id
     assert second.email == "new@example.com"
+
+
+async def test_login_cached_from_the_claim(db_session):
+    sub = uuid.uuid4()
+
+    user = await get_current_user(claims={"sub": str(sub), "login": "ada1"}, db=db_session)
+
+    assert user.login == "ada1"
+
+
+async def test_login_refreshed_when_the_claim_changes(db_session):
+    sub = uuid.uuid4()
+    await get_current_user(claims={"sub": str(sub), "login": "old"}, db=db_session)
+
+    user = await get_current_user(claims={"sub": str(sub), "login": "new"}, db=db_session)
+
+    assert user.login == "new"
+
+
+async def test_token_without_login_claim_keeps_the_cached_login(db_session):
+    sub = uuid.uuid4()
+    await get_current_user(claims={"sub": str(sub), "login": "ada1"}, db=db_session)
+
+    user = await get_current_user(claims={"sub": str(sub), "email": "ada@example.com"}, db=db_session)
+
+    assert user.login == "ada1"
+    assert user.email == "ada@example.com"

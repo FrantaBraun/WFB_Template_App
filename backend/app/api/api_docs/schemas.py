@@ -8,6 +8,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.api.author_messages.schemas import AuthorOut
+
 RecheckPeriod = Literal["manual", "daily", "weekly", "monthly"]
 
 
@@ -67,7 +69,9 @@ class ApiDocumentDetail(BaseModel):
     """is_subscribed is null for an anonymous caller (no identity to check a
     Subscription row against) and true/false otherwise - see
     api_docs/router.py's _build_detail, which computes it from the same
-    current_user already used for can_edit."""
+    current_user already used for can_edit. author is who created the
+    document and the team that owns it (see AuthorOut) - what the "contact
+    the author" card shows."""
 
     id: uuid.UUID
     team_id: uuid.UUID
@@ -83,6 +87,7 @@ class ApiDocumentDetail(BaseModel):
     current_version: ApiDocumentCurrentVersion | None
     can_edit: bool
     is_subscribed: bool | None
+    author: AuthorOut
 
 
 class ApiDocumentCheckResult(ApiDocumentDetail):

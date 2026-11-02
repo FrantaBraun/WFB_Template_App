@@ -22,9 +22,13 @@ class User(Base):
     needs to bulk-email team members/subscribers and the auth service exposes
     no user directory / lookup-by-id for other users, so it's cached here and
     kept fresh from the JWT's email claim on every get_current_user resolve
-    (see app/api/deps.py). `nickname` is a deliberately minimal example of
-    genuinely local data: a template extending this model adds fields here,
-    not identity data.
+    (see app/api/deps.py). `login` is the second such exception, for the same
+    reason: the author of a document or collection is shown to other users
+    (app/services/author_contact.py) and there is no way to ask the auth
+    service for someone else's name, so the username claim is cached too -
+    deliberately only that, never the real first/last name. `nickname` is a
+    deliberately minimal example of genuinely local data: a template
+    extending this model adds fields here, not identity data.
     """
 
     __tablename__ = "users"
@@ -36,6 +40,7 @@ class User(Base):
         UUID(as_uuid=True), unique=True, index=True, nullable=False
     )
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    login: Mapped[str | None] = mapped_column(String(255), nullable=True)
     nickname: Mapped[str | None] = mapped_column(String(100), nullable=True)
     is_admin: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false")

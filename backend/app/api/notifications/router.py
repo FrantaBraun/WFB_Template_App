@@ -9,13 +9,41 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
-from app.api.notifications.schemas import NotificationListOut, NotificationOut
+from app.api.notifications.schemas import NotificationListOut, NotificationMessageOut, NotificationOut
 from app.database import get_db
 from app.models.api_document import ApiDocument, ApiDocumentVersion
+from app.models.author_message import AuthorMessage
+from app.models.collection import Collection
 from app.models.notification import Notification
 from app.models.user import User
+from app.services.author_contact import display_name, preview
 
 router = APIRouter()
+
+
+async def _load_messages(db: AsyncSession, message_ids: list[uuid.UUID]) -> dict[uuid.UUID, NotificationMessageOut]:
+    """The "author_message" entries' details in one query, by message id."""
+    if not message_ids:
+        return {}
+    stmt = (
+        select(AuthorMessage, User, ApiDocument.title, Collection.name)
+        .join(User, User.id == AuthorMessage.sender_user_id)
+        .outerjoin(ApiDocument, ApiDocument.id == AuthorMessage.documentation_id)
+        .outerjoin(Collection, Collection.id == AuthorMessage.collection_id)
+        .where(AuthorMessage.id.in_(message_ids))
+    )
+    result: dict[uuid.UUID, NotificationMessageOut] = {}
+    for message, sender, document_title, collection_name in (await db.execute(stmt)).all():
+        is_document = message.documentation_id is not None
+        result[message.id] = NotificationMessageOut(
+            id=message.id,
+            sender_name=display_name(sender),
+            target_kind="document" if is_document else "collection",
+            target_id=message.documentation_id if is_document else message.collection_id,
+            target_title=document_title if is_document else collection_name,
+            preview=preview(message.body),
+        )
+    return result
 
 
 @router.get("")
@@ -34,7 +62,10 @@ async def list_notifications(
     unread param itself - see NotificationListOut. This lets one call serve
     the header bell (no filters -> global unread badge) and another serve a
     per-document banner (documentation_id + unread=true -> both "is there
-    anything new" and "what is it")."""
+    anything new" and "what is it"). Messages from other users (kind
+    "author_message") show in the unfiltered list and its badge, but never in a
+    documentation_id-scoped one - they carry no documentation_id, so the
+    per-document version banner cannot mistake one for news about a version."""
     unread_count_stmt = (
         select(func.count())
         .select_from(Notification)
@@ -46,8 +77,8 @@ async def list_notifications(
 
     items_stmt = (
         select(Notification, ApiDocument.title, ApiDocumentVersion.version)
-        .join(ApiDocument, ApiDocument.id == Notification.documentation_id)
-        .join(ApiDocumentVersion, ApiDocumentVersion.id == Notification.version_id)
+        .outerjoin(ApiDocument, ApiDocument.id == Notification.documentation_id)
+        .outerjoin(ApiDocumentVersion, ApiDocumentVersion.id == Notification.version_id)
         .where(Notification.user_id == current_user.id)
         .order_by(Notification.created_at.desc())
         .limit(limit)
@@ -59,12 +90,15 @@ async def list_notifications(
         items_stmt = items_stmt.where(Notification.is_read.is_(not unread))
 
     rows = (await db.execute(items_stmt)).all()
+    messages = await _load_messages(db, [n.message_id for n, _, _ in rows if n.message_id is not None])
     items = [
         NotificationOut(
             id=notification.id,
+            kind=notification.kind,
             documentation_id=notification.documentation_id,
             document_title=title,
             version=version,
+            message=messages.get(notification.message_id),
             is_read=notification.is_read,
             created_at=notification.created_at,
         )

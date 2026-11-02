@@ -5,7 +5,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, func, text
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, String, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -73,12 +73,32 @@ class Subscription(Base):
 
 
 class Notification(Base):
-    """One row per recipient per version-archive event (see
-    app/services/notifications.py's notify_new_version) - read/unread only,
-    no richer state machine per the locked-in plan. user_id is the
-    recipient, not the actor who triggered the check."""
+    """One row per recipient per event, shown under the header bell. kind
+    says which event:
+
+    - "new_version" (the default): a version was archived - see
+      app/services/notifications.py's notify_new_version. Carries
+      documentation_id and version_id.
+    - "author_message": another user wrote to the recipient as the author of
+      a document or collection - see app/services/author_contact.py. Carries
+      only message_id (the AuthorMessage knows its target); documentation_id
+      stays NULL, which is also why the per-document banner
+      (GET /api/notifications?documentation_id=...) never counts it.
+
+    The CheckConstraint below keeps each kind's columns together. Read/unread
+    only, no richer state machine per the locked-in plan. user_id is the
+    recipient, not the actor who triggered the event."""
 
     __tablename__ = "notifications"
+    __table_args__ = (
+        CheckConstraint(
+            "(kind = 'new_version' AND documentation_id IS NOT NULL AND version_id IS NOT NULL "
+            "AND message_id IS NULL) "
+            "OR (kind = 'author_message' AND message_id IS NOT NULL AND documentation_id IS NULL "
+            "AND version_id IS NULL)",
+            name="ck_notifications_kind_columns",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -86,11 +106,17 @@ class Notification(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
     )
-    documentation_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("api_documents.id", ondelete="CASCADE"), nullable=False
+    kind: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="new_version", server_default="new_version"
     )
-    version_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("api_document_versions.id", ondelete="CASCADE"), nullable=False
+    documentation_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("api_documents.id", ondelete="CASCADE"), nullable=True
+    )
+    version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("api_document_versions.id", ondelete="CASCADE"), nullable=True
+    )
+    message_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("author_messages.id", ondelete="CASCADE"), nullable=True, index=True
     )
     is_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(

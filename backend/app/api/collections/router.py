@@ -19,7 +19,10 @@ from app.api.collections.schemas import (
     KnowledgeBasePageOut,
     KnowledgeBasePageUpdate,
 )
+from app.api.author_messages.contact import build_author_out, contact_author
+from app.api.author_messages.schemas import ContactAuthorBody, ContactAuthorResult
 from app.api.deps import get_current_user, get_current_user_optional, is_team_member, require_team_membership
+from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.api_document import ApiDocument, ApiDocumentVersion
 from app.models.collection import Collection, CollectionDocument
@@ -102,6 +105,9 @@ async def _build_detail(
 ) -> CollectionDetail:
     document_count = await _document_count(db, collection.id)
     is_subscribed = await _get_is_subscribed(db, collection.id, current_user)
+    author = await build_author_out(
+        db, created_by_user_id=collection.created_by_user_id, team_id=collection.team_id, viewer=current_user
+    )
     return CollectionDetail(
         id=collection.id,
         team_id=collection.team_id,
@@ -112,6 +118,7 @@ async def _build_detail(
         created_at=collection.created_at,
         can_edit=can_edit,
         is_subscribed=is_subscribed,
+        author=author,
     )
 
 
@@ -332,6 +339,21 @@ async def subscribe_to_collection(
         )
     )
     await db.commit()
+
+
+@router.post("/{collection_id}/contact-author", status_code=201)
+async def contact_collection_author(
+    collection_id: uuid.UUID,
+    body: ContactAuthorBody,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> ContactAuthorResult:
+    """Mirrors app/api/api_docs/router.py's contact_document_author, one
+    level up the domain model: any signed-in user who can currently see the
+    collection may write to the person who created it."""
+    collection, _ = await _require_visible_collection(db, collection_id, current_user)
+    return await contact_author(db, settings, sender=current_user, message=body.message, collection=collection)
 
 
 @router.delete("/{collection_id}/subscribe", status_code=204)

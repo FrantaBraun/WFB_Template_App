@@ -19,6 +19,8 @@ from app.api.api_docs.schemas import (
     ApiDocumentUpdate,
     ApiDocumentVersionOut,
 )
+from app.api.author_messages.contact import build_author_out, contact_author
+from app.api.author_messages.schemas import ContactAuthorBody, ContactAuthorResult
 from app.api.deps import get_current_user, get_current_user_optional, is_team_member, require_team_membership
 from app.config import Settings, get_settings
 from app.database import get_db
@@ -113,6 +115,9 @@ async def _build_detail(
         else None
     )
     is_subscribed = await _get_is_subscribed(db, doc.id, current_user)
+    author = await build_author_out(
+        db, created_by_user_id=doc.created_by_user_id, team_id=doc.team_id, viewer=current_user
+    )
     return ApiDocumentDetail(
         id=doc.id,
         team_id=doc.team_id,
@@ -128,6 +133,7 @@ async def _build_detail(
         current_version=current_out,
         can_edit=can_edit,
         is_subscribed=is_subscribed,
+        author=author,
     )
 
 
@@ -422,6 +428,23 @@ async def unsubscribe_from_document(
     if subscription is not None:
         await db.delete(subscription)
         await db.commit()
+
+
+@router.post("/{document_id}/contact-author", status_code=201)
+async def contact_document_author(
+    document_id: uuid.UUID,
+    body: ContactAuthorBody,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> ContactAuthorResult:
+    """Any signed-in user who can currently see the document - public, or
+    their own team's - may write to the person who created it: an in-app
+    notification plus an e-mail (Reply-To is the sender's address). 404 for a
+    document the caller cannot see, 422 for the author themselves, 429 past
+    the hourly limit (app/services/author_contact.py)."""
+    doc, _ = await _require_visible_document(db, document_id, current_user)
+    return await contact_author(db, settings, sender=current_user, message=body.message, document=doc)
 
 
 @router.get("/{document_id}/versions")
