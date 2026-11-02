@@ -388,7 +388,7 @@ export default function IntegrationDetail() {
   const kbPageTotal = kb ? kb.own_pages.length + kb.collection_pages.reduce((sum, group) => sum + group.pages.length, 0) : null
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-16 text-slate-900 dark:text-slate-100">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-16 text-slate-900 dark:text-slate-100">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">{integration.name}</h1>
         <Link to="/integrations" className="text-sm text-slate-600 underline dark:text-slate-400">

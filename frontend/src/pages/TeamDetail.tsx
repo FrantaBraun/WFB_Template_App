@@ -279,7 +279,7 @@ export default function TeamDetail() {
   const myRole = team.members.find((m) => m.user_id === myAccountId)?.role
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-16 text-slate-900 dark:text-slate-100">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-16 text-slate-900 dark:text-slate-100">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">{team.name}</h1>
         <Link to="/teams" className="text-sm text-slate-600 underline dark:text-slate-400">

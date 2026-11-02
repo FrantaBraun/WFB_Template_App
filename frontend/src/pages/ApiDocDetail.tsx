@@ -402,7 +402,7 @@ export default function ApiDocDetail() {
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-16 text-slate-900 dark:text-slate-100">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-16 text-slate-900 dark:text-slate-100">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{doc.title}</h1>
