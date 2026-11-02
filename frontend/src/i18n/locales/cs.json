@@ -138,7 +138,9 @@
     "pageDescription": "Spravujte údaje svého účtu.",
     "accountCard": {
       "title": "Účet",
-      "nicknameLabel": "Přezdívka"
+      "nicknameLabel": "Přezdívka",
+      "acceptAuthorMessagesLabel": "Dovolit ostatním uživatelům, aby mi psali jako autorovi mých dokumentací a kolekcí",
+      "acceptAuthorMessagesHint": "Vaše jméno u nich zůstane vidět v každém případě. Už přijaté zprávy zůstanou na stránce Zprávy."
     },
     "profileCard": {
       "title": "Profil",
@@ -450,6 +452,7 @@
       "signInSuffix": "a můžete autorovi napsat.",
       "labelDocument": "Vaše zpráva pro {{name}} k této dokumentaci",
       "labelCollection": "Vaše zpráva pro {{name}} k této kolekci",
+      "notAccepting": "Autor zprávy nepřijímá.",
       "privacyNote": "Autor dostane vaši zprávu e-mailem i jako oznámení v aplikaci, a to spolu s vaším jménem a e-mailovou adresou, aby vám mohl odpovědět.",
       "send": "Odeslat zprávu",
       "sending": "Odesílám…",

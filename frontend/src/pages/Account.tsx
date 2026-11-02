@@ -20,6 +20,7 @@ import { applyUserLanguage } from '../i18n'
 interface AccountData {
   id: string
   nickname: string | null
+  accept_author_messages: boolean
   created_at: string
   updated_at: string
 }
@@ -67,6 +68,7 @@ export default function Account() {
 
   const [account, setAccount] = useState<AccountData | null>(null)
   const [nickname, setNickname] = useState('')
+  const [acceptAuthorMessages, setAcceptAuthorMessages] = useState(true)
   const [accountSaving, setAccountSaving] = useState(false)
   const [accountMessage, setAccountMessage] = useState<Message>(null)
 
@@ -92,6 +94,7 @@ export default function Account() {
       .then((data: AccountData) => {
         setAccount(data)
         setNickname(data.nickname ?? '')
+        setAcceptAuthorMessages(data.accept_author_messages)
       })
       .catch(() => setAccountMessage({ type: 'error', text: t('account.saveError') }))
 
@@ -153,7 +156,7 @@ export default function Account() {
       // Local data only - this call never reaches the auth service.
       const resp = await apiFetch('/api/account/me', {
         method: 'PATCH',
-        body: JSON.stringify({ nickname: nickname || null }),
+        body: JSON.stringify({ nickname: nickname || null, accept_author_messages: acceptAuthorMessages }),
       })
       if (!resp.ok) throw new Error()
       setAccount(await resp.json())
@@ -230,6 +233,22 @@ export default function Account() {
             onChange={(e) => setNickname(e.target.value)}
             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           />
+        </div>
+
+        <div>
+          <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+            <input
+              id="accept-author-messages"
+              type="checkbox"
+              checked={acceptAuthorMessages}
+              onChange={(e) => setAcceptAuthorMessages(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700"
+            />
+            {t('account.accountCard.acceptAuthorMessagesLabel')}
+          </label>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            {t('account.accountCard.acceptAuthorMessagesHint')}
+          </p>
         </div>
 
         {accountMessage && (

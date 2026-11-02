@@ -16,6 +16,7 @@ import { rememberReturnPath } from '../utils/returnPath'
 export interface AuthorData {
   display_name: string | null
   team_name: string | null
+  accepts_messages: boolean
   is_self: boolean
 }
 
@@ -63,6 +64,7 @@ export default function AuthorCard({
     try {
       const resp = await apiFetch(contactPath, { method: 'POST', body: JSON.stringify({ message }) })
       if (resp.status === 429) throw new Error(t('author.contact.rateLimited'))
+      if (resp.status === 403) throw new Error(t('author.contact.notAccepting'))
       if (!resp.ok) throw new Error(t('author.contact.error'))
       const result: { email_sent: boolean } = await resp.json()
       setOutcome({
@@ -114,7 +116,9 @@ export default function AuthorCard({
         </p>
       )}
 
-      {author.is_self ? null : !user ? (
+      {author.is_self ? null : !author.accepts_messages ? (
+        <p className="text-sm text-slate-600 dark:text-slate-400">{t('author.contact.notAccepting')}</p>
+      ) : !user ? (
         <p className="text-sm text-slate-600 dark:text-slate-400">
           <Link
             to="/login"

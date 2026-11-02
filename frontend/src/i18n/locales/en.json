@@ -138,7 +138,9 @@
     "pageDescription": "Manage your account details.",
     "accountCard": {
       "title": "Account",
-      "nicknameLabel": "Nickname"
+      "nicknameLabel": "Nickname",
+      "acceptAuthorMessagesLabel": "Let other users write to me as the author of my documentation and collections",
+      "acceptAuthorMessagesHint": "Your name stays visible on them either way. Messages you already received stay in the Messages page."
     },
     "profileCard": {
       "title": "Profile",
@@ -450,6 +452,7 @@
       "signInSuffix": "to write to the author.",
       "labelDocument": "Your message to {{name}} about this documentation",
       "labelCollection": "Your message to {{name}} about this collection",
+      "notAccepting": "The author does not accept messages.",
       "privacyNote": "The author receives your message by e-mail and as a notification in the app, together with your name and e-mail address so they can reply.",
       "send": "Send message",
       "sending": "Sending…",
