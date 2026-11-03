@@ -283,6 +283,65 @@
         "success": "Invitation sent.",
         "error": "Failed to send the invitation."
       },
+      "webhooks": {
+        "title": "Notifications to Slack and your own endpoint",
+        "description": "When a document of this team - or a public one that an integration of this team uses - gets a new version, it is posted here. Slack gets a chat message; a webhook gets signed JSON.",
+        "ownersOnly": "Only a team owner can add, change or remove these.",
+        "empty": "No webhooks yet.",
+        "loadError": "Failed to load the webhooks.",
+        "actionError": "Failed to update the webhook.",
+        "kind": { "slack": "Slack", "generic": "Webhook" },
+        "onlyBreaking": "only breaking changes",
+        "disabled": "disabled",
+        "neverUsed": "Not used yet.",
+        "statusOk": "Last delivery succeeded",
+        "statusError": "Last delivery failed: {{error}}",
+        "failures_one": "{{count}} failure in a row",
+        "failures_other": "{{count}} failures in a row",
+        "test": "Send a test",
+        "testing": "Sending…",
+        "testOk": "The test message was delivered.",
+        "testFailed": "The test failed: {{error}}",
+        "enable": "Enable",
+        "disable": "Disable",
+        "onlyBreakingAction": "Only breaking changes",
+        "allChanges": "All changes",
+        "delete": "Delete",
+        "confirmDelete": "Delete this webhook?",
+        "delivery": {
+          "timedOut": "the receiver did not answer in time",
+          "connect": "could not connect",
+          "notAllowed": "the address is not allowed",
+          "answered": "the receiver answered {{status}}",
+          "unexpected": "unexpected error"
+        },
+        "add": {
+          "title": "Add a webhook",
+          "kind": "Type",
+          "url": "URL",
+          "urlHelpSlack": "A Slack incoming webhook URL (https://hooks.slack.com/services/...).",
+          "urlHelpGeneric": "An https address of yours. It is called with JSON signed with a secret shown once, after you add it.",
+          "name": "Name (optional)",
+          "onlyBreaking": "Only tell about breaking changes",
+          "submit": "Add",
+          "saving": "Adding…",
+          "error": "Failed to add the webhook."
+        },
+        "errors": {
+          "notHttps": "The address must start with https://.",
+          "credentials": "The address must not contain a user name or password.",
+          "unresolved": "The host name cannot be found.",
+          "notPublic": "The address is not a public one - addresses inside a private network cannot be called.",
+          "notSlack": "A Slack webhook address must be on hooks.slack.com.",
+          "limit": "A team can have at most 10 webhooks.",
+          "invalid": "This address cannot be used."
+        },
+        "secret": {
+          "title": "Save the signing secret now",
+          "body": "Every request carries X-ApiHub-Signature: sha256= followed by the HMAC-SHA256 of \"<X-ApiHub-Timestamp>.<request body>\" made with this secret. It is shown only once.",
+          "dismiss": "I have saved it"
+        }
+      },
       "invitationsCard": {
         "title": "Pending invitations",
         "empty": "No pending invitations.",

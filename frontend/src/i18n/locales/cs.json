@@ -283,6 +283,67 @@
         "success": "Pozvánka odeslána.",
         "error": "Odeslání pozvánky se nezdařilo."
       },
+      "webhooks": {
+        "title": "Upozornění do Slacku a na vlastní adresu",
+        "description": "Když dokumentace tohoto týmu – nebo veřejná dokumentace, kterou používá integrace tohoto týmu – dostane novou verzi, pošle se to sem. Do Slacku přijde zpráva, na webhook podepsaný JSON.",
+        "ownersOnly": "Přidávat, měnit a mazat je smí jen vlastník týmu.",
+        "empty": "Zatím žádné webhooky.",
+        "loadError": "Webhooky se nepodařilo načíst.",
+        "actionError": "Webhook se nepodařilo upravit.",
+        "kind": { "slack": "Slack", "generic": "Webhook" },
+        "onlyBreaking": "jen nekompatibilní změny",
+        "disabled": "vypnutý",
+        "neverUsed": "Zatím nepoužitý.",
+        "statusOk": "Poslední doručení se zdařilo",
+        "statusError": "Poslední doručení selhalo: {{error}}",
+        "failures_one": "{{count}} selhání v řadě",
+        "failures_few": "{{count}} selhání v řadě",
+        "failures_many": "{{count}} selhání v řadě",
+        "failures_other": "{{count}} selhání v řadě",
+        "test": "Poslat zkoušku",
+        "testing": "Odesílám…",
+        "testOk": "Zkušební zpráva byla doručena.",
+        "testFailed": "Zkouška selhala: {{error}}",
+        "enable": "Zapnout",
+        "disable": "Vypnout",
+        "onlyBreakingAction": "Jen nekompatibilní změny",
+        "allChanges": "Všechny změny",
+        "delete": "Smazat",
+        "confirmDelete": "Smazat tento webhook?",
+        "delivery": {
+          "timedOut": "příjemce neodpověděl včas",
+          "connect": "nepodařilo se připojit",
+          "notAllowed": "adresa není povolená",
+          "answered": "příjemce odpověděl {{status}}",
+          "unexpected": "neočekávaná chyba"
+        },
+        "add": {
+          "title": "Přidat webhook",
+          "kind": "Typ",
+          "url": "Adresa",
+          "urlHelpSlack": "Adresa příchozího webhooku Slacku (https://hooks.slack.com/services/...).",
+          "urlHelpGeneric": "Vaše adresa na https. Volá se s JSONem podepsaným tajemstvím, které se po přidání zobrazí jen jednou.",
+          "name": "Název (nepovinný)",
+          "onlyBreaking": "Upozorňovat jen na nekompatibilní změny",
+          "submit": "Přidat",
+          "saving": "Přidávám…",
+          "error": "Webhook se nepodařilo přidat."
+        },
+        "errors": {
+          "notHttps": "Adresa musí začínat https://.",
+          "credentials": "Adresa nesmí obsahovat uživatelské jméno ani heslo.",
+          "unresolved": "Jméno serveru se nepodařilo najít.",
+          "notPublic": "Adresa není veřejná – adresy uvnitř soukromé sítě se volat nedají.",
+          "notSlack": "Adresa webhooku Slacku musí být na hooks.slack.com.",
+          "limit": "Tým může mít nejvýše 10 webhooků.",
+          "invalid": "Tuto adresu nelze použít."
+        },
+        "secret": {
+          "title": "Uložte si teď podpisové tajemství",
+          "body": "Každý požadavek nese X-ApiHub-Signature: sha256= a za tím HMAC-SHA256 z „<X-ApiHub-Timestamp>.<tělo požadavku>“ vytvořený tímto tajemstvím. Zobrazuje se jen jednou.",
+          "dismiss": "Mám uloženo"
+        }
+      },
       "invitationsCard": {
         "title": "Čekající pozvánky",
         "empty": "Žádné čekající pozvánky.",

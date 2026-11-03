@@ -8,6 +8,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import TeamWebhooksCard from '../components/TeamWebhooksCard'
 import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
 
@@ -435,6 +436,8 @@ export default function TeamDetail() {
           </ul>
         )}
       </div>
+
+      <TeamWebhooksCard teamId={team.id} isOwner={myRole === 'owner'} />
     </div>
   )
 }
