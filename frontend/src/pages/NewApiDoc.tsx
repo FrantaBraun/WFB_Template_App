@@ -275,7 +275,7 @@ export default function NewApiDoc() {
               <input
                 id="doc-file"
                 type="file"
-                accept=".json,.yaml,.yml"
+                accept=".json,.yaml,.yml,.graphql,.gql,.graphqls"
                 onChange={handleFileChange}
                 required
                 className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"

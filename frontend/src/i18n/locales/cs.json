@@ -19,6 +19,7 @@
     "apiDocs": "API dokumentace",
     "collections": "Kolekce",
     "integrations": "Integrace",
+    "endpointSearch": "Hledání endpointů",
     "changeLanguage": "Změnit jazyk",
     "openMenu": "Otevřít nabídku",
     "closeMenu": "Zavřít nabídku",
@@ -35,7 +36,7 @@
     "hero": {
       "title": "API Hub",
       "tagline": "Přehledná evidence API dokumentace – s historií, upozorněními a týmovou spoluprací.",
-      "description": "Nahrajte OpenAPI/Swagger specifikaci ze souboru, nebo na ni jen odkažte – API Hub sám hlídá nové verze a archivuje každou z nich, takže se k nim můžete vrátit i poté, co originál zmizí. Dokumentace patří vašemu týmu, dá se sdružovat do kolekcí a integrací a doplnit o vlastní poznámky ve znalostní bázi.",
+      "description": "Nahrajte OpenAPI/Swagger, AsyncAPI, Postman nebo GraphQL specifikaci ze souboru, nebo na ni jen odkažte – API Hub sám hlídá nové verze a archivuje každou z nich, takže se k nim můžete vrátit i poté, co originál zmizí. Dokumentace patří vašemu týmu, dá se sdružovat do kolekcí a integrací a doplnit o vlastní poznámky ve znalostní bázi.",
       "ctaBrowse": "Prohlédnout API dokumentaci",
       "ctaTeamsLoggedIn": "Spravovat své týmy",
       "ctaTeamsLoggedOut": "Založit si účet"
@@ -46,7 +47,7 @@
       "registry": {
         "title": "Centrální evidence s historií verzí",
         "summary": "Jedno místo pro API dokumentaci všech aplikací třetích stran – s archivem každé verze.",
-        "detail": "Dokumentaci založíte odkazem na OpenAPI/Swagger specifikaci, nebo nahrajete soubor JSON/YAML. Každá nová verze se archivuje, takže se k ní můžete vrátit, i když už oficiálně dostupná nebude."
+        "detail": "Dokumentaci založíte odkazem na OpenAPI/Swagger, AsyncAPI, Postman nebo GraphQL specifikaci, nebo nahrajete soubor JSON/YAML/GraphQL. Každá nová verze se archivuje, takže se k ní můžete vrátit, i když už oficiálně dostupná nebude."
       },
       "notifications": {
         "title": "Automatická kontrola a upozornění",
@@ -411,7 +412,7 @@
       "modeUpload": "Nahrát soubor",
       "sourceUrlLabel": "Zdrojová URL",
       "recheckPeriodLabel": "Interval kontroly",
-      "fileLabel": "Soubor specifikace (.json, .yaml, .yml)",
+      "fileLabel": "Soubor specifikace (.json, .yaml, .yml, .graphql)",
       "fileRequired": "Vyberte prosím soubor k nahrání.",
       "submit": "Vytvořit",
       "error": "Vytvoření dokumentace se nezdařilo."
@@ -440,6 +441,7 @@
         "version": "Verze",
         "specTitle": "Název specifikace",
         "format": "Formát",
+        "specType": "Druh",
         "fetchedAt": "Staženo",
         "contentLabel": "Obsah",
         "contentChanged": "Změněn bez nového čísla verze",
@@ -515,6 +517,48 @@
       }
     }
   },
+  "specTypes": {
+    "openapi": "OpenAPI / Swagger",
+    "asyncapi": "AsyncAPI",
+    "postman": "Postman kolekce",
+    "graphql": "GraphQL schéma"
+  },
+  "outline": {
+    "open": "Přehled",
+    "openTitle": "Vypsat endpointy této verze",
+    "summary_one": "{{count}} endpoint",
+    "summary_few": "{{count}} endpointy",
+    "summary_many": "{{count}} endpointu",
+    "summary_other": "{{count}} endpointů",
+    "filterLabel": "Filtrovat endpointy",
+    "filterPlaceholder": "Filtrovat podle cesty, názvu nebo popisu",
+    "noMatch": "Žádný endpoint neodpovídá „{{query}}“.",
+    "empty": "Tento dokument neuvádí žádné endpointy.",
+    "deprecated": "zastaralé",
+    "notRendered": "Tento druh dokumentu tu nemá vykreslenou dokumentaci – níže je výpis toho, co obsahuje. Zbytek si přečtete ve staženém souboru."
+  },
+  "endpointSearch": {
+    "pageTitle": "Hledání endpointů",
+    "pageDescription": "Najděte endpoint napříč veškerou dokumentací, kterou vidíte – podle cesty, názvu, metody nebo popisu.",
+    "label": "Hledat endpointy",
+    "placeholder": "např. faktury, POST /orders, createUser",
+    "methodLabel": "Metoda",
+    "anyMethod": "Jakákoli metoda",
+    "kindLabel": "Druh",
+    "anyKind": "Jakýkoli druh",
+    "results_one": "{{count}} endpoint",
+    "results_few": "{{count}} endpointy",
+    "results_many": "{{count}} endpointu",
+    "results_other": "{{count}} endpointů",
+    "noResults": "Žádný endpoint neodpovídá.",
+    "loadError": "Hledání se nezdařilo. Zkuste to prosím znovu.",
+    "version": "verze {{version}}",
+    "deprecated": "zastaralé",
+    "team": "jen tým",
+    "previous": "Předchozí",
+    "next": "Další",
+    "page": "Strana {{page}} z {{pages}}"
+  },
   "author": {
     "title": "Autor",
     "nameLabel": "Jméno",
@@ -585,7 +629,8 @@
     "scope": {
       "parameter": "Parametr",
       "request": "Požadavek",
-      "response": "Odpověď {{status}}"
+      "response": "Odpověď {{status}}",
+      "message": "Zpráva"
     },
     "kinds": {
       "operation_removed": "Operace odstraněna",
@@ -620,7 +665,34 @@
       "property_added_required": "Přidána povinná vlastnost",
       "property_added_optional": "Přidána nepovinná vlastnost",
       "property_became_required": "Vlastnost se stala povinnou",
-      "property_became_optional": "Vlastnost se stala nepovinnou"
+      "property_became_optional": "Vlastnost se stala nepovinnou",
+      "spec_type_changed": "Druh dokumentu se změnil z {{from}} na {{to}}",
+      "message_removed": "Zpráva odstraněna",
+      "message_added": "Zpráva přidána",
+      "graphql_type_removed": "Typ odstraněn ({{kind}})",
+      "graphql_type_added": "Typ přidán ({{kind}})",
+      "graphql_type_kind_changed": "Druh typu se změnil z {{from}} na {{to}}",
+      "graphql_field_removed": "Pole odstraněno",
+      "graphql_field_added": "Pole přidáno",
+      "graphql_field_type_changed": "Typ pole se změnil z {{from}} na {{to}}",
+      "graphql_field_deprecated": "Pole označeno jako zastaralé",
+      "graphql_argument_removed": "Argument odstraněn",
+      "graphql_argument_added_required": "Přidán povinný argument",
+      "graphql_argument_added_optional": "Přidán nepovinný argument",
+      "graphql_argument_type_changed": "Typ argumentu se změnil z {{from}} na {{to}}",
+      "graphql_input_field_removed": "Vstupní pole odstraněno",
+      "graphql_input_field_added_required": "Přidáno povinné vstupní pole",
+      "graphql_input_field_added_optional": "Přidáno nepovinné vstupní pole",
+      "graphql_input_field_type_changed": "Typ vstupního pole se změnil z {{from}} na {{to}}",
+      "graphql_default_changed": "Výchozí hodnota se změnila z {{from}} na {{to}}",
+      "graphql_enum_value_removed": "Hodnota výčtu odstraněna",
+      "graphql_enum_value_added": "Hodnota výčtu přidána",
+      "graphql_union_member_removed": "Člen unie odstraněn",
+      "graphql_union_member_added": "Člen unie přidán",
+      "graphql_interface_removed": "Rozhraní už není implementováno",
+      "graphql_interface_added": "Rozhraní je nově implementováno",
+      "graphql_directive_removed": "Direktiva odstraněna",
+      "graphql_directive_added": "Direktiva přidána"
     }
   },
   "notifications": {

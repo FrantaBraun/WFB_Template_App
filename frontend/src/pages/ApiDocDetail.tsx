@@ -21,6 +21,7 @@ interface ApiDocumentCurrentVersionData {
   version: string
   spec_title: string | null
   format: string
+  spec_type: string
   fetched_at: string
   source: string
   content_changed: boolean
@@ -61,6 +62,7 @@ interface ApiDocumentVersionOutData {
   fetched_at: string
   archived_at: string | null
   source: string
+  spec_type: string
   content_changed: boolean
   change_summary: ChangeSummaryData | null
 }
@@ -512,6 +514,10 @@ export default function ApiDocDetail() {
             )}
             <dt className="text-slate-500 dark:text-slate-400">{t('apiDocs.detail.currentVersionCard.format')}</dt>
             <dd className="text-slate-900 dark:text-slate-100">{doc.current_version.format}</dd>
+            <dt className="text-slate-500 dark:text-slate-400">{t('apiDocs.detail.currentVersionCard.specType')}</dt>
+            <dd className="text-slate-900 dark:text-slate-100">
+              {t(`specTypes.${doc.current_version.spec_type}`, { defaultValue: doc.current_version.spec_type })}
+            </dd>
             <dt className="text-slate-500 dark:text-slate-400">{t('apiDocs.detail.currentVersionCard.fetchedAt')}</dt>
             <dd className="text-slate-900 dark:text-slate-100">{formatDateTime(doc.current_version.fetched_at, i18n.language)}</dd>
             {doc.current_version.content_changed && (
@@ -621,7 +627,7 @@ export default function ApiDocDetail() {
                 <input
                   id="upload-version-file"
                   type="file"
-                  accept=".json,.yaml,.yml"
+                  accept=".json,.yaml,.yml,.graphql,.gql,.graphqls"
                   onChange={(e) => setVersionFile(e.target.files?.[0] ?? null)}
                   className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
                 />
@@ -794,6 +800,11 @@ export default function ApiDocDetail() {
                         {t('apiDocs.detail.versionsCard.current')}
                       </span>
                     )}
+                    {version.spec_type !== 'openapi' && (
+                      <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
+                        {t(`specTypes.${version.spec_type}`, { defaultValue: version.spec_type })}
+                      </span>
+                    )}
                     {version.content_changed && (
                       <span
                         title={t('apiDocs.detail.versionsCard.contentChangedTitle')}
@@ -822,20 +833,32 @@ export default function ApiDocDetail() {
                       {t('apiDocs.detail.versionsCard.changes')}
                     </Link>
                   )}
-                  <Link
-                    to={`/api-docs/${doc.id}/versions/${version.id}/view?viewer=docs`}
-                    title={t('apiDocs.detail.versionsCard.viewDocsTitle')}
-                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                  >
-                    {t('apiDocs.detail.versionsCard.viewDocs')}
-                  </Link>
-                  <Link
-                    to={`/api-docs/${doc.id}/versions/${version.id}/view?viewer=redoc`}
-                    title={t('apiDocs.detail.versionsCard.viewRedocTitle')}
-                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                  >
-                    {t('apiDocs.detail.versionsCard.viewRedoc')}
-                  </Link>
+                  {version.spec_type === 'openapi' ? (
+                    <>
+                      <Link
+                        to={`/api-docs/${doc.id}/versions/${version.id}/view?viewer=docs`}
+                        title={t('apiDocs.detail.versionsCard.viewDocsTitle')}
+                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                      >
+                        {t('apiDocs.detail.versionsCard.viewDocs')}
+                      </Link>
+                      <Link
+                        to={`/api-docs/${doc.id}/versions/${version.id}/view?viewer=redoc`}
+                        title={t('apiDocs.detail.versionsCard.viewRedocTitle')}
+                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                      >
+                        {t('apiDocs.detail.versionsCard.viewRedoc')}
+                      </Link>
+                    </>
+                  ) : (
+                    <Link
+                      to={`/api-docs/${doc.id}/versions/${version.id}/view`}
+                      title={t('outline.openTitle')}
+                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                    >
+                      {t('outline.open')}
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleDownloadVersion(version)}

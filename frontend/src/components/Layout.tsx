@@ -104,6 +104,9 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
       <Link to="/collections" onClick={closeMobileMenu} className="hover:text-slate-900 dark:hover:text-slate-100">
         {t('common.collections')}
       </Link>
+      <Link to="/endpoint-search" onClick={closeMobileMenu} className="hover:text-slate-900 dark:hover:text-slate-100">
+        {t('common.endpointSearch')}
+      </Link>
       {user && (
         <>
           <Link to="/teams" onClick={closeMobileMenu} className="hover:text-slate-900 dark:hover:text-slate-100">

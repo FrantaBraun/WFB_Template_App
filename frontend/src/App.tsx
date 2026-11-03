@@ -29,6 +29,7 @@ import ApiDocs from "./pages/ApiDocs"
 import NewApiDoc from "./pages/NewApiDoc"
 import ApiDocDetail from "./pages/ApiDocDetail"
 import VersionChanges from "./pages/VersionChanges"
+import EndpointSearch from "./pages/EndpointSearch"
 import Collections from "./pages/Collections"
 import CollectionDetail from "./pages/CollectionDetail"
 import CollectionKnowledgeBase from "./pages/CollectionKnowledgeBase"
@@ -76,6 +77,7 @@ function App() {
           </Suspense>
         }
       />
+      <Route path="/endpoint-search" element={<EndpointSearch />} />
       <Route path="/collections" element={<Collections />} />
       <Route path="/collections/:id" element={<CollectionDetail />} />
       <Route path="/collections/:id/kb" element={<CollectionKnowledgeBase />} />

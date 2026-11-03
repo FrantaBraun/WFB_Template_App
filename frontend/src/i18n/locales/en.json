@@ -19,6 +19,7 @@
     "apiDocs": "API Docs",
     "collections": "Collections",
     "integrations": "Integrations",
+    "endpointSearch": "Endpoint search",
     "changeLanguage": "Change language",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
@@ -35,7 +36,7 @@
     "hero": {
       "title": "API Hub",
       "tagline": "A clear record of your API documentation — with history, alerts, and team collaboration built in.",
-      "description": "Upload an OpenAPI/Swagger specification from a file, or just link to it — API Hub watches for new versions on its own and archives every one, so you can look back even after the original disappears. Documentation belongs to your team, groups into collections and integrations, and can carry your own notes in a knowledge base.",
+      "description": "Upload an OpenAPI/Swagger, AsyncAPI, Postman or GraphQL specification from a file, or just link to it — API Hub watches for new versions on its own and archives every one, so you can look back even after the original disappears. Documentation belongs to your team, groups into collections and integrations, and can carry your own notes in a knowledge base.",
       "ctaBrowse": "Browse API documentation",
       "ctaTeamsLoggedIn": "Manage your teams",
       "ctaTeamsLoggedOut": "Create an account"
@@ -46,7 +47,7 @@
       "registry": {
         "title": "Central registry with version history",
         "summary": "One place for the API documentation of every third-party app you work with — with every version archived.",
-        "detail": "Register a doc from an OpenAPI/Swagger URL, or upload a JSON/YAML file directly. Every new version is archived automatically, so you can look back even after it's no longer officially available."
+        "detail": "Register a doc from an OpenAPI/Swagger, AsyncAPI, Postman or GraphQL URL, or upload a JSON/YAML/GraphQL file directly. Every new version is archived automatically, so you can look back even after it's no longer officially available."
       },
       "notifications": {
         "title": "Automatic rechecks and alerts",
@@ -409,7 +410,7 @@
       "modeUpload": "Upload a file",
       "sourceUrlLabel": "Source URL",
       "recheckPeriodLabel": "Recheck period",
-      "fileLabel": "Specification file (.json, .yaml, .yml)",
+      "fileLabel": "Specification file (.json, .yaml, .yml, .graphql)",
       "fileRequired": "Please choose a file to upload.",
       "submit": "Create",
       "error": "Failed to create the documentation."
@@ -438,6 +439,7 @@
         "version": "Version",
         "specTitle": "Spec title",
         "format": "Format",
+        "specType": "Kind",
         "fetchedAt": "Fetched",
         "contentLabel": "Content",
         "contentChanged": "Changed without a new version number",
@@ -513,6 +515,44 @@
       }
     }
   },
+  "specTypes": {
+    "openapi": "OpenAPI / Swagger",
+    "asyncapi": "AsyncAPI",
+    "postman": "Postman collection",
+    "graphql": "GraphQL schema"
+  },
+  "outline": {
+    "open": "Overview",
+    "openTitle": "List the endpoints of this version",
+    "summary_one": "{{count}} endpoint",
+    "summary_other": "{{count}} endpoints",
+    "filterLabel": "Filter the endpoints",
+    "filterPlaceholder": "Filter by path, name or description",
+    "noMatch": "No endpoint matches \u201c{{query}}\u201d.",
+    "empty": "This document lists no endpoints.",
+    "deprecated": "deprecated",
+    "notRendered": "This kind of document has no rendered documentation here - the list below is what it contains. Download the file to read the rest."
+  },
+  "endpointSearch": {
+    "pageTitle": "Endpoint search",
+    "pageDescription": "Find an endpoint across all the documentation you can see - by path, name, method or description.",
+    "label": "Search endpoints",
+    "placeholder": "e.g. invoices, POST /orders, createUser",
+    "methodLabel": "Method",
+    "anyMethod": "Any method",
+    "kindLabel": "Kind",
+    "anyKind": "Any kind",
+    "results_one": "{{count}} endpoint",
+    "results_other": "{{count}} endpoints",
+    "noResults": "No endpoint matches.",
+    "loadError": "The search failed. Please try again.",
+    "version": "version {{version}}",
+    "deprecated": "deprecated",
+    "team": "team only",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{page}} of {{pages}}"
+  },
   "author": {
     "title": "Author",
     "nameLabel": "Name",
@@ -575,7 +615,8 @@
     "scope": {
       "parameter": "Parameter",
       "request": "Request",
-      "response": "Response {{status}}"
+      "response": "Response {{status}}",
+      "message": "Message"
     },
     "kinds": {
       "operation_removed": "Operation removed",
@@ -610,7 +651,34 @@
       "property_added_required": "Required property added",
       "property_added_optional": "Optional property added",
       "property_became_required": "Property became required",
-      "property_became_optional": "Property became optional"
+      "property_became_optional": "Property became optional",
+      "spec_type_changed": "The kind of document changed from {{from}} to {{to}}",
+      "message_removed": "Message removed",
+      "message_added": "Message added",
+      "graphql_type_removed": "Type removed ({{kind}})",
+      "graphql_type_added": "Type added ({{kind}})",
+      "graphql_type_kind_changed": "The kind of the type changed from {{from}} to {{to}}",
+      "graphql_field_removed": "Field removed",
+      "graphql_field_added": "Field added",
+      "graphql_field_type_changed": "Field type changed from {{from}} to {{to}}",
+      "graphql_field_deprecated": "Field marked as deprecated",
+      "graphql_argument_removed": "Argument removed",
+      "graphql_argument_added_required": "Required argument added",
+      "graphql_argument_added_optional": "Optional argument added",
+      "graphql_argument_type_changed": "Argument type changed from {{from}} to {{to}}",
+      "graphql_input_field_removed": "Input field removed",
+      "graphql_input_field_added_required": "Required input field added",
+      "graphql_input_field_added_optional": "Optional input field added",
+      "graphql_input_field_type_changed": "Input field type changed from {{from}} to {{to}}",
+      "graphql_default_changed": "Default value changed from {{from}} to {{to}}",
+      "graphql_enum_value_removed": "Enum value removed",
+      "graphql_enum_value_added": "Enum value added",
+      "graphql_union_member_removed": "Union member removed",
+      "graphql_union_member_added": "Union member added",
+      "graphql_interface_removed": "Interface is no longer implemented",
+      "graphql_interface_added": "Interface is now implemented",
+      "graphql_directive_removed": "Directive removed",
+      "graphql_directive_added": "Directive added"
     }
   },
   "notifications": {

@@ -41,6 +41,8 @@ interface VersionChangesData {
   truncated: boolean
 }
 
+type Translate = (key: string, options?: Record<string, unknown>) => string
+
 const SEVERITY_STYLE: Record<Severity, string> = {
   breaking: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
   warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
@@ -63,11 +65,14 @@ function listText(value: unknown): string {
  * that picks between wordings of one kind (a required or an optional
  * parameter added, a property that may now be null or no longer may be).
  */
-function sentenceOptions(change: SpecChange): Record<string, unknown> {
+function sentenceOptions(change: SpecChange, t: Translate): Record<string, unknown> {
   const { kind, detail } = change
+  // A default value that was not there before (or no longer is) arrives as null.
+  const plain = (value: unknown) => (value === null || value === undefined || value === '' ? '–' : value)
   const options: Record<string, unknown> = {
-    from: detail.from,
-    to: detail.to,
+    from: plain(detail.from),
+    to: plain(detail.to),
+    kind: detail.kind,
     values: listText(detail.values),
     schemes: listText(detail.schemes),
     added: listText(detail.added),
@@ -75,11 +80,15 @@ function sentenceOptions(change: SpecChange): Record<string, unknown> {
   }
   if (typeof detail.required === 'boolean') options.context = detail.required ? 'required' : 'optional'
   if (kind === 'nullable_changed') options.context = String(detail.nullable === true)
+  if (kind === 'spec_type_changed') {
+    options.from = t(`specTypes.${detail.from}`, { defaultValue: String(detail.from) })
+    options.to = t(`specTypes.${detail.to}`, { defaultValue: String(detail.to) })
+  }
   return options
 }
 
 /** Where inside the operation a change is: "Response 200 · application/json · address.zip". */
-function whereText(change: SpecChange, t: (key: string, options?: Record<string, unknown>) => string): string {
+function whereText(change: SpecChange, t: Translate): string {
   const parts: string[] = []
   if (change.scope) parts.push(t(`changes.scope.${change.scope}`, { status: change.status ?? '' }))
   if (change.media_type) parts.push(change.media_type)
@@ -138,7 +147,8 @@ export default function VersionChanges() {
     const visible = (data?.changes ?? []).filter((change) => !onlyWhatMatters || change.severity !== 'info')
     const byOperation = new Map<string, SpecChange[]>()
     for (const change of visible) {
-      const key = change.method && change.path ? `${change.method} ${change.path}` : ''
+      // An operation ("GET /pets"), or - for a GraphQL type or directive - just its name.
+      const key = change.path ? (change.method ? `${change.method} ${change.path}` : change.path) : ''
       byOperation.set(key, [...(byOperation.get(key) ?? []), change])
     }
     return [...byOperation.entries()]
@@ -223,7 +233,7 @@ export default function VersionChanges() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="break-words text-slate-900 dark:text-slate-100">
-                    {t(`changes.kinds.${change.kind}`, { ...sentenceOptions(change), defaultValue: change.kind })}
+                    {t(`changes.kinds.${change.kind}`, { ...sentenceOptions(change, t), defaultValue: change.kind })}
                   </p>
                   {whereText(change, t) && (
                     <p className="break-all font-mono text-xs text-slate-500 dark:text-slate-400">{whereText(change, t)}</p>

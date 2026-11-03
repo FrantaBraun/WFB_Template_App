@@ -8,8 +8,16 @@ import { Component, lazy, Suspense, useEffect, useState, type ErrorInfo, type Re
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { load as parseYaml } from 'js-yaml'
+import SpecOutline from '../components/spec/SpecOutline'
 import usePageMeta from '../hooks/usePageMeta'
-import { fetchVersionSpec, saveSpecBlob, SpecFetchError, type SpecFormat } from '../utils/versionSpec'
+import {
+  fetchVersionOutline,
+  fetchVersionSpec,
+  saveSpecBlob,
+  SpecFetchError,
+  type SpecFormat,
+  type VersionOutline,
+} from '../utils/versionSpec'
 
 // Each viewer library is large, so they load only when that viewer is shown -
 // opening "Docs" never downloads ReDoc and vice versa, and neither weighs on
@@ -22,7 +30,10 @@ type ViewerKind = 'docs' | 'redoc'
 interface LoadedSpec {
   blob: Blob
   format: SpecFormat
-  spec: Record<string, unknown>
+  /** The parsed file; null for GraphQL SDL, which is neither JSON nor YAML. */
+  spec: Record<string, unknown> | null
+  /** The endpoint list that stands in for Docs / ReDoc, which only render OpenAPI / Swagger; null when the document is one. */
+  outline: VersionOutline | null
 }
 
 type LoadState =
@@ -32,10 +43,18 @@ type LoadState =
 
 async function loadSpec(documentId: string, versionId: string): Promise<LoadedSpec> {
   const { blob, format } = await fetchVersionSpec(documentId, versionId)
-  const text = await blob.text()
-  const parsed: unknown = format === 'json' ? JSON.parse(text) : parseYaml(text)
-  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) throw new SyntaxError('Spec is not an object')
-  return { blob, format, spec: parsed as Record<string, unknown> }
+  let spec: Record<string, unknown> | null = null
+  if (format !== 'graphql') {
+    const text = await blob.text()
+    const parsed: unknown = format === 'json' ? JSON.parse(text) : parseYaml(text)
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) throw new SyntaxError('Spec is not an object')
+    spec = parsed as Record<string, unknown>
+  }
+  // Swagger UI and ReDoc render OpenAPI / Swagger documents only; any other kind
+  // (AsyncAPI, a Postman collection, a GraphQL schema) is read as a list of its endpoints.
+  const renderable = spec !== null && ('openapi' in spec || 'swagger' in spec)
+  const outline = renderable ? null : await fetchVersionOutline(documentId, versionId)
+  return { blob, format, spec, outline }
 }
 
 /**
@@ -84,7 +103,7 @@ export default function VersionSpecViewer() {
       })
       .catch((err: unknown) => {
         if (cancelled) return
-        if (err instanceof SpecFetchError) setState({ status: 'error', reason: err.status === 404 ? 'notFound' : 'failed' })
+        if (err instanceof SpecFetchError) setState({ status: 'error', reason: err.status === 404 ? 'notFound' : err.status === 422 ? 'invalid' : 'failed' })
         else if (err instanceof SyntaxError || (err instanceof Error && err.name === 'YAMLException')) setState({ status: 'error', reason: 'invalid' })
         else setState({ status: 'error', reason: 'failed' })
       })
@@ -93,9 +112,10 @@ export default function VersionSpecViewer() {
     }
   }, [id, versionId])
 
-  const info = state.status === 'ready' ? (state.spec.info as { title?: unknown; version?: unknown } | undefined) : undefined
-  const specTitle = typeof info?.title === 'string' ? info.title : null
-  const specVersion = typeof info?.version === 'string' || typeof info?.version === 'number' ? String(info.version) : null
+  const info = state.status === 'ready' ? (state.spec?.info as { title?: unknown; version?: unknown } | undefined) : undefined
+  const outline = state.status === 'ready' ? state.outline : null
+  const specTitle = outline ? outline.title : typeof info?.title === 'string' ? info.title : null
+  const specVersion = outline ? outline.version : typeof info?.version === 'string' || typeof info?.version === 'number' ? String(info.version) : null
 
   function handleDownload() {
     if (state.status !== 'ready') return
@@ -123,7 +143,7 @@ export default function VersionSpecViewer() {
           </Link>
           {state.status === 'ready' && (
             <h1 className="mt-1 truncate text-xl font-semibold tracking-tight">
-              {specTitle ?? t('apiDocs.viewer.untitled')}
+              {specTitle ?? (outline ? t(`specTypes.${outline.spec_type}`, { defaultValue: outline.spec_type }) : t('apiDocs.viewer.untitled'))}
               {specVersion && <span className="ml-2 text-base font-normal text-slate-500 dark:text-slate-400">{specVersion}</span>}
             </h1>
           )}
@@ -131,14 +151,16 @@ export default function VersionSpecViewer() {
 
         {state.status === 'ready' && (
           <div className="flex flex-wrap items-center gap-2">
-            <div role="group" aria-label={t('apiDocs.viewer.viewerLabel')} className="flex gap-1 rounded-xl border border-slate-200 p-1 dark:border-slate-700">
-              <button type="button" aria-pressed={viewer === 'docs'} onClick={() => setSearchParams({ viewer: 'docs' }, { replace: true })} className={toggleClass(viewer === 'docs')}>
-                {t('apiDocs.viewer.docs')}
-              </button>
-              <button type="button" aria-pressed={viewer === 'redoc'} onClick={() => setSearchParams({ viewer: 'redoc' }, { replace: true })} className={toggleClass(viewer === 'redoc')}>
-                {t('apiDocs.viewer.redoc')}
-              </button>
-            </div>
+            {!outline && (
+              <div role="group" aria-label={t('apiDocs.viewer.viewerLabel')} className="flex gap-1 rounded-xl border border-slate-200 p-1 dark:border-slate-700">
+                <button type="button" aria-pressed={viewer === 'docs'} onClick={() => setSearchParams({ viewer: 'docs' }, { replace: true })} className={toggleClass(viewer === 'docs')}>
+                  {t('apiDocs.viewer.docs')}
+                </button>
+                <button type="button" aria-pressed={viewer === 'redoc'} onClick={() => setSearchParams({ viewer: 'redoc' }, { replace: true })} className={toggleClass(viewer === 'redoc')}>
+                  {t('apiDocs.viewer.redoc')}
+                </button>
+              </div>
+            )}
             <button
               type="button"
               onClick={handleDownload}
@@ -155,7 +177,12 @@ export default function VersionSpecViewer() {
       {state.status === 'error' && (
         <p className="text-sm text-red-600 dark:text-red-400">{t(`apiDocs.viewer.error.${state.reason}`)}</p>
       )}
-      {state.status === 'ready' && (
+      {state.status === 'ready' && state.outline && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <SpecOutline outline={state.outline} />
+        </div>
+      )}
+      {state.status === 'ready' && state.spec && !state.outline && (
         <div className="min-h-[60vh] rounded-2xl border border-slate-200 bg-white text-slate-900 dark:border-slate-700">
           <ViewerErrorBoundary key={viewer} fallback={viewerFallback}>
             <Suspense fallback={<p className="p-6 text-sm text-slate-500">{t('apiDocs.viewer.loadingViewer')}</p>}>

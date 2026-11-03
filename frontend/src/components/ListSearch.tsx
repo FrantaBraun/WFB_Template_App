@@ -28,9 +28,19 @@ function ClearIcon({ className }: { className?: string }) {
  * The free-text search row shared by the API documentation, collection and
  * integration lists. It only holds the text - the page decides what to do with
  * it (a debounced server-side search). `label` is read by screen readers only;
- * the placeholder says what is searched.
+ * the placeholder says what is searched (a page with its own wording passes `placeholder`).
  */
-export default function ListSearch({ value, onChange, label }: { value: string; onChange: (value: string) => void; label: string }) {
+export default function ListSearch({
+  value,
+  onChange,
+  label,
+  placeholder,
+}: {
+  value: string
+  onChange: (value: string) => void
+  label: string
+  placeholder?: string
+}) {
   const { t } = useTranslation()
   const inputId = useId()
 
@@ -48,7 +58,7 @@ export default function ListSearch({ value, onChange, label }: { value: string; 
         onKeyDown={(e) => {
           if (e.key === 'Escape') onChange('')
         }}
-        placeholder={t('common.search.placeholder')}
+        placeholder={placeholder ?? t('common.search.placeholder')}
         autoComplete="off"
         spellCheck={false}
         maxLength={200}
