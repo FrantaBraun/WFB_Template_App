@@ -9,7 +9,7 @@ from uuid import UUID
 
 from app.models.api_document import ApiDocumentVersion
 from app.services.openapi_spec import parse_spec
-from app.services.spec_diff import diff_specs
+from app.services.spec_compare import diff_parsed
 from app.services.spec_storage import read_spec_file
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ _CACHE_SIZE = 1000
 
 
 def _summarise(old_raw: bytes, new_raw: bytes) -> dict[str, int]:
-    return diff_specs(parse_spec(old_raw).document, parse_spec(new_raw).document).summary()
+    return diff_parsed(parse_spec(old_raw), parse_spec(new_raw)).summary()
 
 
 async def compare_versions(

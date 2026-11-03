@@ -15,7 +15,7 @@ from app.config import Settings
 from app.models.api_document import ApiDocument, ApiDocumentVersion
 from app.services.notifications import notify_new_version
 from app.services.openapi_spec import ParsedSpec, SpecValidationError, fetch_spec_from_url, parse_spec
-from app.services.spec_diff import diff_specs
+from app.services.spec_compare import diff_parsed
 from app.services.spec_storage import read_spec_file, save_spec_file
 
 logger = logging.getLogger(__name__)
@@ -70,9 +70,7 @@ def _summarise_changes(current: ApiDocumentVersion, parsed: ParsedSpec, uploads_
     page says it cannot compare."""
     try:
         previous = parse_spec(read_spec_file(uploads_dir, current.storage_path))
-        if previous.kind != "openapi" or parsed.kind != "openapi":
-            return None  # only OpenAPI / Swagger documents can be compared so far
-        return diff_specs(previous.document, parsed.document).summary()
+        return diff_parsed(previous, parsed).summary()
     except Exception:
         logger.exception("Cannot compare version %s (document %s) with the new spec", current.id, current.documentation_id)
         return None

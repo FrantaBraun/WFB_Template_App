@@ -89,7 +89,7 @@ async def test_a_failing_comparison_never_fails_the_check(db_session, tmp_path, 
     def boom(*args, **kwargs):
         raise RuntimeError("cannot diff")
 
-    monkeypatch.setattr(versions_module, "diff_specs", boom)
+    monkeypatch.setattr(versions_module, "diff_parsed", boom)
     with caplog.at_level(logging.ERROR):
         second = await record(db_session, doc, pets_spec("2.0.0"), tmp_path)
 

@@ -37,7 +37,7 @@ from app.models.user import User
 from app.services.api_document_versions import fetch_and_process, get_current_version, process_new_spec
 from app.services.integration_usage import integrations_using_documents
 from app.services.openapi_spec import SpecValidationError, parse_spec
-from app.services.spec_diff import diff_specs
+from app.services.spec_compare import diff_parsed
 from app.services.spec_storage import delete_document_files, read_spec_file
 from app.services.text_search import matches_all_terms
 
@@ -526,7 +526,7 @@ async def get_document_version_spec(
 def _diff_files(old_raw: bytes, new_raw: bytes):
     """Parse and compare two stored spec files - CPU work that can take a
     moment on a big spec, so the caller runs it off the event loop."""
-    return diff_specs(parse_spec(old_raw).document, parse_spec(new_raw).document)
+    return diff_parsed(parse_spec(old_raw), parse_spec(new_raw))
 
 
 @router.get("/{document_id}/versions/{version_id}/changes")

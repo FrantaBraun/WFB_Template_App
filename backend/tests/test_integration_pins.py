@@ -288,13 +288,13 @@ async def test_a_pinned_version_whose_file_is_gone_has_no_summary_but_the_list_s
 async def test_the_comparison_of_a_pair_of_versions_is_made_once(db_session, tmp_path, monkeypatch):
     _, _, _, (v1, v2, v3) = await _scenario(db_session, tmp_path)
     calls: list[int] = []
-    real = comparison_module.diff_specs
+    real = comparison_module.diff_parsed
 
     def counting(old, new):
         calls.append(1)
         return real(old, new)
 
-    monkeypatch.setattr(comparison_module, "diff_specs", counting)
+    monkeypatch.setattr(comparison_module, "diff_parsed", counting)
 
     first = await compare_versions(str(tmp_path), v1, v3)
     second = await compare_versions(str(tmp_path), v1, v3)
