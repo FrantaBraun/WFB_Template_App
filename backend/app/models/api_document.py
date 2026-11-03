@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, func, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -94,6 +94,12 @@ class ApiDocumentVersion(Base):
     content_changed: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false")
     )
+    # What changed against the version this one replaced, counted by severity
+    # ({"breaking": n, "warning": n, "info": n} - app/services/spec_diff.py).
+    # NULL for a first version, for rows from before the diff existed, and
+    # when the comparison itself failed; the changes themselves are computed
+    # on demand from the two stored files (GET .../versions/{id}/changes).
+    change_summary: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

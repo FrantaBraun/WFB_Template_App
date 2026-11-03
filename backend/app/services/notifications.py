@@ -87,17 +87,30 @@ async def notify_new_version(
         # already made in app/api/teams/router.py's create_invitation); a
         # per-recipient send loop is a one-line change later if that's ever
         # undesirable.
+        # What changed for someone consuming the API, counted when the version
+        # was recorded (ApiDocumentVersion.change_summary); absent for a first
+        # version or when the comparison failed - then the mail just says less.
+        summary = version.change_summary or {}
+        breaking, warnings = summary.get("breaking", 0), summary.get("warning", 0)
+        flag = f" - {breaking} breaking change{'s' if breaking != 1 else ''}" if breaking else ""
+        counts = (
+            f"Breaking changes: {breaking}. Potentially breaking: {warnings}.\n\n" if breaking or warnings else ""
+        )
+        changes_link = f"{link}/versions/{version.id}/changes"
         if version.content_changed:
             # Same version number, different content: say so, or the mail
             # would announce a "new version" that looks identical to the old one.
-            subject = f"{doc.title} changed without a new version number ({version.version})"
+            subject = f"{doc.title} changed without a new version number ({version.version}){flag}"
             body = (
                 f"The specification of {doc.title} has changed, but its version is still {version.version}.\n\n"
-                f"What it said before is kept in the version history.\n\nView it here: {link}"
+                f"What it said before is kept in the version history.\n\n{counts}"
+                f"View it here: {link}"
             )
         else:
-            subject = f"New version of {doc.title}: {version.version}"
-            body = f"{doc.title} has a new version available: {version.version}.\n\nView it here: {link}"
+            subject = f"New version of {doc.title}: {version.version}{flag}"
+            body = f"{doc.title} has a new version available: {version.version}.\n\n{counts}View it here: {link}"
+        if any(summary.values()):
+            body += f"\nWhat changed: {changes_link}"
         await send_email(
             subject=subject,
             recipients=recipient_emails,

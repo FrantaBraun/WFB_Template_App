@@ -2,6 +2,7 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
+import asyncio
 import uuid
 
 import httpx
@@ -18,6 +19,10 @@ from app.api.api_docs.schemas import (
     ApiDocumentSummary,
     ApiDocumentUpdate,
     ApiDocumentVersionOut,
+    ChangeSummaryOut,
+    SpecChangeOut,
+    VersionChangesOut,
+    VersionRefOut,
 )
 from app.api.author_messages.contact import build_author_out, contact_author
 from app.api.author_messages.schemas import ContactAuthorBody, ContactAuthorResult
@@ -29,7 +34,8 @@ from app.models.notification import Subscription
 from app.models.team import TeamMembership
 from app.models.user import User
 from app.services.api_document_versions import fetch_and_process, get_current_version, process_new_spec
-from app.services.openapi_spec import SpecValidationError
+from app.services.openapi_spec import SpecValidationError, parse_spec
+from app.services.spec_diff import diff_specs
 from app.services.spec_storage import delete_document_files, read_spec_file
 from app.services.text_search import matches_all_terms
 
@@ -62,6 +68,14 @@ async def _require_member_document(db: AsyncSession, document_id: uuid.UUID, use
     if not await is_team_member(db, doc.team_id, user.id):
         raise HTTPException(status_code=404, detail="Document not found")
     return doc
+
+
+def _summary_out(summary: dict | None) -> ChangeSummaryOut | None:
+    if not summary:
+        return None
+    return ChangeSummaryOut(
+        breaking=summary.get("breaking", 0), warning=summary.get("warning", 0), info=summary.get("info", 0)
+    )
 
 
 def _validate_recheck_period(recheck_period: str, source_url: str | None) -> None:
@@ -111,6 +125,7 @@ async def _build_detail(
             fetched_at=current.fetched_at,
             source=current.source,
             content_changed=current.content_changed,
+            change_summary=_summary_out(current.change_summary),
         )
         if current is not None
         else None
@@ -476,6 +491,7 @@ async def list_document_versions(
             archived_at=v.archived_at,
             source=v.source,
             content_changed=v.content_changed,
+            change_summary=_summary_out(v.change_summary),
         )
         for v in result.scalars().all()
     ]
@@ -504,3 +520,88 @@ async def get_document_version_spec(
     content = read_spec_file(settings.uploads_dir, version.storage_path)
     media_type = "application/json" if version.format == "json" else "application/yaml"
     return Response(content=content, media_type=media_type)
+
+
+def _diff_files(old_raw: bytes, new_raw: bytes):
+    """Parse and compare two stored spec files - CPU work that can take a
+    moment on a big spec, so the caller runs it off the event loop."""
+    return diff_specs(parse_spec(old_raw).document, parse_spec(new_raw).document)
+
+
+@router.get("/{document_id}/versions/{version_id}/changes")
+async def get_document_version_changes(
+    document_id: uuid.UUID,
+    version_id: uuid.UUID,
+    against: uuid.UUID | None = None,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> VersionChangesOut:
+    """What changed from another version of this document to this one
+    (app/services/spec_diff.py): `against` if given, else the version just
+    before this one in the history. Same visibility as the version list. 404
+    for a version that is not this document's, for the oldest version when
+    no `against` is given (nothing earlier to compare with), and when a
+    stored spec file is gone; 422 when a stored file no longer parses."""
+    doc, _ = await _require_visible_document(db, document_id, current_user)
+
+    versions = (
+        (
+            await db.execute(
+                select(ApiDocumentVersion)
+                .where(ApiDocumentVersion.documentation_id == doc.id)
+                .order_by(ApiDocumentVersion.fetched_at.desc(), ApiDocumentVersion.created_at.desc())
+            )
+        )
+        .scalars()
+        .all()
+    )
+    by_id = {v.id: v for v in versions}
+    target = by_id.get(version_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="Version not found")
+    if against is not None:
+        base = by_id.get(against)
+        if base is None:
+            raise HTTPException(status_code=404, detail="Version to compare against not found")
+    else:
+        older = versions[versions.index(target) + 1 :]
+        if not older:
+            raise HTTPException(status_code=404, detail="There is no earlier version to compare with")
+        base = older[0]
+
+    try:
+        old_raw = read_spec_file(settings.uploads_dir, base.storage_path)
+        new_raw = read_spec_file(settings.uploads_dir, target.storage_path)
+    except OSError as exc:
+        raise HTTPException(status_code=404, detail="A specification file of these versions is no longer available") from exc
+    try:
+        diff = await asyncio.to_thread(_diff_files, old_raw, new_raw)
+    except SpecValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    def ref(version: ApiDocumentVersion) -> VersionRefOut:
+        return VersionRefOut(
+            id=version.id, version=version.version, fetched_at=version.fetched_at, content_changed=version.content_changed
+        )
+
+    return VersionChangesOut(
+        base=ref(base),
+        target=ref(target),
+        summary=ChangeSummaryOut(**diff.summary()),
+        changes=[
+            SpecChangeOut(
+                kind=c.kind,
+                severity=c.severity,
+                method=c.method,
+                path=c.path,
+                scope=c.scope,
+                status=c.status,
+                media_type=c.media_type,
+                location=c.location,
+                detail=c.detail,
+            )
+            for c in diff.changes
+        ],
+        truncated=diff.truncated,
+    )

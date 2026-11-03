@@ -15,6 +15,7 @@ from app.config import Settings
 from app.models.api_document import ApiDocument, ApiDocumentVersion
 from app.services.notifications import notify_new_version
 from app.services.openapi_spec import ParsedSpec, SpecValidationError, fetch_spec_from_url, parse_spec
+from app.services.spec_diff import diff_specs
 from app.services.spec_storage import read_spec_file, save_spec_file
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,21 @@ def _content_differs(current: ApiDocumentVersion, raw: bytes, parsed: ParsedSpec
         )
         return False
     return stored.content_hash != parsed.content_hash
+
+
+def _summarise_changes(current: ApiDocumentVersion, parsed: ParsedSpec, uploads_dir: str) -> dict[str, int] | None:
+    """The structural changes from the version being replaced to the new
+    spec, counted by severity (app/services/spec_diff.py), or None when they
+    cannot be worked out. Never raises: a spec the diff cannot make sense of,
+    or a stored file that is gone, must not turn a successful check into a
+    failed one - the version is recorded without a summary and the changes
+    page says it cannot compare."""
+    try:
+        previous = parse_spec(read_spec_file(uploads_dir, current.storage_path))
+        return diff_specs(previous.document, parsed.document).summary()
+    except Exception:
+        logger.exception("Cannot compare version %s (document %s) with the new spec", current.id, current.documentation_id)
+        return None
 
 
 async def process_new_spec(
@@ -126,6 +142,9 @@ async def process_new_spec(
         # current row archived with no new one to replace it.
         storage_path = save_spec_file(uploads_dir, doc.id, version_id, parsed.format, raw)
 
+        # Before the old row is archived: it is still the file being replaced.
+        change_summary = _summarise_changes(current, parsed, uploads_dir) if current is not None else None
+
         if current is not None:
             current.archived_at = now
 
@@ -139,6 +158,7 @@ async def process_new_spec(
             checksum=checksum,
             source=source,
             content_changed=content_changed,
+            change_summary=change_summary,
             archived_at=None,
         )
         db.add(new_version)

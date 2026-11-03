@@ -4,7 +4,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -53,6 +53,18 @@ class ApiDocumentSummary(BaseModel):
     current_version: str | None
 
 
+class ChangeSummaryOut(BaseModel):
+    """How many structural changes a version brought over the one it replaced,
+    by severity (app/services/spec_diff.py): breaking ones can make an
+    existing client fail, warnings may, info ones are safe. Null on a version
+    where there is nothing to say (a first version, or one recorded before
+    this existed or when the comparison failed)."""
+
+    breaking: int
+    warning: int
+    info: int
+
+
 class ApiDocumentCurrentVersion(BaseModel):
     """The current-version object nested in ApiDocumentDetail. Distinct from
     ApiDocumentVersionOut (the /versions list-item shape below): this one
@@ -66,6 +78,7 @@ class ApiDocumentCurrentVersion(BaseModel):
     fetched_at: datetime
     source: str
     content_changed: bool
+    change_summary: ChangeSummaryOut | None
 
 
 class ApiDocumentDetail(BaseModel):
@@ -124,3 +137,45 @@ class ApiDocumentVersionOut(BaseModel):
     archived_at: datetime | None
     source: str
     content_changed: bool
+    change_summary: ChangeSummaryOut | None
+
+
+class SpecChangeOut(BaseModel):
+    """One structural change (app/services/spec_diff.py's Change): kind names
+    what changed and the frontend words it, severity is "breaking", "warning"
+    or "info", method/path say which operation (null for none), scope is
+    "parameter", "request" or "response", status the response's status code,
+    media_type the body's, location where inside it ("query:limit",
+    "address.zip", "items[].id"), detail the few facts the wording needs."""
+
+    kind: str
+    severity: Literal["breaking", "warning", "info"]
+    method: str | None
+    path: str | None
+    scope: str | None
+    status: str | None
+    media_type: str | None
+    location: str
+    detail: dict[str, Any]
+
+
+class VersionRefOut(BaseModel):
+    id: uuid.UUID
+    version: str
+    fetched_at: datetime
+    content_changed: bool
+
+
+class VersionChangesOut(BaseModel):
+    """GET /api/api-docs/{id}/versions/{version_id}/changes: what differs
+    between `base` (the older side) and `target`, most severe first.
+    truncated is true when the list was cut off at the diff's limit - the
+    summary then counts only what was kept. An empty list means no
+    structural change: descriptions, examples and other documentation may
+    still differ."""
+
+    base: VersionRefOut
+    target: VersionRefOut
+    summary: ChangeSummaryOut
+    changes: list[SpecChangeOut]
+    truncated: bool

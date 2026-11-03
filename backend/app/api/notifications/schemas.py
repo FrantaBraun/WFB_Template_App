@@ -32,7 +32,10 @@ class NotificationOut(BaseModel):
     the foreign keys); "author_message" has message instead and leaves those
     three null. content_changed is true for a "new_version" entry whose
     version string did not change - the spec did (see
-    ApiDocumentVersion.content_changed); the UI words those differently."""
+    ApiDocumentVersion.content_changed); the UI words those differently.
+    breaking_changes is how many breaking changes that version brought over
+    the one it replaced (ApiDocumentVersion.change_summary), 0 when none or
+    unknown."""
 
     id: uuid.UUID
     kind: Literal["new_version", "author_message"]
@@ -40,6 +43,7 @@ class NotificationOut(BaseModel):
     document_title: str | None
     version: str | None
     content_changed: bool
+    breaking_changes: int
     message: NotificationMessageOut | None
     is_read: bool
     created_at: datetime
