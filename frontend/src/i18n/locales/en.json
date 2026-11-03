@@ -376,6 +376,8 @@
         "specTitle": "Spec title",
         "format": "Format",
         "fetchedAt": "Fetched",
+        "contentLabel": "Content",
+        "contentChanged": "Changed without a new version number",
         "none": "No version has been registered yet."
       },
       "actionsCard": {
@@ -388,6 +390,8 @@
       "editCard": {
         "title": "Edit",
         "isPublicLabel": "Publicly visible",
+        "detectContentChangesLabel": "Notice a changed specification even when its version number stays the same",
+        "detectContentChangesHint": "Turn this off for a specification that changes on every check, for example one that contains a build time.",
         "success": "Saved.",
         "error": "Failed to save changes."
       },
@@ -396,6 +400,8 @@
         "title": "Version history",
         "empty": "No versions yet.",
         "current": "current",
+        "contentChanged": "content changed",
+        "contentChangedTitle": "The specification changed without a new version number; the previous content is the entry below",
         "viewDocs": "Docs",
         "viewDocsTitle": "View the specification as Docs (Swagger UI)",
         "viewRedoc": "ReDoc",
@@ -415,6 +421,8 @@
       "newVersionLabel": "New version",
       "previousVersionLabel": "Previous version",
       "noNewVersion": "No new version was found.",
+      "contentChanged": "The specification changed, but its version number did not.",
+      "contentChangedHint": "What it said before is kept in the version history.",
       "currentVersionUnchanged": "The current version is still {{version}}.",
       "failureLead": "Could not find out whether there is a new version.",
       "reasonLabel": "Reason",
@@ -479,11 +487,13 @@
       "title": "Notifications",
       "empty": "No notifications yet.",
       "itemText": "New version {{version}}",
+      "contentChangedText": "Changed, still version {{version}}",
       "messageText": "Message from {{sender}} about {{title}}",
       "allMessages": "All messages"
     },
     "banner": {
       "text": "New version available: {{versions}}",
+      "contentChanged": "The specification changed without a new version number: {{versions}}",
       "dismiss": "Dismiss"
     },
     "subscribe": {

@@ -15,6 +15,7 @@ interface NotificationItemData {
   documentation_id: string
   document_title: string
   version: string
+  content_changed: boolean
   is_read: boolean
   created_at: string
 }
@@ -68,11 +69,16 @@ export default function VersionBanner({ documentationId }: { documentationId: st
 
   if (dismissed || items.length === 0) return null
 
-  const versions = items.map((item) => item.version).join(', ')
+  // Two kinds of news: a new version number, and the same number with different content.
+  const newVersions = items.filter((item) => !item.content_changed).map((item) => item.version).join(', ')
+  const changedVersions = items.filter((item) => item.content_changed).map((item) => item.version).join(', ')
 
   return (
     <div className="flex items-center justify-between gap-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
-      <p>{t('notifications.banner.text', { versions })}</p>
+      <div className="space-y-1">
+        {newVersions && <p>{t('notifications.banner.text', { versions: newVersions })}</p>}
+        {changedVersions && <p>{t('notifications.banner.contentChanged', { versions: changedVersions })}</p>}
+      </div>
       <button
         type="button"
         onClick={() => setDismissed(true)}

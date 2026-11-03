@@ -26,6 +26,7 @@ interface NotificationItemData {
   documentation_id: string | null
   document_title: string | null
   version: string | null
+  content_changed: boolean
   message: NotificationMessageData | null
   is_read: boolean
   created_at: string
@@ -188,7 +189,9 @@ export default function NotificationBell() {
                     >
                       <p className="font-medium text-slate-900 dark:text-slate-100">{item.document_title}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {t('notifications.bell.itemText', { version: item.version })}
+                        {t(item.content_changed ? 'notifications.bell.contentChangedText' : 'notifications.bell.itemText', {
+                          version: item.version,
+                        })}
                         {' · '}
                         {formatDateTime(item.created_at, i18n.language)}
                       </p>

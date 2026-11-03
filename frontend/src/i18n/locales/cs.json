@@ -376,6 +376,8 @@
         "specTitle": "Název specifikace",
         "format": "Formát",
         "fetchedAt": "Staženo",
+        "contentLabel": "Obsah",
+        "contentChanged": "Změněn bez nového čísla verze",
         "none": "Zatím nebyla zaregistrována žádná verze."
       },
       "actionsCard": {
@@ -388,6 +390,8 @@
       "editCard": {
         "title": "Úprava",
         "isPublicLabel": "Veřejně viditelné",
+        "detectContentChangesLabel": "Všímat si změny specifikace i při nezměněném čísle verze",
+        "detectContentChangesHint": "Vypněte u specifikace, která se mění při každé kontrole, třeba protože obsahuje čas sestavení.",
         "success": "Uloženo.",
         "error": "Uložení změn se nezdařilo."
       },
@@ -396,6 +400,8 @@
         "title": "Historie verzí",
         "empty": "Zatím žádné verze.",
         "current": "aktuální",
+        "contentChanged": "změněný obsah",
+        "contentChangedTitle": "Specifikace se změnila bez nového čísla verze; původní obsah je položka níže",
         "viewDocs": "Docs",
         "viewDocsTitle": "Zobrazit specifikaci v přehledu Docs (Swagger UI)",
         "viewRedoc": "ReDoc",
@@ -415,6 +421,8 @@
       "newVersionLabel": "Nová verze",
       "previousVersionLabel": "Předchozí verze",
       "noNewVersion": "Nová verze nebyla nalezena.",
+      "contentChanged": "Specifikace se změnila, ale číslo verze zůstalo stejné.",
+      "contentChangedHint": "Původní obsah zůstává v historii verzí.",
       "currentVersionUnchanged": "Aktuální verze zůstává {{version}}.",
       "failureLead": "Nepodařilo se zjistit, zda existuje nová verze.",
       "reasonLabel": "Důvod",
@@ -479,11 +487,13 @@
       "title": "Oznámení",
       "empty": "Zatím žádná oznámení.",
       "itemText": "Nová verze {{version}}",
+      "contentChangedText": "Změna obsahu, verze stále {{version}}",
       "messageText": "Zpráva od {{sender}} k „{{title}}“",
       "allMessages": "Všechny zprávy"
     },
     "banner": {
       "text": "Nová verze k dispozici: {{versions}}",
+      "contentChanged": "Specifikace se změnila bez nového čísla verze: {{versions}}",
       "dismiss": "Skrýt"
     },
     "subscribe": {

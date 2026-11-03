@@ -22,6 +22,7 @@ interface ApiDocumentCurrentVersionData {
   format: string
   fetched_at: string
   source: string
+  content_changed: boolean
 }
 
 interface ApiDocumentDetailData {
@@ -33,6 +34,7 @@ interface ApiDocumentDetailData {
   docs_url: string | null
   recheck_period: string
   is_public: boolean
+  detect_content_changes: boolean
   last_checked_at: string | null
   last_check_error: string | null
   created_at: string
@@ -45,6 +47,7 @@ interface ApiDocumentDetailData {
 /** What POST .../recheck and .../upload-version answer: the document plus what the check found. */
 interface ApiDocumentCheckResultData extends ApiDocumentDetailData {
   new_version_found: boolean
+  content_changed: boolean
   previous_version: string | null
 }
 
@@ -55,15 +58,25 @@ interface ApiDocumentVersionOutData {
   fetched_at: string
   archived_at: string | null
   source: string
+  content_changed: boolean
 }
 
 type RecheckPeriod = 'manual' | 'daily' | 'weekly' | 'monthly'
 const RECHECK_PERIODS: RecheckPeriod[] = ['manual', 'daily', 'weekly', 'monthly']
 type Message = { type: 'success' | 'error'; text: string } | null
 
-/** `version` is the document's current version once the check has finished - the new one when `newVersionFound`. */
+/**
+ * `version` is the document's current version once the check has finished - the new one when `newVersionFound`.
+ * `contentChanged` is the other kind of news: the same version number, different content.
+ */
 type CheckDialogState =
-  | { kind: 'success'; newVersionFound: boolean; version: string | null; previousVersion: string | null }
+  | {
+      kind: 'success'
+      newVersionFound: boolean
+      contentChanged: boolean
+      version: string | null
+      previousVersion: string | null
+    }
   | { kind: 'failure'; reason: string | null }
 
 function formatDateTime(iso: string, locale: string): string {
@@ -77,8 +90,18 @@ function formatDateTime(iso: string, locale: string): string {
 }
 
 /** Separates the plain document from the check outcome the recheck/upload endpoints add to it. */
-function splitCheckResult({ new_version_found, previous_version, ...detail }: ApiDocumentCheckResultData) {
-  return { detail, newVersionFound: new_version_found, previousVersion: previous_version }
+function splitCheckResult({
+  new_version_found,
+  content_changed,
+  previous_version,
+  ...detail
+}: ApiDocumentCheckResultData) {
+  return {
+    detail,
+    newVersionFound: new_version_found,
+    contentChanged: content_changed,
+    previousVersion: previous_version,
+  }
 }
 
 function CheckResultBody({ result }: { result: CheckDialogState }) {
@@ -93,6 +116,16 @@ function CheckResultBody({ result }: { result: CheckDialogState }) {
           {t('apiDocs.checkDialog.reasonLabel')}: {result.reason ?? t('apiDocs.checkDialog.unknownReason')}
         </p>
         <p>{t('apiDocs.checkDialog.failureHint')}</p>
+      </>
+    )
+  }
+
+  if (result.contentChanged) {
+    return (
+      <>
+        <p className={emphasis}>{t('apiDocs.checkDialog.contentChanged')}</p>
+        {result.version && <p>{t('apiDocs.checkDialog.currentVersionUnchanged', { version: result.version })}</p>}
+        <p>{t('apiDocs.checkDialog.contentChangedHint')}</p>
       </>
     )
   }
@@ -150,6 +183,7 @@ export default function ApiDocDetail() {
   const [editSourceUrl, setEditSourceUrl] = useState('')
   const [editDocsUrl, setEditDocsUrl] = useState('')
   const [editIsPublic, setEditIsPublic] = useState(false)
+  const [editDetectContentChanges, setEditDetectContentChanges] = useState(true)
   const [editSaving, setEditSaving] = useState(false)
   const [editMessage, setEditMessage] = useState<Message>(null)
 
@@ -203,6 +237,7 @@ export default function ApiDocDetail() {
         setEditSourceUrl(data.source_url ?? '')
         setEditDocsUrl(data.docs_url ?? '')
         setEditIsPublic(data.is_public)
+        setEditDetectContentChanges(data.detect_content_changes)
       })
       .catch(() => {
         if (!cancelled) setLoadError(t('apiDocs.detail.loadError'))
@@ -243,6 +278,7 @@ export default function ApiDocDetail() {
           source_url: editSourceUrl || null,
           docs_url: editDocsUrl || null,
           is_public: editIsPublic,
+          detect_content_changes: editDetectContentChanges,
         }),
       })
       if (!resp.ok) {
@@ -277,14 +313,15 @@ export default function ApiDocDetail() {
         refreshDoc().catch(() => {})
         return
       }
-      const { detail, newVersionFound, previousVersion } = splitCheckResult(await resp.json())
+      const { detail, newVersionFound, contentChanged, previousVersion } = splitCheckResult(await resp.json())
       setDoc(detail)
       // The notification this created (for the user too, as a team member) must reach the header bell now.
-      if (newVersionFound) requestNotificationsRefresh()
+      if (newVersionFound || contentChanged) requestNotificationsRefresh()
       refreshVersions().catch(() => {})
       setCheckDialog({
         kind: 'success',
         newVersionFound,
+        contentChanged,
         version: detail.current_version?.version ?? null,
         previousVersion,
       })
@@ -313,9 +350,9 @@ export default function ApiDocDetail() {
         const body = await resp.json().catch(() => ({}))
         throw new Error(typeof body.detail === 'string' ? body.detail : t('apiDocs.detail.uploadVersionError'))
       }
-      const { detail, newVersionFound } = splitCheckResult(await resp.json())
+      const { detail, newVersionFound, contentChanged } = splitCheckResult(await resp.json())
       setDoc(detail)
-      if (newVersionFound) requestNotificationsRefresh()
+      if (newVersionFound || contentChanged) requestNotificationsRefresh()
       setVersionFile(null)
       await refreshVersions()
     } catch (err) {
@@ -465,6 +502,12 @@ export default function ApiDocDetail() {
             <dd className="text-slate-900 dark:text-slate-100">{doc.current_version.format}</dd>
             <dt className="text-slate-500 dark:text-slate-400">{t('apiDocs.detail.currentVersionCard.fetchedAt')}</dt>
             <dd className="text-slate-900 dark:text-slate-100">{formatDateTime(doc.current_version.fetched_at, i18n.language)}</dd>
+            {doc.current_version.content_changed && (
+              <>
+                <dt className="text-slate-500 dark:text-slate-400">{t('apiDocs.detail.currentVersionCard.contentLabel')}</dt>
+                <dd className="text-amber-700 dark:text-amber-300">{t('apiDocs.detail.currentVersionCard.contentChanged')}</dd>
+              </>
+            )}
           </dl>
         ) : (
           <p className="text-sm text-slate-600 dark:text-slate-400">{t('apiDocs.detail.currentVersionCard.none')}</p>
@@ -650,6 +693,21 @@ export default function ApiDocDetail() {
               {t('apiDocs.detail.editCard.isPublicLabel')}
             </label>
 
+            <div>
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={editDetectContentChanges}
+                  onChange={(e) => setEditDetectContentChanges(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 dark:border-slate-700"
+                />
+                {t('apiDocs.detail.editCard.detectContentChangesLabel')}
+              </label>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {t('apiDocs.detail.editCard.detectContentChangesHint')}
+              </p>
+            </div>
+
             {editMessage && (
               <p
                 className={`text-sm ${
@@ -701,6 +759,14 @@ export default function ApiDocDetail() {
                     {version.archived_at === null && (
                       <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                         {t('apiDocs.detail.versionsCard.current')}
+                      </span>
+                    )}
+                    {version.content_changed && (
+                      <span
+                        title={t('apiDocs.detail.versionsCard.contentChangedTitle')}
+                        className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                      >
+                        {t('apiDocs.detail.versionsCard.contentChanged')}
                       </span>
                     )}
                   </p>
