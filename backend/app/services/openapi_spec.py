@@ -2,8 +2,9 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
+import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import httpx
 import yaml
@@ -17,9 +18,39 @@ class SpecValidationError(Exception):
 
 @dataclass
 class ParsedSpec:
+    """content_hash is a fingerprint of what the spec says, not of its bytes
+    (see _content_hash) - it is left out of ==, so it never matters to a
+    caller that only compares version / title / format."""
+
     version: str
     title: str | None
     format: str
+    content_hash: str = field(default="", compare=False)
+
+
+def _canonical(value: object) -> object:
+    """The parsed document with every mapping key as a string, so it can be
+    serialised with sorted keys: YAML happily produces integer keys (a bare
+    `200:` response code) that json.dumps(sort_keys=True) cannot sort next to
+    string ones, while the same spec in JSON has them as strings anyway."""
+    if isinstance(value, dict):
+        return {str(key): _canonical(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_canonical(item) for item in value]
+    return value
+
+
+def _content_hash(parsed: object) -> str:
+    """SHA-256 of the spec's content with keys sorted and no insignificant
+    whitespace, so reformatting, reordering the keys of an object or sending
+    the same spec as YAML instead of JSON gives the same value, while any
+    change to a value, a list's order or a key does not. Used to tell a
+    spec that changed from one that was only re-serialised, which a hash of
+    the raw bytes (ApiDocumentVersion.checksum) cannot."""
+    canonical = json.dumps(
+        _canonical(parsed), sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def parse_spec(raw: bytes) -> ParsedSpec:
@@ -60,7 +91,7 @@ def parse_spec(raw: bytes) -> ParsedSpec:
     if not isinstance(title, str):
         title = None
 
-    return ParsedSpec(version=version, title=title, format=format)
+    return ParsedSpec(version=version, title=title, format=format, content_hash=_content_hash(parsed))
 
 
 async def fetch_spec_from_url(url: str, timeout: float) -> bytes:

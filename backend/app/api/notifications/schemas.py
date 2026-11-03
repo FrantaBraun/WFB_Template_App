@@ -30,13 +30,16 @@ class NotificationOut(BaseModel):
     ApiDocument/ApiDocumentVersion to populate them, since a bell dropdown or
     notification list needs to display something human-readable, not just
     the foreign keys); "author_message" has message instead and leaves those
-    three null."""
+    three null. content_changed is true for a "new_version" entry whose
+    version string did not change - the spec did (see
+    ApiDocumentVersion.content_changed); the UI words those differently."""
 
     id: uuid.UUID
     kind: Literal["new_version", "author_message"]
     documentation_id: uuid.UUID | None
     document_title: str | None
     version: str | None
+    content_changed: bool
     message: NotificationMessageOut | None
     is_read: bool
     created_at: datetime

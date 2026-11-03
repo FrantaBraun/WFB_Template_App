@@ -3,6 +3,7 @@
 # Freely available as a template for building custom applications.
 
 import hashlib
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -13,8 +14,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import Settings
 from app.models.api_document import ApiDocument, ApiDocumentVersion
 from app.services.notifications import notify_new_version
-from app.services.openapi_spec import SpecValidationError, fetch_spec_from_url, parse_spec
-from app.services.spec_storage import save_spec_file
+from app.services.openapi_spec import ParsedSpec, SpecValidationError, fetch_spec_from_url, parse_spec
+from app.services.spec_storage import read_spec_file, save_spec_file
+
+logger = logging.getLogger(__name__)
 
 
 async def get_current_version(db: AsyncSession, documentation_id: uuid.UUID) -> ApiDocumentVersion | None:
@@ -32,6 +35,31 @@ async def get_current_version(db: AsyncSession, documentation_id: uuid.UUID) -> 
     return result.scalar_one_or_none()
 
 
+def _content_differs(current: ApiDocumentVersion, raw: bytes, parsed: ParsedSpec, uploads_dir: str) -> bool:
+    """Whether raw says something different from the stored current version,
+    both having the same info.version. Identical bytes are the cheap answer
+    (the usual case, no parsing); otherwise the stored file is parsed again
+    and the two content hashes compared (ParsedSpec.content_hash), so a spec
+    that was merely reformatted, reordered or served as YAML instead of JSON
+    is not a change. Computed from the stored file rather than kept in a
+    column so versions archived before this check existed compare the same
+    way. A stored file that cannot be read or parsed (gone from disk) means
+    there is nothing to compare with: logged, and not a change."""
+    if hashlib.sha256(raw).hexdigest() == current.checksum:
+        return False
+    try:
+        stored = parse_spec(read_spec_file(uploads_dir, current.storage_path))
+    except (OSError, SpecValidationError):
+        logger.warning(
+            "Cannot compare the content of version %s (document %s) with the stored file %s",
+            current.id,
+            current.documentation_id,
+            current.storage_path,
+        )
+        return False
+    return stored.content_hash != parsed.content_hash
+
+
 async def process_new_spec(
     doc: ApiDocument,
     raw: bytes,
@@ -42,9 +70,17 @@ async def process_new_spec(
 ) -> ApiDocumentVersion | None:
     """Turn newly-fetched-or-uploaded spec bytes into the document's version
     history: parse raw, compare info.version against the current row (if
-    any). Same version -> no-op (only last_checked_at moves), returns None.
-    Different version (or no current row yet) -> archive the old current
-    row, persist the file, insert the new current row, returns it.
+    any). Same version and the same content -> no-op (only last_checked_at
+    moves), returns None. Different version (or no current row yet) ->
+    archive the old current row, persist the file, insert the new current
+    row, returns it.
+
+    Same version but different content (the vendor changed the spec without
+    bumping info.version) is treated like a new version when
+    doc.detect_content_changes is on: the old row is archived, the new one
+    inserted with content_changed=True, so what the spec said before is not
+    lost. "Different" means the parsed content, not the bytes - see
+    _content_differs.
 
     Reused unchanged by create-by-URL/-upload, manual recheck, manual
     re-upload and (a later phase's) scheduled recheck - source is the only
@@ -52,9 +88,9 @@ async def process_new_spec(
 
     On an actual new/changed version, notify_new_version
     (app/services/notifications.py) is called before returning - never on
-    the same-version no-op path above, and never on a failure path below,
-    since those don't reach this point. notify_new_version never raises, so
-    it can't turn this call's own success into a failure.
+    the no-op path above, and never on a failure path below, since those
+    don't reach this point. notify_new_version never raises, so it can't
+    turn this call's own success into a failure.
 
     On any failure (oversized content, parse_spec, or save_spec_file once a
     new version is actually needed) doc.last_check_error is set to a short
@@ -72,11 +108,16 @@ async def process_new_spec(
         current = await get_current_version(db, doc.id)
         now = datetime.now(timezone.utc)
 
+        content_changed = False
         if current is not None and current.version == parsed.version:
-            doc.last_checked_at = now
-            doc.last_check_error = None
-            await db.commit()
-            return None
+            content_changed = doc.detect_content_changes and _content_differs(
+                current, raw, parsed, uploads_dir
+            )
+            if not content_changed:
+                doc.last_checked_at = now
+                doc.last_check_error = None
+                await db.commit()
+                return None
 
         checksum = hashlib.sha256(raw).hexdigest()
         version_id = uuid.uuid4()
@@ -97,6 +138,7 @@ async def process_new_spec(
             storage_path=storage_path,
             checksum=checksum,
             source=source,
+            content_changed=content_changed,
             archived_at=None,
         )
         db.add(new_version)

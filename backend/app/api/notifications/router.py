@@ -76,7 +76,7 @@ async def list_notifications(
     unread_count = await db.scalar(unread_count_stmt) or 0
 
     items_stmt = (
-        select(Notification, ApiDocument.title, ApiDocumentVersion.version)
+        select(Notification, ApiDocument.title, ApiDocumentVersion.version, ApiDocumentVersion.content_changed)
         .outerjoin(ApiDocument, ApiDocument.id == Notification.documentation_id)
         .outerjoin(ApiDocumentVersion, ApiDocumentVersion.id == Notification.version_id)
         .where(Notification.user_id == current_user.id)
@@ -90,7 +90,7 @@ async def list_notifications(
         items_stmt = items_stmt.where(Notification.is_read.is_(not unread))
 
     rows = (await db.execute(items_stmt)).all()
-    messages = await _load_messages(db, [n.message_id for n, _, _ in rows if n.message_id is not None])
+    messages = await _load_messages(db, [n.message_id for n, _, _, _ in rows if n.message_id is not None])
     items = [
         NotificationOut(
             id=notification.id,
@@ -98,11 +98,12 @@ async def list_notifications(
             documentation_id=notification.documentation_id,
             document_title=title,
             version=version,
+            content_changed=bool(content_changed),
             message=messages.get(notification.message_id),
             is_read=notification.is_read,
             created_at=notification.created_at,
         )
-        for notification, title, version in rows
+        for notification, title, version, content_changed in rows
     ]
     return NotificationListOut(items=items, unread_count=unread_count)
 

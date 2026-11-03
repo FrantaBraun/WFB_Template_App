@@ -110,6 +110,7 @@ async def _build_detail(
             format=current.format,
             fetched_at=current.fetched_at,
             source=current.source,
+            content_changed=current.content_changed,
         )
         if current is not None
         else None
@@ -127,6 +128,7 @@ async def _build_detail(
         docs_url=doc.docs_url,
         recheck_period=doc.recheck_period,
         is_public=doc.is_public,
+        detect_content_changes=doc.detect_content_changes,
         last_checked_at=doc.last_checked_at,
         last_check_error=doc.last_check_error,
         created_at=doc.created_at,
@@ -162,8 +164,12 @@ async def _build_check_result(
     new_version: ApiDocumentVersion | None,
 ) -> ApiDocumentCheckResult:
     detail = await _build_detail(db, doc, can_edit=True, current_user=current_user)
+    content_changed = new_version is not None and new_version.content_changed
     return ApiDocumentCheckResult(
-        **detail.model_dump(), new_version_found=new_version is not None, previous_version=previous_version
+        **detail.model_dump(),
+        new_version_found=new_version is not None and not content_changed,
+        content_changed=content_changed,
+        previous_version=previous_version,
     )
 
 
@@ -469,6 +475,7 @@ async def list_document_versions(
             fetched_at=v.fetched_at,
             archived_at=v.archived_at,
             source=v.source,
+            content_changed=v.content_changed,
         )
         for v in result.scalars().all()
     ]

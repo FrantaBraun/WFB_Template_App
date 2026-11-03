@@ -32,6 +32,14 @@ class ApiDocument(Base):
     docs_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     recheck_period: Mapped[str] = mapped_column(String(20), nullable=False, default="manual")
     is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Whether a check that finds the same info.version but different content
+    # archives the old version and records a new one marked content_changed
+    # (see app/services/api_document_versions.py). On by default; a spec that
+    # embeds something volatile (a build time, random examples) would
+    # otherwise "change" on every check, so it can be switched off per document.
+    detect_content_changes: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=text("true")
+    )
     last_checked_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -80,6 +88,12 @@ class ApiDocumentVersion(Base):
     storage_path: Mapped[str] = mapped_column(String(500), nullable=False)
     checksum: Mapped[str] = mapped_column(String(64), nullable=False)
     source: Mapped[str] = mapped_column(String(20), nullable=False)
+    # True when this row replaced a version with the SAME version string
+    # whose content was different - the vendor changed the spec without
+    # bumping info.version. The replaced row stays in the history, archived.
+    content_changed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

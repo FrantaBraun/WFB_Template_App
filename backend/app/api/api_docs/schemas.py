@@ -32,6 +32,8 @@ class ApiDocumentUpdate(BaseModel):
     notes: str | None = None
     recheck_period: RecheckPeriod | None = None
     is_public: bool | None = None
+    # Not nullable (the column is NOT NULL): an explicit null is a 422.
+    detect_content_changes: bool = True
     source_url: str | None = Field(default=None, max_length=2048)
     docs_url: str | None = Field(default=None, max_length=2048)
 
@@ -63,6 +65,7 @@ class ApiDocumentCurrentVersion(BaseModel):
     format: str
     fetched_at: datetime
     source: str
+    content_changed: bool
 
 
 class ApiDocumentDetail(BaseModel):
@@ -81,6 +84,7 @@ class ApiDocumentDetail(BaseModel):
     docs_url: str | None
     recheck_period: str
     is_public: bool
+    detect_content_changes: bool
     last_checked_at: datetime | None
     last_check_error: str | None
     created_at: datetime
@@ -95,11 +99,16 @@ class ApiDocumentCheckResult(ApiDocumentDetail):
     document as ApiDocumentDetail, plus what this particular call did - so the
     UI can say so instead of leaving the user to compare versions by eye.
     new_version_found is true only when this call archived the old current
-    version and created a new one (an unchanged info.version is false, and a
-    failed check never gets here - it is an HTTP error). previous_version is
-    the current version's string before the call, null if there was none yet."""
+    version and created a new one with a DIFFERENT info.version (an unchanged
+    info.version is false, and a failed check never gets here - it is an HTTP
+    error). content_changed is true when the call found the same info.version
+    with different content and recorded it as a new row (see
+    ApiDocument.detect_content_changes); it is never true together with
+    new_version_found. previous_version is the current version's string
+    before the call, null if there was none yet."""
 
     new_version_found: bool
+    content_changed: bool
     previous_version: str | None
 
 
@@ -114,3 +123,4 @@ class ApiDocumentVersionOut(BaseModel):
     fetched_at: datetime
     archived_at: datetime | None
     source: str
+    content_changed: bool

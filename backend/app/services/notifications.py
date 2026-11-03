@@ -87,10 +87,21 @@ async def notify_new_version(
         # already made in app/api/teams/router.py's create_invitation); a
         # per-recipient send loop is a one-line change later if that's ever
         # undesirable.
+        if version.content_changed:
+            # Same version number, different content: say so, or the mail
+            # would announce a "new version" that looks identical to the old one.
+            subject = f"{doc.title} changed without a new version number ({version.version})"
+            body = (
+                f"The specification of {doc.title} has changed, but its version is still {version.version}.\n\n"
+                f"What it said before is kept in the version history.\n\nView it here: {link}"
+            )
+        else:
+            subject = f"New version of {doc.title}: {version.version}"
+            body = f"{doc.title} has a new version available: {version.version}.\n\nView it here: {link}"
         await send_email(
-            subject=f"New version of {doc.title}: {version.version}",
+            subject=subject,
             recipients=recipient_emails,
-            body=f"{doc.title} has a new version available: {version.version}.\n\nView it here: {link}",
+            body=body,
             settings=resolved_settings,
         )
     except Exception:
