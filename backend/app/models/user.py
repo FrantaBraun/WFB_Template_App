@@ -18,7 +18,7 @@ class User(Base):
     Identity fields (name, role, ...) are owned by the auth service and read
     fresh from the JWT / GET /api/auth/me, never duplicated here - this model
     otherwise only holds the link (auth_sub) plus data genuinely local to
-    this app. `email` is a deliberate, narrow exception to that rule: API Hub
+    this app. `email` is a deliberate, narrow exception to that rule: ApiVerCon
     needs to bulk-email team members/subscribers and the auth service exposes
     no user directory / lookup-by-id for other users, so it's cached here and
     kept fresh from the JWT's email claim on every get_current_user resolve

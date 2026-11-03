@@ -14,7 +14,7 @@ from app.models.base import Base
 
 
 class Team(Base):
-    """Owns everything else in API Hub (documents, collections,
+    """Owns everything else in ApiVerCon (documents, collections,
     integrations, ...) - see CLAUDE.md's domain model."""
 
     __tablename__ = "teams"

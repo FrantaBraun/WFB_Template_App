@@ -81,7 +81,8 @@ export default function usePageMeta({
   const defaultDescription = t('meta.description')
 
   useEffect(() => {
-    const fullTitle = title ? `${title} — ${brand}` : brand
+    // A title that already carries the name (the home page's full name) is not suffixed again.
+    const fullTitle = !title ? brand : title.includes(brand) ? title : `${title} — ${brand}`
     const text = description || defaultDescription
     const url = `${window.location.origin}${pathname}`
 

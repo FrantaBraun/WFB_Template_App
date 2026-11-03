@@ -5,7 +5,7 @@
  */
 
 import { useState, type FormEvent } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import usePageMeta from '../hooks/usePageMeta'
@@ -156,6 +156,16 @@ export default function Register() {
           {loading ? t('register.submitting') : t('register.submit')}
         </button>
       </form>
+
+      <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+        <Trans
+          i18nKey="register.legalNotice"
+          components={{
+            terms: <Link to="/terms" className="underline" />,
+            privacy: <Link to="/privacy" className="underline" />,
+          }}
+        />
+      </p>
 
       <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
         {t('register.haveAccount')}{' '}

@@ -1,6 +1,6 @@
-# API Hub
+# ApiVerCon - Api Version Control System
 
-Aplikace pro evidenci API dokumentací s historickými verzemi a odkazy na dokumentace třetích stran. Import OpenAPI/Swagger dokumentace ze souboru nebo z odkazu.
+**ApiVerCon** (Api Version Control System) je aplikace pro evidenci API dokumentací s historickými verzemi a odkazy na dokumentace třetích stran. Import OpenAPI/Swagger dokumentace ze souboru nebo z odkazu.
 
 This repository doesn't ship a single app — it hosts a shared core plus one branch per application, so improvements to the shared foundation are made once and carried into every app instead of being duplicated per app.
 

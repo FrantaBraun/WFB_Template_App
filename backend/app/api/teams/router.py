@@ -203,9 +203,9 @@ async def create_invitation(
     invite_link = f"{settings.frontend_url}/teams/invitations/{invitation.token}"
     try:
         await send_email(
-            subject="You've been invited to join a team on API Hub",
+            subject="You've been invited to join a team on ApiVerCon",
             recipients=[invitation.email],
-            body=f"You've been invited to join a team on API Hub. Accept your invitation: {invite_link}",
+            body=f"You've been invited to join a team on ApiVerCon. Accept your invitation: {invite_link}",
             settings=settings,
         )
     except Exception as exc:

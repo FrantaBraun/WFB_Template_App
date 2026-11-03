@@ -6,18 +6,22 @@
 
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { LEGAL_PATHS } from './LegalShell'
 import { useEnabledModules } from '../modules/registry'
 
 /**
  * Sitewide footer, styled after the one on withfbraun.com - a border-topped,
  * centered, muted credit line. Rendered by Layout below every page's content.
- * Enabled modules' footerLinks (e.g. legal pages) render as a link row above
- * the credit line; the footer resolves enabled modules itself (the hook is
+ * The About, Terms and Privacy pages are linked from every page, followed by
+ * enabled modules' footerLinks, as one link row above the credit line; the footer resolves enabled modules itself (the hook is
  * cached) so Layout doesn't have to thread them through.
  */
 export default function Footer() {
   const { t } = useTranslation()
-  const footerLinks = useEnabledModules().flatMap((module) => module.footerLinks ?? [])
+  const footerLinks = [
+    ...(Object.keys(LEGAL_PATHS) as (keyof typeof LEGAL_PATHS)[]).map((key) => ({ to: LEGAL_PATHS[key], labelKey: `legal:nav.${key}` })),
+    ...useEnabledModules().flatMap((module) => module.footerLinks ?? []),
+  ]
 
   return (
     <footer className="border-t border-slate-200 px-6 py-8 text-center text-sm text-slate-400 dark:border-slate-800 dark:text-slate-500">

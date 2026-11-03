@@ -310,7 +310,7 @@ async def test_the_test_message_is_sent_signed_and_recorded(db_session, make_acc
 
     assert resp.status_code == 200 and resp.json() == {"ok": True, "status_code": 200, "error": None}
     request_sent = route.calls.last.request
-    assert request_sent.headers["x-apihub-event"] == "ping" and request_sent.headers["x-apihub-signature"].startswith("sha256=")
+    assert request_sent.headers["x-apivercon-event"] == "ping" and request_sent.headers["x-apivercon-signature"].startswith("sha256=")
     listed = (await request(db_session, "GET", _path(team), token=tokens["owner"])).json()[0]
     assert (listed["last_status"], listed["last_error"], listed["consecutive_failures"]) == ("ok", None, 0)
     assert listed["last_attempt_at"] is not None

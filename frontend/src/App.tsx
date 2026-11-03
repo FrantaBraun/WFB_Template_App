@@ -30,6 +30,9 @@ import NewApiDoc from "./pages/NewApiDoc"
 import ApiDocDetail from "./pages/ApiDocDetail"
 import VersionChanges from "./pages/VersionChanges"
 import EndpointSearch from "./pages/EndpointSearch"
+import About from "./pages/About"
+import Terms from "./pages/Terms"
+import Privacy from "./pages/Privacy"
 import Collections from "./pages/Collections"
 import CollectionDetail from "./pages/CollectionDetail"
 import CollectionKnowledgeBase from "./pages/CollectionKnowledgeBase"
@@ -92,6 +95,9 @@ function App() {
       <Route path="/consent" element={<Consent />} />
       <Route path="/consent-rejected" element={<ConsentRejected />} />
       {/* Publicly accessible, hidden from regular nav */}
+      <Route path="/about" element={<About />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route path="/version" element={<Version />} />
       <Route path="/release-news" element={<ReleaseNews />} />
       {/* Enabled feature modules (see src/modules/) contribute their own routes here */}

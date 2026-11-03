@@ -202,11 +202,11 @@ async def test_a_generic_delivery_is_signed_and_carries_the_event():
     assert json.loads(request.content) == event
     assert request.headers["host"] == "hooks.example.com"
     assert request.headers["content-type"] == "application/json"
-    assert request.headers["x-apihub-event"] == "document.version_created"
-    assert request.headers["x-apihub-delivery"] == event["delivery_id"]
-    timestamp = request.headers["x-apihub-timestamp"]
+    assert request.headers["x-apivercon-event"] == "document.version_created"
+    assert request.headers["x-apivercon-delivery"] == event["delivery_id"]
+    timestamp = request.headers["x-apivercon-timestamp"]
     expected = hmac.new(SECRET.encode(), timestamp.encode() + b"." + request.content, hashlib.sha256).hexdigest()
-    assert request.headers["x-apihub-signature"] == f"sha256={expected}"
+    assert request.headers["x-apivercon-signature"] == f"sha256={expected}"
 
 
 @respx.mock
@@ -218,7 +218,7 @@ async def test_a_slack_delivery_is_just_the_message_and_signs_nothing():
     assert result.ok is True
     request = route.calls.last.request
     assert set(json.loads(request.content)) == {"text"}
-    assert not [name for name in request.headers if name.lower().startswith("x-apihub")]
+    assert not [name for name in request.headers if name.lower().startswith("x-apivercon")]
 
 
 @pytest.mark.parametrize(

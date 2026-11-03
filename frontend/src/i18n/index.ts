@@ -9,6 +9,8 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
 import cs from './locales/cs.json'
 import en from './locales/en.json'
+import legalCs from './locales/legal.cs.json'
+import legalEn from './locales/legal.en.json'
 
 /** Single source of truth for which languages this app ships resources for - also used by Layout.tsx's switcher and applyUserLanguage below. */
 export const SUPPORTED_LANGUAGES = ['cs', 'en'] as const
@@ -17,9 +19,12 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
+    // `legal` holds the long texts of the About, Terms and Privacy pages, apart from the
+    // rest because they are whole documents; the provider's details are filled in at
+    // runtime from public/legal.json (see config/legal.ts).
     resources: {
-      cs: { translation: cs },
-      en: { translation: en },
+      cs: { translation: cs, legal: legalCs },
+      en: { translation: en, legal: legalEn },
     },
     // cs is the fallback (not the more conventional en) since this template
     // originates from a Czech-first product; supportedLngs pins detection to

@@ -100,7 +100,7 @@ def build_ping_event() -> dict:
         "event": EVENT_PING,
         "delivery_id": str(uuid.uuid4()),
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "message": "A test message from API Hub - your webhook works.",
+        "message": "A test message from ApiVerCon - your webhook works.",
     }
 
 
@@ -136,17 +136,17 @@ def sign(secret: str, timestamp: str, body: bytes) -> str:
 
 
 def _request_for(webhook: TeamWebhook, event: dict) -> tuple[bytes, dict[str, str]]:
-    headers = {"Content-Type": "application/json", "User-Agent": "API-Hub-Webhook/1.0"}
+    headers = {"Content-Type": "application/json", "User-Agent": "ApiVerCon-Webhook/1.0"}
     if webhook.kind == "slack":
         return json.dumps(slack_message(event), ensure_ascii=False).encode(), headers
     body = json.dumps(event, separators=(",", ":"), ensure_ascii=False).encode()
     timestamp = str(int(time.time()))
     headers.update(
         {
-            "X-ApiHub-Event": event["event"],
-            "X-ApiHub-Delivery": event["delivery_id"],
-            "X-ApiHub-Timestamp": timestamp,
-            "X-ApiHub-Signature": f"sha256={sign(webhook.secret or '', timestamp, body)}",
+            "X-ApiVerCon-Event": event["event"],
+            "X-ApiVerCon-Delivery": event["delivery_id"],
+            "X-ApiVerCon-Timestamp": timestamp,
+            "X-ApiVerCon-Signature": f"sha256={sign(webhook.secret or '', timestamp, body)}",
         }
     )
     return body, headers

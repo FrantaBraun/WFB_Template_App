@@ -14,5 +14,6 @@
   "dpoEmail": "",
   "effectiveFrom": "",
   "gdpr": true,
+  "logRetentionDays": 5,
   "extraStorage": []
 }

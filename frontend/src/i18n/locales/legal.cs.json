@@ -1,0 +1,390 @@
+{
+  "loading": "Načítání…",
+  "notConfigured": "Údaje o provozovateli nejsou vyplněné (název, adresa a e-mail v souboru public/legal.json). Dokud je neuvedete, nejsou tyto stránky úplné.",
+  "effectiveFrom": "Platné od {{effectiveFrom}}",
+  "nav": {
+    "about": "O aplikaci",
+    "terms": "Podmínky použití",
+    "privacy": "Soukromí"
+  },
+  "provider": {
+    "heading": "Kdo {{app}} provozuje",
+    "fields": {
+      "name": "Provozovatel",
+      "ico": "IČO",
+      "dic": "DIČ",
+      "address": "Sídlo / adresa",
+      "registration": "Zápis v rejstříku",
+      "email": "E-mail",
+      "phone": "Telefon"
+    }
+  },
+  "about": {
+    "title": "O aplikaci {{app}}",
+    "pageDescription": "{{fullName}}: evidence dokumentací API třetích stran s historií všech verzí, porovnáním změn, upozorněními a vyhledáváním endpointů.",
+    "sections": [
+      {
+        "title": "Co je {{app}}",
+        "paragraphs": [
+          "{{fullName}} je webová aplikace pro evidenci dokumentací API třetích stran – s historií všech jejich verzí. Dokumentaci zaregistrujete (odkazem na specifikaci, nebo nahráním souboru), {{app}} ji pak sám hlídá, každou novou verzi archivuje a řekne vám, co se v ní změnilo a jestli se vás to týká.",
+          "Název vznikl ze slov „API Version Control“: stejně jako verzovací systém u zdrojového kódu uchovává historii změn, uchovává {{app}} historii dokumentace rozhraní, na kterých stavíte, ale která vám nepatří a která může kdykoli zmizet nebo se změnit."
+        ]
+      },
+      {
+        "title": "Podporované formáty",
+        "paragraphs": [
+          "Dokumentace může být v jednom z těchto formátů; který to je, se pozná podle obsahu:"
+        ],
+        "items": [
+          "OpenAPI / Swagger (JSON nebo YAML) – k prohlížení slouží Swagger UI a ReDoc,",
+          "AsyncAPI 2.x a 3.x,",
+          "kolekce Postman (v2.0 a v2.1),",
+          "GraphQL schéma (soubor SDL, nebo JSON, který vrací introspekční dotaz)."
+        ]
+      },
+      {
+        "title": "Verze, archiv a kontroly",
+        "items": [
+          "Dokumentaci založíte odkazem na specifikaci, nebo nahráním souboru; odkaz lze doplnit i později a zapojit ji tak do automatické kontroly.",
+          "U dokumentace z odkazu nastavíte kontrolu denně, týdně nebo měsíčně, případně ji spustíte ručně. Nahrání nové verze souboru se chová stejně jako kontrola.",
+          "Každá nová verze se uloží a stará se archivuje – k historii se vrátíte, i když původní dokumentace už oficiálně dostupná není.",
+          "Změní-li dodavatel obsah specifikace a číslo verze nechá stejné, {{app}} to pozná, uloží obě podoby a změnu označí (u dokumentace lze tuto kontrolu vypnout).",
+          "GraphQL schéma a většina kolekcí Postman číslo verze nemá, proto dostanou verzi odvozenou ze struktury (např. rev-1a2b3c4d): změní-li se typy, pole nebo požadavky, vznikne nová verze, kdežto změna samotného popisu je jen změna obsahu."
+        ]
+      },
+      {
+        "title": "Co se změnilo – a jak moc to bolí",
+        "paragraphs": [
+          "U každé nové verze se spočítá porovnání s předchozí. Změny se dělí na nekompatibilní (breaking), potenciálně rizikové a neškodné, a to z pohledu toho, kdo API používá: co klient posílá (zpřísnění) a co přijímá (zmizelé pole) se posuzuje zvlášť. Každý formát má vlastní pravidla – OpenAPI, AsyncAPI, Postman i GraphQL.",
+          "Počty změn jsou vidět v historii verzí, v e-mailech i v notifikacích; podrobný seznam je na stránce „Změny“ u každé verze.",
+          "Porovnání je strukturální (operace, parametry, typy, zprávy, pole…). Změna popisu nebo příkladu se za změnu struktury nepovažuje. Je to pomůcka, nikoli záruka úplnosti – viz Podmínky použití."
+        ]
+      },
+      {
+        "title": "Hledání endpointů",
+        "paragraphs": [
+          "Stránka Hledání endpointů prohledá aktuální verze všech dokumentací, které smíte vidět (veřejné a z vašich týmů) – podle cesty, názvu, metody, popisu nebo tagů, bez ohledu na diakritiku a velikost písmen. Výsledky lze zúžit podle metody a druhu dokumentu."
+        ]
+      },
+      {
+        "title": "Týmy, kolekce a integrace",
+        "items": [
+          "Dokumentace, kolekce i integrace patří týmu. Členové týmu je upravují, ostatní k soukromému obsahu nemají přístup.",
+          "Autor může dokumentaci nebo kolekci zveřejnit: prohlížet ji pak smí kdokoli, upravovat jen vlastnící tým. Přihlášený uživatel se může u veřejné dokumentace přihlásit k odběru novinek.",
+          "Kolekce sdružuje související dokumentace (třeba mikroslužby jednoho týmu nebo konkurenční poskytovatele téže služby).",
+          "Integrace spojí kolekce a samostatné dokumentace do jednoho pohledu pro konkrétní projekt. U každé její dokumentace lze připnout verzi, na které je integrace postavená – aplikace pak říká, o kolik verzí je pozadu a co se od té doby změnilo.",
+          "Ke kolekci i integraci lze vést znalostní bázi s vlastními poznámkami, postupy a návody (integrace obsahuje i znalostní báze svých kolekcí).",
+          "Autorovi veřejné dokumentace nebo kolekce můžete napsat; autor si příjem zpráv může vypnout."
+        ]
+      },
+      {
+        "title": "Upozornění a napojení",
+        "paragraphs": [
+          "O nové verzi se dozví každý, koho se týká: členové týmu vlastníka, odběratelé veřejné dokumentace a členové týmů, jejichž integrace dokumentaci používá – i když se k odběru nepřihlásili."
+        ],
+        "items": [
+          "e-mail (s počtem nekompatibilních změn),",
+          "notifikace pod ikonou zvonečku v záhlaví,",
+          "banner přímo na stránce dokumentace,",
+          "volitelně zpráva do Slacku nebo na vlastní adresu týmu (webhook) – podepsaná HMAC-SHA256 a podle volby jen o nekompatibilních změnách."
+        ]
+      },
+      {
+        "title": "Co {{app}} zatím neumí",
+        "items": [
+          "Porovnání významu změn pomocí AI modelu je plánované budoucí rozšíření; zatím se neimplementuje.",
+          "GraphQL schéma nelze získat introspekcí živého endpointu – jen ze souboru (SDL, nebo výsledek introspekce), nahraného nebo dostupného na odkazu.",
+          "Odkazy na adresy uvnitř soukromých sítí se z bezpečnostních důvodů nestahují a přesměrování se nesledují."
+        ]
+      }
+    ],
+    "closingSections": [
+      {
+        "title": "Verze a novinky",
+        "paragraphs": [
+          "Čísla verzí aplikace a seznam novinek jsou na stránkách /version a /release-news."
+        ]
+      },
+      {
+        "title": "Kontakt",
+        "paragraphs": [
+          "Dotazy k provozu aplikace a k ochraně údajů pište na {{email}}."
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "title": "Podmínky použití",
+    "pageDescription": "Podmínky použití služby {{fullName}}: účet, obsah a oprávnění, pravidla používání, odpovědnost a ukončení.",
+    "sections": [
+      {
+        "title": "1. Úvodní ustanovení",
+        "paragraphs": [
+          "Tyto podmínky upravují používání webové služby {{fullName}} (dále „služba“ nebo „{{app}}“), kterou provozuje {{name}}, IČO: {{ico}}, se sídlem / adresou {{address}} (dále „provozovatel“). Kontakt: {{email}}.",
+          "Službu začnete používat registrací nebo prvním přihlášením. Tím potvrzujete, že jste se s těmito podmínkami seznámili a souhlasíte s nimi. Pokud nesouhlasíte, službu nepoužívejte.",
+          "Informace o zpracování osobních údajů jsou na stránce Soukromí, popis funkcí na stránce O aplikaci."
+        ]
+      },
+      {
+        "title": "2. Popis a cena služby",
+        "paragraphs": [
+          "{{app}} slouží k evidenci dokumentací API (OpenAPI/Swagger, AsyncAPI, kolekce Postman, GraphQL schémata) včetně archivu jejich verzí, porovnání změn, upozornění a vyhledávání endpointů. Popis aktuálních funkcí je na stránce O aplikaci a může se vyvíjet.",
+          "Služba je poskytována bez poplatku, dokud provozovatel nestanoví jinak. Případné placené funkce zavede provozovatel jen po předchozím oznámení a podle čl. 12; na již používané funkce se to bez vašeho souhlasu nevztáhne."
+        ]
+      },
+      {
+        "title": "3. Uživatelský účet",
+        "items": [
+          "Přihlášení zajišťuje samostatná autorizační služba provozovatele. Registrací se zakládá jeden účet pro jednu osobu; údaje, které uvedete, musí být pravdivé a aktuální.",
+          "Přihlašovací údaje chraňte a nesdílejte je. Za činnost pod svým účtem odpovídáte; o podezření na zneužití účtu nás neprodleně informujte."
+        ]
+      },
+      {
+        "title": "4. Týmy, obsah a oprávnění",
+        "items": [
+          "Dokumentace, kolekce a integrace patří týmu. Vlastník týmu spravuje členy a nastavení týmu; členové upravují obsah týmu. Do týmu můžete být pozváni e-mailem.",
+          "Obsah, který do služby vložíte (odkazy na dokumentace, nahrané soubory a jejich archivované verze, poznámky, stránky znalostní báze, názvy a popisy), zůstává váš, respektive vašeho týmu. Provozovateli udělujete nevýhradní právo jej po dobu používání služby ukládat, archivovat, zpracovávat a zobrazovat osobám, kterým jej zpřístupníte (členům týmu, u veřejného obsahu komukoli).",
+          "Dokumentace třetích stran, kterou do služby vložíte, zůstává majetkem svých autorů. Odpovídáte za to, že ji smíte stáhnout, uložit a sdílet způsobem, jakým to ve službě děláte, a že dodržujete licenční a užívací podmínky jejích vlastníků. Archiv slouží jako vaše interní pomůcka, není to oficiální kopie ani náhrada originálu.",
+          "Veřejný obsah může vidět každý. Pokud dokumentaci nebo kolekci označíte jako veřejnou, zobrazí se u ní vaše zobrazované jméno (přezdívka, jinak uživatelské jméno) a název týmu; e-mail ani skutečné jméno se nezveřejňují."
+        ]
+      },
+      {
+        "title": "5. Pravidla používání",
+        "paragraphs": [
+          "Při používání služby nesmíte zejména:"
+        ],
+        "items": [
+          "vkládat obsah, který je protiprávní, porušuje práva třetích osob nebo obsahuje škodlivý kód,",
+          "obcházet omezení přístupu, pokoušet se získat přístup k cizím týmům či účtům nebo zjišťovat existenci soukromého obsahu,",
+          "používat stahování specifikací z odkazů nebo webhooky k průzkumu sítí, k zahlcování cizích serverů nebo k odesílání dat na adresy, které neovládáte nebo na které nemáte právo posílat; automatické kontroly nastavujte s rozumnou periodou,",
+          "zatěžovat službu automatizovaným hromadným přístupem, hromadnou registrací nebo zasíláním nevyžádaných zpráv autorům (počet zpráv autorům je omezen),",
+          "vydávat se za jinou osobu nebo uvádět zavádějící údaje."
+        ]
+      },
+      {
+        "title": "6. Upozornění, porovnání změn a hledání",
+        "paragraphs": [
+          "Automatické kontroly, porovnání verzí (včetně rozdělení změn na nekompatibilní, rizikové a neškodné), upozornění a výsledky hledání jsou informativní pomůcky. Nelze zaručit, že odhalí každou změnu nebo že ji ohodnotí správně; porovnání je strukturální a popisy či příklady nezahrnuje. Před nasazením změn do provozu vždy ověřte skutečnou dokumentaci poskytovatele API.",
+          "Doručení e-mailů a zpráv do Slacku nebo na adresu webhooku závisí i na službách třetích stran a nelze je zaručit."
+        ]
+      },
+      {
+        "title": "7. Dostupnost a změny služby",
+        "paragraphs": [
+          "Služba je poskytována „tak, jak je“, bez záruky nepřetržité dostupnosti. Provozovatel může službu z technických důvodů omezit, přerušit, upravit nebo funkce změnit či zrušit. Důležité soubory si proto ponechte i u sebe; zálohu uloženého obsahu provozovatel jako službu neslibuje."
+        ]
+      },
+      {
+        "title": "8. Odpovědnost",
+        "paragraphs": [
+          "Provozovatel odpovídá za škodu jen v rozsahu, který zákon nevylučuje. Neodpovídá zejména za obsah dokumentací třetích stran, za rozhodnutí učiněná na základě výsledků porovnání, upozornění nebo hledání, za nepřímé škody, ušlý zisk ani za ztrátu dat způsobenou okolnostmi, které nemohl ovlivnit.",
+          "Tím nejsou dotčena práva, která vám přiznávají právní předpisy a která nelze smlouvou vyloučit, zejména práva spotřebitele a odpovědnost za škodu způsobenou úmyslně, z hrubé nedbalosti nebo na zdraví."
+        ]
+      },
+      {
+        "title": "9. Ukončení",
+        "paragraphs": [
+          "Používání služby můžete kdykoli ukončit; obsah svého týmu můžete smazat (smazáním dokumentace se odstraní i její archivované verze a soubory). O smazání účtu a údajů požádejte provozovatele na {{email}}.",
+          "Provozovatel může účet pozastavit nebo zrušit, pokud porušíte tyto podmínky nebo služba či jiní uživatelé hrozí újma; podle okolností vás předem upozorní."
+        ]
+      },
+      {
+        "title": "10. Ochrana osobních údajů",
+        "paragraphs": [
+          "Jak zpracováváme osobní údaje, jak je zabezpečujeme, kdo k nim má přístup a co ukládáme ve vašem prohlížeči, popisuje stránka Soukromí."
+        ]
+      },
+      {
+        "title": "11. Autorská práva ke službě",
+        "paragraphs": [
+          "Služba, její vzhled a software jsou chráněny autorským právem. Bez předchozího souhlasu provozovatele je nesmíte kopírovat ani šířit mimo rozsah, který vyplývá z běžného používání služby."
+        ]
+      },
+      {
+        "title": "12. Změny podmínek",
+        "paragraphs": [
+          "Podmínky může provozovatel změnit; aktuální znění je vždy na této stránce včetně data, od kterého platí. O podstatné změně vás informuje předem e-mailem nebo ve službě. Nesouhlasíte-li s ní, můžete používání služby ukončit podle čl. 9."
+        ]
+      },
+      {
+        "title": "13. Závěrečná ustanovení",
+        "paragraphs": [
+          "Vztah se řídí právním řádem České republiky. Případné právo spotřebitele na ochranu podle právních předpisů státu jeho obvyklého bydliště tím není dotčeno.",
+          "Spotřebitel má právo na mimosoudní řešení sporu; subjektem je Česká obchodní inspekce (www.coi.cz).",
+          "Kontakt pro dotazy a stížnosti: {{email}}."
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "title": "Soukromí a zabezpečení",
+    "pageDescription": "Jaké údaje {{app}} zpracovává, jak je zabezpečuje, kdo k nim má přístup, co ukládá ve vašem prohlížeči (cookies) a jaká máte práva.",
+    "sections": [
+      {
+        "title": "Kdo údaje zpracovává",
+        "paragraphs": [
+          "Správcem osobních údajů je {{name}}, IČO: {{ico}}, {{address}} (dále „provozovatel“). Kontakt: {{email}}.",
+          "{{app}} je nástroj pro evidenci dokumentací API; neprodáváme údaje a neprovozujeme reklamu ani sledování."
+        ]
+      },
+      {
+        "title": "Jaké údaje zpracováváme",
+        "items": [
+          "Účet: přihlašovací údaje a profil (e-mail, uživatelské jméno, jméno a příjmení, jazyk, případně další údaje, které vyplníte) spravuje samostatná autorizační služba provozovatele; hesla spravuje jen ona. {{app}} si ukládá jen identifikátor účtu, e-mail (kvůli upozorněním a pozvánkám), uživatelské jméno, volitelnou přezdívku a nastavení (např. zda přijímáte zprávy od uživatelů).",
+          "Obsah: názvy, poznámky a odkazy dokumentací, nahrané soubory specifikací a jejich archivované verze, kolekce, integrace, stránky znalostní báze, odběry a připnuté verze.",
+          "Týmy: členství a role, pozvánky (e-mail pozvaného, jednorázový odkaz, platnost).",
+          "Komunikace: notifikace v aplikaci, zprávy autorům (text, odesílatel, příjemce, čas) a e-maily, které aplikace odesílá; zprávy z kontaktního formuláře (jméno, e-mail, text).",
+          "Napojení týmu: adresa Slacku nebo webhooku a podpisové tajemství, stav posledního doručení.",
+          "Technické záznamy: provozní logy serveru (čas, adresa požadavku, IP adresa, chyby) a běžné přístupové záznamy webového serveru. Logy aplikace se uchovávají po dobu {{logDays}} dní."
+        ]
+      },
+      {
+        "title": "Komu údaje předáváme",
+        "paragraphs": [
+          "Údaje předáváme jen těm, kteří je k provozu potřebují, a jen v nezbytném rozsahu:"
+        ],
+        "items": [
+          "poskytovatelé infrastruktury provozovatele (server, e-mailové služby),",
+          "Google – jen když se přihlásíte tlačítkem „Pokračovat přes Google“,",
+          "Slack nebo adresa webhooku – jen když je váš tým nastaví a jen s údaji o nové verzi dokumentace (název, verze, počty změn a názvy integrací vašeho týmu),",
+          "poskytovatelé API, jejichž specifikaci odkazem sledujete – jejich server vidí požadavek z IP adresy našeho serveru, nikoli vaši,",
+          "služby YouTube a Vimeo – jen když stránka znalostní báze obsahuje vložené video; váš prohlížeč pak kontaktuje danou službu."
+        ]
+      },
+      {
+        "title": "Zabezpečení",
+        "items": [
+          "Spojení mezi prohlížečem a službou je šifrované (HTTPS), nešifrovaný přístup se přesměrovává na šifrovaný.",
+          "Hesla neukládáme ani nevidíme; přihlášení řeší autorizační služba. Přístupové tokeny ověřujeme podpisem (RS256) přímo na našem serveru.",
+          "Klíč, jímž se náš server prokazuje autorizační službě, je uložen jen na serveru a nikdy se neposílá do prohlížeče.",
+          "Každý požadavek se kontroluje na serveru: soukromý obsah vidí jen členové vlastnícího týmu a na cizí soukromý obsah server odpoví jako na neexistující, takže se nedá zjistit, že existuje.",
+          "Názvy integrací jsou soukromé týmu: e-maily, notifikace i stránky dokumentací uvádějí jen integrace týmů příjemce.",
+          "Adresy Slacku a webhooků se v aplikaci zobrazují zamaskované, podpisové tajemství se ukáže jen jednou při vytvoření a každá zpráva webhooku je podepsaná (HMAC-SHA256 s časovou značkou).",
+          "Server stahuje specifikace a volá webhooky jen na veřejné internetové adresy, spojení naváže na ověřenou IP adresu, nesleduje přesměrování a omezuje velikost stahovaného souboru – tím brání zneužití k útokům na vnitřní síť.",
+          "Obsah znalostní báze se při ukládání čistí od nebezpečných prvků a cizí specifikace se zobrazují v omezeném (nedůvěryhodném) režimu; „vyzkoušet požadavek“ ve Swagger UI je vypnuté, takže prohlížeč z dokumentace neodesílá žádné požadavky na API.",
+          "Počet zpráv autorům je omezen, aby nešlo hromadně obtěžovat.",
+          "Žádné zabezpečení není absolutní. Dojde-li k porušení zabezpečení osobních údajů, oznámíme to, jak vyžaduje zákon."
+        ]
+      },
+      {
+        "title": "Kdo má k údajům přístup",
+        "items": [
+          "Vy: ke svému účtu a ke všemu, co váš tým vlastní.",
+          "Členové vašeho týmu: k obsahu týmu a v přehledu členů vidí e-mailové adresy členů téhož týmu.",
+          "Kdokoli: k veřejné dokumentaci a kolekcím, které autor zveřejnil – včetně zobrazovaného jména autora (přezdívka, jinak uživatelské jméno) a názvu týmu; nikdy ne e-mail ani skutečné jméno.",
+          "Autor, kterému napíšete: vaši zprávu; v e-mailu autorovi je vaše adresa jako adresa pro odpověď (aplikace na to před odesláním upozorňuje). Autor si příjem zpráv může vypnout.",
+          "Provozovatel: technický přístup k serveru a databázi mají jen osoby, které ho potřebují k provozu a podpoře."
+        ]
+      }
+    ],
+    "storage": {
+      "heading": "Cookies a úložiště prohlížeče",
+      "intro": [
+        {
+          "title": "Používáme jen technické úložiště",
+          "paragraphs": [
+            "Aplikace nenastavuje žádné cookies. Používá výhradně místní úložiště prohlížeče (localStorage a sessionStorage), a to jen k tomu, aby fungovala: udržuje přihlášení a pamatuje si zvolený jazyk a vzhled.",
+            "Nepoužíváme analytické, marketingové ani reklamní nástroje a nesledujeme vás napříč weby. Technické úložiště nevyžaduje souhlas (§ 89 odst. 3 zákona č. 127/2005 Sb., o elektronických komunikacích, a čl. 5 odst. 3 směrnice 2002/58/ES), proto se nezobrazuje lišta se souhlasem."
+          ]
+        }
+      ],
+      "columns": {
+        "name": "Název",
+        "kind": "Kde",
+        "purpose": "K čemu slouží",
+        "duration": "Jak dlouho"
+      },
+      "items": [
+        {
+          "name": "access_token",
+          "kind": "localStorage",
+          "purpose": "Krátkodobý přístupový token – udržuje vás přihlášené.",
+          "duration": "Do odhlášení (po vypršení se obnoví)"
+        },
+        {
+          "name": "refresh_token",
+          "kind": "localStorage",
+          "purpose": "Obnovení přihlášení bez zadávání hesla.",
+          "duration": "Do odhlášení"
+        },
+        {
+          "name": "i18nextLng",
+          "kind": "localStorage",
+          "purpose": "Zvolený jazyk rozhraní.",
+          "duration": "Dokud ho nesmažete"
+        },
+        {
+          "name": "dark_mode",
+          "kind": "localStorage",
+          "purpose": "Zvolený světlý nebo tmavý vzhled.",
+          "duration": "Dokud ho nesmažete"
+        },
+        {
+          "name": "pending_team_invitation_token",
+          "kind": "localStorage",
+          "purpose": "Pamatuje si odkaz pozvánky do týmu, dokud se nepřihlásíte.",
+          "duration": "Do přijetí pozvánky"
+        },
+        {
+          "name": "auth_return_to",
+          "kind": "sessionStorage",
+          "purpose": "Stránka, na kterou se po přihlášení vrátíte.",
+          "duration": "Jen v tomto panelu, nejvýše 30 minut"
+        }
+      ],
+      "closing": [
+        {
+          "title": "Jak úložiště smazat",
+          "paragraphs": [
+            "Uložené údaje smažete v nastavení prohlížeče (vymazání dat webu); odhlášením se přihlašovací tokeny smažou samy. Bez technického úložiště nebude web správně fungovat – například se nepůjde udržet přihlášení.",
+            "Přihlášení přes Google probíhá na stránkách Googlu, který tam používá vlastní cookies podle svých zásad."
+          ]
+        }
+      ]
+    },
+    "closingSections": [
+      {
+        "title": "Jak dlouho údaje uchováváme",
+        "items": [
+          "Údaje účtu po dobu, kdy účet existuje.",
+          "Obsah týmu do jeho smazání týmem; smazáním dokumentace se odstraní všechny její verze a uložené soubory.",
+          "Zprávy autorům a notifikace po dobu nezbytnou k provozu služby.",
+          "Logy aplikace po dobu {{logDays}} dní; přístupové záznamy webového serveru podle jeho nastavení.",
+          "Zprávy z kontaktního formuláře po dobu nezbytnou k jejich vyřízení."
+        ]
+      },
+      {
+        "title": "Smazání účtu a dotazy",
+        "paragraphs": [
+          "O smazání účtu a svých údajů, o jejich opravu nebo o výpis požádejte na {{email}}; vyřídíme je bez zbytečného odkladu."
+        ]
+      }
+    ],
+    "dpo": "Pověřenec pro ochranu osobních údajů: {{email}}.",
+    "gdprSections": [
+      {
+        "title": "Právní důvody zpracování",
+        "items": [
+          "plnění smlouvy – poskytování služby, kterou jste si zřídili účtem (čl. 6 odst. 1 písm. b) GDPR),",
+          "oprávněný zájem – zabezpečení služby, předcházení zneužití a oprava chyb, včetně provozních logů (čl. 6 odst. 1 písm. f) GDPR),",
+          "plnění právní povinnosti, pokud nám ji zákon ukládá (čl. 6 odst. 1 písm. c) GDPR),",
+          "souhlas, pokud o něj výslovně požádáme (čl. 6 odst. 1 písm. a) GDPR) – lze jej kdykoli odvolat."
+        ]
+      },
+      {
+        "title": "Vaše práva",
+        "paragraphs": [
+          "Máte právo na přístup k osobním údajům, na jejich opravu, výmaz, omezení zpracování, přenositelnost a právo vznést námitku proti zpracování založenému na oprávněném zájmu. Uplatnit je můžete na {{email}}.",
+          "Považujete-li zpracování za neoprávněné, můžete podat stížnost u Úřadu pro ochranu osobních údajů (www.uoou.gov.cz)."
+        ]
+      },
+      {
+        "title": "Předávání mimo EU a automatizovaná rozhodování",
+        "paragraphs": [
+          "Osobní údaje samy nepředáváme mimo Evropský hospodářský prostor. K předání může dojít jen vaší volbou – přihlášením přes Google nebo nastavením Slacku či webhooku v týmu, kdy se řídí zásadami dané služby.",
+          "Neprovádíme automatizované rozhodování ani profilování s právními účinky pro vás."
+        ]
+      }
+    ]
+  }
+}

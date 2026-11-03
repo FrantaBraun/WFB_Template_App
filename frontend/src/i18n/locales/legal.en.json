@@ -1,0 +1,390 @@
+{
+  "loading": "Loading…",
+  "notConfigured": "The provider details (name, address and e-mail in public/legal.json) have not been filled in. Until they are, these pages are incomplete.",
+  "effectiveFrom": "Effective from {{effectiveFrom}}",
+  "nav": {
+    "about": "About",
+    "terms": "Terms of use",
+    "privacy": "Privacy"
+  },
+  "provider": {
+    "heading": "Who runs {{app}}",
+    "fields": {
+      "name": "Provider",
+      "ico": "Company ID (IČO)",
+      "dic": "VAT ID (DIČ)",
+      "address": "Registered office / address",
+      "registration": "Registration",
+      "email": "E-mail",
+      "phone": "Phone"
+    }
+  },
+  "about": {
+    "title": "About {{app}}",
+    "pageDescription": "{{fullName}}: a register of third-party API documentation with the history of every version, change comparison, alerts and endpoint search.",
+    "sections": [
+      {
+        "title": "What {{app}} is",
+        "paragraphs": [
+          "{{fullName}} is a web application that keeps a register of third-party API documentation - with the history of all its versions. You register a documentation (by linking to the specification or uploading a file), and {{app}} watches it, archives every new version and tells you what changed in it and whether it concerns you.",
+          "The name comes from \"API Version Control\": the way a version control system keeps the history of source code, {{app}} keeps the history of the documentation of the interfaces you build on but do not own - and which can vanish or change at any time."
+        ]
+      },
+      {
+        "title": "Supported formats",
+        "paragraphs": [
+          "A documentation can be in any of these formats; which one it is, is recognised from its content:"
+        ],
+        "items": [
+          "OpenAPI / Swagger (JSON or YAML) - read in Swagger UI and ReDoc,",
+          "AsyncAPI 2.x and 3.x,",
+          "Postman collections (v2.0 and v2.1),",
+          "GraphQL schemas (an SDL file, or the JSON an introspection query returns)."
+        ]
+      },
+      {
+        "title": "Versions, archive and checks",
+        "items": [
+          "You register a documentation by linking to its specification or uploading a file; a link can be added later to bring it into the automatic checks.",
+          "For a documentation from a link you set a daily, weekly or monthly check, or run one by hand. Uploading a new version of the file behaves like a check.",
+          "Every new version is stored and the old one archived - you can look back even when the original documentation is no longer officially available.",
+          "If a vendor changes the content of a specification but keeps the version number, {{app}} notices, keeps both and flags the change (this check can be switched off per documentation).",
+          "A GraphQL schema and most Postman collections have no version number, so they get one derived from their structure (e.g. rev-1a2b3c4d): changed types, fields or requests make a new version, while a changed description alone is only a content change."
+        ]
+      },
+      {
+        "title": "What changed - and how much it hurts",
+        "paragraphs": [
+          "Every new version is compared with the one before it. Changes are sorted into breaking, potentially risky and harmless, from the point of view of whoever uses the API: what a client sends (tightening) and what it receives (a field that disappears) are judged separately. Every format has its own rules - OpenAPI, AsyncAPI, Postman and GraphQL.",
+          "The counts are shown in the version history, in e-mails and in notifications; the full list is on each version's \"Changes\" page.",
+          "The comparison is structural (operations, parameters, types, messages, fields…). A changed description or example is not a structural change. It is an aid, not a guarantee of completeness - see the Terms of use."
+        ]
+      },
+      {
+        "title": "Endpoint search",
+        "paragraphs": [
+          "The Endpoint search page searches the current version of every documentation you may see (public ones and those of your teams) - by path, name, method, description or tags, ignoring case and diacritics. Results can be narrowed by method and by kind of document."
+        ]
+      },
+      {
+        "title": "Teams, collections and integrations",
+        "items": [
+          "Documentation, collections and integrations belong to a team. Team members edit them; others have no access to private content.",
+          "An author can make a documentation or a collection public: anyone may then browse it, only the owning team can edit it. A signed-in user can subscribe to a public documentation's news.",
+          "A collection groups related documentation (say, one team's microservices or competing providers of the same service).",
+          "An integration combines collections and standalone documentation into one view for a particular project. For each of its documents you can pin the version the integration was built against - the app then tells you how many versions behind it is and what has changed since.",
+          "A collection or an integration can have a knowledge base of your own notes, procedures and how-tos (an integration also includes the knowledge bases of its collections).",
+          "You can write to the author of a public documentation or collection; authors can switch messages off."
+        ]
+      },
+      {
+        "title": "Alerts and connections",
+        "paragraphs": [
+          "Everyone a new version concerns is told: members of the owning team, subscribers of a public documentation and members of teams whose integration uses the documentation - even if they did not subscribe."
+        ],
+        "items": [
+          "an e-mail (with the number of breaking changes),",
+          "a notification under the bell icon in the header,",
+          "a banner right on the documentation's page,",
+          "optionally a message to Slack or to a team's own endpoint (a webhook) - signed with HMAC-SHA256 and, if you choose, only about breaking changes."
+        ]
+      },
+      {
+        "title": "What {{app}} cannot do yet",
+        "items": [
+          "Comparing the meaning of changes with an AI model is a planned extension; it is not implemented yet.",
+          "A GraphQL schema cannot be obtained by introspecting a live endpoint - only from a file (SDL, or an introspection result), uploaded or available at a link.",
+          "For security reasons, links to addresses inside private networks are not fetched and redirects are not followed."
+        ]
+      }
+    ],
+    "closingSections": [
+      {
+        "title": "Versions and news",
+        "paragraphs": [
+          "The version numbers of the application and the list of news are on the /version and /release-news pages."
+        ]
+      },
+      {
+        "title": "Contact",
+        "paragraphs": [
+          "Questions about the operation of the application and about personal data: {{email}}."
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "title": "Terms of use",
+    "pageDescription": "Terms of use of {{fullName}}: account, content and permissions, rules of use, liability and termination.",
+    "sections": [
+      {
+        "title": "1. Introduction",
+        "paragraphs": [
+          "These terms govern the use of the web service {{fullName}} (the \"service\" or \"{{app}}\"), operated by {{name}}, Company ID: {{ico}}, registered office / address {{address}} (the \"provider\"). Contact: {{email}}.",
+          "You start using the service by registering or signing in for the first time. By doing so you confirm that you have read these terms and agree to them. If you do not agree, do not use the service.",
+          "How personal data are processed is on the Privacy page, and what the service does is on the About page."
+        ]
+      },
+      {
+        "title": "2. The service and its price",
+        "paragraphs": [
+          "{{app}} serves to keep a register of API documentation (OpenAPI/Swagger, AsyncAPI, Postman collections, GraphQL schemas) with an archive of their versions, change comparison, alerts and endpoint search. The current functions are described on the About page and may evolve.",
+          "The service is provided free of charge unless the provider decides otherwise. Any paid functions will only be introduced after prior notice and under clause 12; functions you already use are not affected without your consent."
+        ]
+      },
+      {
+        "title": "3. User account",
+        "items": [
+          "Sign-in is provided by the provider's separate authorization service. Registration creates one account for one person; the details you give must be true and up to date.",
+          "Keep your credentials safe and do not share them. You are responsible for activity under your account; tell us without delay if you suspect it has been misused."
+        ]
+      },
+      {
+        "title": "4. Teams, content and permissions",
+        "items": [
+          "Documentation, collections and integrations belong to a team. A team owner manages the members and the team's settings; members edit the team's content. You can be invited to a team by e-mail.",
+          "The content you put in the service (links to documentation, uploaded files and their archived versions, notes, knowledge base pages, names and descriptions) remains yours, or your team's. You grant the provider a non-exclusive right to store, archive, process and display it, for as long as you use the service, to the people you make it available to (team members; anyone, for public content).",
+          "Third-party documentation you put in the service remains the property of its authors. You are responsible for being entitled to download, store and share it the way you do in the service, and for keeping to the licence and usage terms of its owners. The archive is your internal aid, not an official copy or a replacement for the original.",
+          "Public content can be seen by everyone. If you mark a documentation or a collection public, your display name (nickname, otherwise username) and the team's name are shown with it; your e-mail and real name are not published."
+        ]
+      },
+      {
+        "title": "5. Rules of use",
+        "paragraphs": [
+          "When using the service you must not, in particular:"
+        ],
+        "items": [
+          "put in content that is unlawful, infringes the rights of others or contains malicious code,",
+          "circumvent access restrictions, try to reach other teams' data or accounts, or probe whether private content exists,",
+          "use fetching specifications from links or webhooks to scan networks, flood other people's servers or send data to addresses you do not control or have no right to send to; set automatic checks to a reasonable period,",
+          "burden the service with automated mass access, mass registration or unsolicited messages to authors (the number of messages to authors is limited),",
+          "impersonate someone else or give misleading details."
+        ]
+      },
+      {
+        "title": "6. Alerts, change comparison and search",
+        "paragraphs": [
+          "Automatic checks, the comparison of versions (including sorting changes into breaking, risky and harmless), alerts and search results are informative aids. It cannot be guaranteed that they detect every change or rate it correctly; the comparison is structural and does not include descriptions or examples. Always check the API provider's actual documentation before putting changes into production.",
+          "The delivery of e-mails and of messages to Slack or a webhook address also depends on third-party services and cannot be guaranteed."
+        ]
+      },
+      {
+        "title": "7. Availability and changes to the service",
+        "paragraphs": [
+          "The service is provided \"as is\", without a guarantee of uninterrupted availability. The provider may, for technical reasons, restrict, interrupt or modify the service, or change or discontinue functions. Keep important files with you as well; the provider does not promise a backup of stored content as a service."
+        ]
+      },
+      {
+        "title": "8. Liability",
+        "paragraphs": [
+          "The provider is liable for damage only to the extent the law does not exclude. In particular it is not liable for the content of third-party documentation, for decisions made on the basis of comparison, alert or search results, for indirect damage, lost profit or loss of data caused by circumstances it could not influence.",
+          "This does not affect the rights that legal regulations give you and that cannot be excluded by contract, in particular consumer rights and liability for damage caused intentionally, by gross negligence or to health."
+        ]
+      },
+      {
+        "title": "9. Termination",
+        "paragraphs": [
+          "You can stop using the service at any time; you can delete your team's content (deleting a documentation also removes its archived versions and files). To have your account and data deleted, ask the provider at {{email}}.",
+          "The provider may suspend or close an account if you breach these terms or if you or the service threaten harm to the service or other users; depending on the circumstances it will warn you first."
+        ]
+      },
+      {
+        "title": "10. Personal data",
+        "paragraphs": [
+          "How we process personal data, how we secure it, who can access it and what we store in your browser is described on the Privacy page."
+        ]
+      },
+      {
+        "title": "11. Copyright in the service",
+        "paragraphs": [
+          "The service, its appearance and its software are protected by copyright. Without the provider's prior consent you may not copy or distribute them beyond what follows from normal use of the service."
+        ]
+      },
+      {
+        "title": "12. Changes to the terms",
+        "paragraphs": [
+          "The provider may change the terms; the current wording is always on this page, with the date from which it applies. It will tell you about a substantial change in advance by e-mail or in the service. If you do not agree with it, you can stop using the service under clause 9."
+        ]
+      },
+      {
+        "title": "13. Final provisions",
+        "paragraphs": [
+          "The relationship is governed by the law of the Czech Republic. Any right of a consumer to protection under the law of the state of their habitual residence is not affected.",
+          "A consumer has the right to out-of-court dispute resolution; the body is the Czech Trade Inspection Authority (www.coi.cz).",
+          "Contact for questions and complaints: {{email}}."
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "title": "Privacy and security",
+    "pageDescription": "What data {{app}} processes, how it secures them, who can access them, what it stores in your browser (cookies) and what rights you have.",
+    "sections": [
+      {
+        "title": "Who processes the data",
+        "paragraphs": [
+          "The controller of personal data is {{name}}, Company ID: {{ico}}, {{address}} (the \"provider\"). Contact: {{email}}.",
+          "{{app}} is a tool for keeping a register of API documentation; we do not sell data and we run no advertising or tracking."
+        ]
+      },
+      {
+        "title": "What data we process",
+        "items": [
+          "Account: sign-in details and profile (e-mail, username, first and last name, language, and anything else you fill in) are managed by the provider's separate authorization service; only it handles passwords. {{app}} stores just the account identifier, the e-mail (for alerts and invitations), the username, an optional nickname and settings (such as whether you accept messages from users).",
+          "Content: titles, notes and links of documentation, uploaded specification files and their archived versions, collections, integrations, knowledge base pages, subscriptions and pinned versions.",
+          "Teams: membership and roles, invitations (the invitee's e-mail, a one-time link, its expiry).",
+          "Communication: in-app notifications, messages to authors (text, sender, recipient, time) and the e-mails the application sends; messages from the contact form (name, e-mail, text).",
+          "A team's connections: the Slack or webhook address and signing secret, the status of the last delivery.",
+          "Technical records: the server's operating logs (time, request address, IP address, errors) and the web server's usual access records. Application logs are kept for {{logDays}} days."
+        ]
+      },
+      {
+        "title": "Who we share data with",
+        "paragraphs": [
+          "We share data only with those who need it to run the service, and only as far as necessary:"
+        ],
+        "items": [
+          "the providers of the provider's infrastructure (server, e-mail services),",
+          "Google - only when you sign in with \"Continue with Google\",",
+          "Slack or a webhook address - only when your team sets one up, and only with data about a new version of a documentation (name, version, change counts and the names of your team's integrations),",
+          "the providers of the APIs whose specification you track by link - their server sees a request from our server's IP address, not yours,",
+          "YouTube and Vimeo - only when a knowledge base page contains an embedded video; your browser then contacts that service."
+        ]
+      },
+      {
+        "title": "Security",
+        "items": [
+          "The connection between your browser and the service is encrypted (HTTPS); unencrypted access is redirected to the encrypted one.",
+          "We neither store nor see passwords; sign-in is handled by the authorization service. We verify access tokens by their signature (RS256) on our own server.",
+          "The key our server uses to identify itself to the authorization service is kept on the server only and is never sent to the browser.",
+          "Every request is checked on the server: private content is visible only to members of the owning team, and for someone else's private content the server answers as if it did not exist, so its existence cannot be found out.",
+          "The names of integrations are private to a team: e-mails, notifications and documentation pages mention only the recipient's own teams' integrations.",
+          "Slack and webhook addresses are shown masked in the application, the signing secret is shown only once when it is created, and every webhook message is signed (HMAC-SHA256 with a timestamp).",
+          "The server fetches specifications and calls webhooks only at public internet addresses, connects to a verified IP address, does not follow redirects and limits the size of what it downloads - which prevents it from being abused to attack an internal network.",
+          "Knowledge base content is cleaned of dangerous elements when saved and third-party specifications are displayed in a restricted (untrusted) mode; \"try it out\" in Swagger UI is switched off, so your browser sends no requests to the API from the documentation.",
+          "The number of messages to authors is limited so that nobody can be harassed in bulk.",
+          "No security is absolute. If personal data security is breached, we will report it as the law requires."
+        ]
+      },
+      {
+        "title": "Who can access the data",
+        "items": [
+          "You: your account and everything your team owns.",
+          "Members of your team: the team's content; the member list shows the e-mail addresses of members of the same team.",
+          "Anyone: public documentation and collections an author has published - including the author's display name (nickname, otherwise username) and the team's name; never an e-mail or a real name.",
+          "An author you write to: your message; in the e-mail to the author your address is the reply address (the application says so before you send). Authors can switch messages off.",
+          "The provider: technical access to the server and the database is limited to people who need it to operate and support the service."
+        ]
+      }
+    ],
+    "storage": {
+      "heading": "Cookies and browser storage",
+      "intro": [
+        {
+          "title": "We only use technical storage",
+          "paragraphs": [
+            "The application sets no cookies. It uses only the browser's local storage (localStorage and sessionStorage), and only to work: it keeps you signed in and remembers your chosen language and appearance.",
+            "We use no analytics, marketing or advertising tools and do not track you across websites. Technical storage does not require consent (Art. 5(3) of Directive 2002/58/EC and Section 89(3) of Czech Act No. 127/2005 Coll., on Electronic Communications), which is why no consent banner is shown."
+          ]
+        }
+      ],
+      "columns": {
+        "name": "Name",
+        "kind": "Where",
+        "purpose": "What it is for",
+        "duration": "How long"
+      },
+      "items": [
+        {
+          "name": "access_token",
+          "kind": "localStorage",
+          "purpose": "Short-lived access token - keeps you signed in.",
+          "duration": "Until you sign out (renewed when it expires)"
+        },
+        {
+          "name": "refresh_token",
+          "kind": "localStorage",
+          "purpose": "Renews your sign-in without asking for the password.",
+          "duration": "Until you sign out"
+        },
+        {
+          "name": "i18nextLng",
+          "kind": "localStorage",
+          "purpose": "The interface language you chose.",
+          "duration": "Until you delete it"
+        },
+        {
+          "name": "dark_mode",
+          "kind": "localStorage",
+          "purpose": "The light or dark appearance you chose.",
+          "duration": "Until you delete it"
+        },
+        {
+          "name": "pending_team_invitation_token",
+          "kind": "localStorage",
+          "purpose": "Remembers a team invitation link until you have signed in.",
+          "duration": "Until the invitation is accepted"
+        },
+        {
+          "name": "auth_return_to",
+          "kind": "sessionStorage",
+          "purpose": "The page you return to after signing in.",
+          "duration": "This tab only, at most 30 minutes"
+        }
+      ],
+      "closing": [
+        {
+          "title": "How to delete the storage",
+          "paragraphs": [
+            "You can delete stored data in your browser's settings (clear site data); signing out deletes the sign-in tokens by itself. Without technical storage the website will not work properly - for example you will not stay signed in.",
+            "Signing in with Google takes place on Google's pages, where Google uses its own cookies under its own policies."
+          ]
+        }
+      ]
+    },
+    "closingSections": [
+      {
+        "title": "How long we keep data",
+        "items": [
+          "Account data: for as long as the account exists.",
+          "A team's content: until the team deletes it; deleting a documentation removes all its versions and stored files.",
+          "Messages to authors and notifications: for as long as necessary to run the service.",
+          "Application logs: for {{logDays}} days; the web server's access records according to its settings.",
+          "Messages from the contact form: for as long as necessary to deal with them."
+        ]
+      },
+      {
+        "title": "Deleting your account and questions",
+        "paragraphs": [
+          "To have your account and data deleted, corrected or listed, write to {{email}}; we will deal with it without undue delay."
+        ]
+      }
+    ],
+    "dpo": "Data protection officer: {{email}}.",
+    "gdprSections": [
+      {
+        "title": "Legal bases of processing",
+        "items": [
+          "performance of a contract - providing the service you set up with your account (Art. 6(1)(b) GDPR),",
+          "legitimate interest - securing the service, preventing abuse and fixing errors, including operating logs (Art. 6(1)(f) GDPR),",
+          "compliance with a legal obligation where the law imposes one on us (Art. 6(1)(c) GDPR),",
+          "consent, where we expressly ask for it (Art. 6(1)(a) GDPR) - it can be withdrawn at any time."
+        ]
+      },
+      {
+        "title": "Your rights",
+        "paragraphs": [
+          "You have the right of access to your personal data, to rectification, erasure, restriction of processing and portability, and the right to object to processing based on legitimate interest. You can exercise them at {{email}}.",
+          "If you consider the processing unlawful, you can lodge a complaint with the Czech Office for Personal Data Protection (www.uoou.gov.cz)."
+        ]
+      },
+      {
+        "title": "Transfers outside the EU and automated decisions",
+        "paragraphs": [
+          "We do not ourselves transfer personal data outside the European Economic Area. A transfer can only happen by your choice - signing in with Google or setting up Slack or a webhook in a team - and is then governed by that service's policies.",
+          "We take no automated decisions and do no profiling with legal effects for you."
+        ]
+      }
+    ]
+  }
+}

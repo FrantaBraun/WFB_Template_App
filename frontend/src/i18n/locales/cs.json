@@ -1,6 +1,6 @@
 {
   "meta": {
-    "description": "API Hub – evidence API dokumentací s historickými verzemi a odkazy na dokumentace třetích stran."
+    "description": "ApiVerCon – Api Version Control System: evidence API dokumentací s historickými verzemi, porovnáním změn a odkazy na dokumentace třetích stran."
   },
   "common": {
     "save": "Uložit",
@@ -31,64 +31,131 @@
     }
   },
   "home": {
-    "pageTitle": "API Hub",
-    "pageDescription": "API Hub eviduje API dokumentaci třetích stran s historií verzí, automatickými kontrolami, kolekcemi, integracemi a znalostní bází pro váš tým.",
+    "pageTitle": "ApiVerCon - Api Version Control System",
+    "pageDescription": "ApiVerCon (Api Version Control System) eviduje API dokumentace třetích stran – OpenAPI, AsyncAPI, Postman i GraphQL – s archivem každé verze, rozpoznáním nekompatibilních změn, upozorněními pro váš tým a hledáním napříč všemi endpointy.",
     "hero": {
-      "title": "API Hub",
-      "tagline": "Přehledná evidence API dokumentace – s historií, upozorněními a týmovou spoluprací.",
-      "description": "Nahrajte OpenAPI/Swagger, AsyncAPI, Postman nebo GraphQL specifikaci ze souboru, nebo na ni jen odkažte – API Hub sám hlídá nové verze a archivuje každou z nich, takže se k nim můžete vrátit i poté, co originál zmizí. Dokumentace patří vašemu týmu, dá se sdružovat do kolekcí a integrací a doplnit o vlastní poznámky ve znalostní bázi.",
-      "ctaBrowse": "Prohlédnout API dokumentaci",
-      "ctaTeamsLoggedIn": "Spravovat své týmy",
-      "ctaTeamsLoggedOut": "Založit si účet"
+      "title": "ApiVerCon",
+      "fullName": "Api Version Control System",
+      "tagline": "Verzování pro API, na kterých stavíte, ale která vám nepatří – každá verze archivovaná, každá změna ohodnocená, celý tým upozorněný.",
+      "description": "Odkažte na specifikaci, nebo ji nahrajte – OpenAPI/Swagger, AsyncAPI, kolekci Postman nebo GraphQL schéma. ApiVerCon sám hlídá nové verze, každou archivuje, porovná s předchozí a řekne vašemu týmu, co se rozbilo. Dokumentace patří vašemu týmu, dá se sdružovat do kolekcí a integrací a doplnit o vlastní poznámky ve znalostní bázi.",
+      "ctaBrowse": "Procházet API dokumentaci",
+      "ctaTeamsLoggedIn": "Spravovat týmy",
+      "ctaTeamsLoggedOut": "Vytvořit účet",
+      "ctaAbout": "Co je ApiVerCon?"
+    },
+    "formats": {
+      "heading": "Jedna evidence pro každý druh API kontraktu",
+      "text": "Formát se pozná podle obsahu. Tam, kde formát číslo verze nemá, ho ApiVerCon odvodí ze struktury."
+    },
+    "howItWorks": {
+      "heading": "Jak to funguje",
+      "register": {
+        "title": "Zaregistrujete",
+        "text": "Odkážete na specifikaci, nebo nahrajete soubor. Odkaz lze doplnit i později a kontrolovat denně, týdně, měsíčně nebo na požádání."
+      },
+      "watch": {
+        "title": "Hlídá a archivuje",
+        "text": "Každá nová verze se uloží a stará se archivuje. Pozná i specifikaci, která se změnila bez nového čísla verze."
+      },
+      "compare": {
+        "title": "Porovná a upozorní",
+        "text": "Novou verzi porovná s předchozí: nekompatibilní, rizikové i neškodné změny spočítá a váš tým se to dozví e-mailem, zvonkem, bannerem, ve Slacku nebo přes webhook."
+      }
     },
     "features": {
-      "heading": "Co všechno API Hub nabízí",
-      "subheading": "Najeďte myší na kartu a zobrazí se víc podrobností.",
+      "heading": "Co všechno ApiVerCon nabízí",
+      "subheading": "Najeďte na kartu a uvidíte podrobnosti.",
       "registry": {
         "title": "Centrální evidence s historií verzí",
-        "summary": "Jedno místo pro API dokumentaci všech aplikací třetích stran – s archivem každé verze.",
-        "detail": "Dokumentaci založíte odkazem na OpenAPI/Swagger, AsyncAPI, Postman nebo GraphQL specifikaci, nebo nahrajete soubor JSON/YAML/GraphQL. Každá nová verze se archivuje, takže se k ní můžete vrátit, i když už oficiálně dostupná nebude."
+        "summary": "Jedno místo pro API dokumentaci každé aplikace třetí strany, se kterou pracujete – s archivem každé verze.",
+        "detail": "Dokumentaci založíte odkazem, nebo nahrajete soubor. Každá nová verze se archivuje, takže se k ní můžete vrátit, i když už oficiálně dostupná nebude."
+      },
+      "formats": {
+        "title": "OpenAPI, AsyncAPI, Postman, GraphQL",
+        "summary": "Nejen REST: plnohodnotně i událostní API, kolekce Postman a GraphQL schémata.",
+        "detail": "Každý formát se pozná sám. OpenAPI zobrazí Swagger UI a ReDoc, ostatní druhy se otevřou jako filtrovatelný seznam endpointů. GraphQL schémata a kolekce Postman dostanou verzi odvozenou ze struktury."
       },
       "notifications": {
-        "title": "Automatická kontrola a upozornění",
-        "summary": "Nastavte periodu kontroly a nechte si nové verze hlídat automaticky.",
-        "detail": "Denní, týdenní nebo měsíční kontrola porovná verzi ze specifikace a při změně založí novou verzi. O novince pošleme e-mail, in-app notifikaci i banner přímo na stránce dokumentace."
+        "title": "Automatické kontroly a upozornění",
+        "summary": "Nastavte periodu kontroly a nové verze se zachytí samy.",
+        "detail": "Denní, týdenní nebo měsíční kontrola porovná verzi specifikace a při změně založí novou. Pošleme e-mail, in-app notifikaci i banner přímo na stránce dokumentace."
+      },
+      "contentChanges": {
+        "title": "Tichá změna neunikne",
+        "summary": "Specifikace se změnila bez nového čísla verze? ApiVerCon to pozná a uchová obě.",
+        "detail": "Při stejné verzi se porovná obsah podle otisku, který ignoruje formátování i pořadí klíčů. Skutečná změna se stane novým záznamem označeným „změna obsahu“ a starý se archivuje. U specifikace, která se mění při každé kontrole, to lze vypnout."
+      },
+      "breakingChanges": {
+        "title": "Nekompatibilní změny na první pohled",
+        "summary": "Každá nová verze se porovná s předchozí a změny se ohodnotí.",
+        "detail": "Nekompatibilní, potenciálně rizikové a neškodné – z pohledu toho, kdo API používá: co klient posílá a co přijímá se posuzuje jinak. Počty vidíte v historii, v e-mailech i v notifikacích a stránka „Změny“ vypíše každou z nich ve vašem jazyce."
+      },
+      "endpointSearch": {
+        "title": "Hledání napříč všemi endpointy",
+        "summary": "Najděte kterýkoli endpoint v celé dokumentaci, kterou smíte vidět.",
+        "detail": "Hledejte podle cesty, názvu, metody, popisu nebo tagu – bez ohledu na diakritiku a velikost písmen. Zúžit lze podle metody nebo druhu dokumentu. Funguje pro operace REST, pole GraphQL, kanály AsyncAPI i požadavky Postman."
       },
       "collections": {
         "title": "Kolekce pro související API",
         "summary": "Seskupte dokumentace, které patří k sobě, do jedné sdílené kolekce.",
-        "detail": "Ať jde o sadu mikroslužeb, nebo konkurenční poskytovatele stejné služby – kolekce drží jejich dokumentaci pohromadě a nabízí i vlastní znalostní bázi."
+        "detail": "Ať jde o sadu mikroslužeb, nebo o konkurenční poskytovatele téže služby, kolekce drží jejich dokumentaci pohromadě – i s vlastní znalostní bází."
       },
       "integrations": {
-        "title": "Integrace napříč kolekcemi",
-        "summary": "Zkombinujte kolekce a samostatné dokumentace do jednoho pohledu pro konkrétní projekt.",
-        "detail": "Integrace může využívat celou kolekci a k tomu jednu či více samostatných dokumentací navíc – přesně podle toho, co daný projekt potřebuje. Její znalostní báze automaticky obsahuje i znalostní báze všech použitých kolekcí."
+        "title": "Integrace, které cítí každou změnu",
+        "summary": "Spojte kolekce a samostatné dokumentace do jednoho pohledu na projekt – a dozvíte se, když se kterákoli změní.",
+        "detail": "Integrace může využívat celou kolekci i samostatné dokumentace navíc. Členové jejího týmu se o změnách dozvědí, i když se k odběru nepřihlásili, a stránka integrace ukazuje, co která dokumentace změnila. Její znalostní báze obsahuje znalostní báze všech použitých kolekcí."
+      },
+      "pins": {
+        "title": "Připněte verzi, na které stavíte",
+        "summary": "Uvidíte, o kolik jste pozadu a co se mezitím změnilo.",
+        "detail": "Aktuální verzi dokumentace připnete jedním kliknutím, nebo vyberete starší z historie. Integrace pak řekne „Postaveno na 1.2.0“, kolik je novějších verzí a co se od té doby rozbilo."
       },
       "knowledgeBase": {
-        "title": "Znalostní báze týmu",
-        "summary": "Poznámky, postupy a návody přímo u dokumentace, kterou používáte.",
-        "detail": "Ke kolekci i integraci si vytvoříte vlastní stránky se zkušenostmi týmu. Úprava znalostní báze kolekce se promítne do všech integrací, které ji obsahují – nemusíte psát dvakrát to samé."
+        "title": "Znalostní báze pro váš tým",
+        "summary": "Poznámky, postupy a návody hned vedle dokumentací, které používáte.",
+        "detail": "K libovolné kolekci nebo integraci vytvoříte vlastní stránky týmového know-how. Úprava znalostní báze kolekce se promítne do každé integrace, která ji obsahuje – nemusíte psát totéž dvakrát."
       },
       "sharing": {
-        "title": "Sdílení v týmu i navenek",
-        "summary": "Dokumentace i kolekce od začátku patří týmu – a volitelně je uvidí i ostatní.",
-        "detail": "Autor může dokumentaci nebo kolekci označit jako veřejnou – kdokoliv v aplikaci si ji pak může prohlédnout a přihlásit se k odběru novinek, i bez členství v týmu."
+        "title": "Patří týmu, volitelně veřejné",
+        "summary": "Dokumentace i kolekce patří od začátku týmu – a lze je otevřít všem.",
+        "detail": "Autor může dokumentaci nebo kolekci zveřejnit, takže ji může procházet kdokoli v aplikaci, přihlásit se k odběru novinek i napsat autorovi – i bez členství ve vlastnícím týmu."
+      },
+      "webhooks": {
+        "title": "Slack a webhooky",
+        "summary": "Novinky o nových verzích tam, kde váš tým už pracuje.",
+        "detail": "Pošleme zprávu do Slacku nebo na vlastní adresu, když dokumentace, kterou tým vlastní nebo na které závisí, dostane novou verzi. Volání webhooku je podepsané HMAC-SHA256, lze ho omezit na nekompatibilní změny a vidíte, jak dopadlo poslední doručení."
       }
     },
     "examples": {
       "heading": "Jak to pomáhá v praxi",
       "microservices": {
-        "title": "Tým se sadou mikroslužeb",
-        "text": "API dokumentace pěti mikroslužeb se kontroluje týdně automaticky. Jakmile se u kterékoli z nich změní verze specifikace, dostane celý tým e-mail i notifikaci v aplikaci – nemusíte nic sledovat ručně."
+        "title": "Tým s několika mikroslužbami",
+        "text": "API dokumentace pěti mikroslužeb se každý týden samy zkontrolují. Ve chvíli, kdy kterákoli z nich zvýší verzi, dostane celý tým e-mail i in-app notifikaci – nikdo nemusí kontrolovat ručně."
       },
       "paymentProviders": {
-        "title": "Srovnání poskytovatelů plateb",
-        "text": "Dokumentaci tří platebních bran přidáte do jedné kolekce „Platby“. Kdokoliv v týmu ji pak najde na jednom místě, místo hledání odkazů v chatu nebo starých poznámkách."
+        "title": "Srovnání platebních bran",
+        "text": "Dokumentaci tří platebních bran přidáte do jedné kolekce „Platby“. Kdokoli v týmu je pak najde na jednom místě, místo aby hledal odkazy v chatu nebo ve starých poznámkách."
       },
       "integrationScoped": {
-        "title": "Nová funkce, přesně vymezená integrace",
-        "text": "Pro novou funkci vytvoříte integraci jen z API, na kterých skutečně závisí – jedna kolekce a k tomu jedna samostatná dokumentace navíc. Do znalostní báze integrace přidáte poznámky týmu k limitům a specifikům autentizace."
+        "title": "Nová funkce, přesně vymezená",
+        "text": "Pro novou funkci vytvoříte integraci přesně z těch API, na kterých závisí – jedna kolekce a jedna samostatná dokumentace navíc. Poznámky týmu k limitům požadavků a zvláštnostem přihlašování doplníte rovnou do znalostní báze integrace."
+      },
+      "breakingBeforeDeploy": {
+        "title": "Nekompatibilní změna zachycená před vydáním",
+        "text": "Poskytovatel plateb zveřejní novou verzi specifikace. Ještě před dalším nasazením vám e-mail z ApiVerCon řekne „1 nekompatibilní změna“ – do požadavku přibylo povinné pole – a stránka Změny ukáže přesnou operaci."
+      },
+      "pinnedVersion": {
+        "title": "Víte, o kolik jste pozadu",
+        "text": "Vaše integrace je připnutá na verzi 2.3. Jediný pohled na její stránku ukáže, že poskytovatel je o dvě verze dál a co se mezitím změnilo – upgrade si naplánujete, místo abyste na něj přišli až v provozu."
+      },
+      "findEndpoint": {
+        "title": "Kde byl ten endpoint?",
+        "text": "Místo otevírání pěti dokumentací jednou zadáte „faktury“ a dostanete všechny odpovídající endpointy – napříč REST, GraphQL i AsyncAPI – i s dokumentací a verzí, ve které leží."
       }
+    },
+    "trust": {
+      "heading": "Vaše dokumentace, vaše kontrola",
+      "text": "Soukromá dokumentace je vidět jen vašemu týmu; všem je otevřené jen to, co zveřejníte. Žádné sledování, reklamy ani analytika – jen technické úložiště potřebné k udržení přihlášení."
     }
   },
   "login": {
@@ -121,7 +188,8 @@
     "successMessage": "Na váš e-mail jsme odeslali ověřovací odkaz. Nyní se můžete přihlásit.",
     "loginLink": "Přejít na přihlášení",
     "haveAccount": "Už máte účet?",
-    "failed": "Registrace se nezdařila"
+    "failed": "Registrace se nezdařila",
+    "legalNotice": "Registrací souhlasíte s <terms>Podmínkami použití</terms> a berete na vědomí informace o <privacy>soukromí</privacy>."
   },
   "account": {
     "passwordCard": {
@@ -226,7 +294,8 @@
     "loadError": "Načtení novinek se nezdařilo."
   },
   "nav": {
-    "brand": "API Hub"
+    "brand": "ApiVerCon",
+    "fullName": "ApiVerCon - Api Version Control System"
   },
   "footer": {
     "ecosystem": "WithFBraun",
@@ -341,7 +410,7 @@
         },
         "secret": {
           "title": "Uložte si teď podpisové tajemství",
-          "body": "Každý požadavek nese X-ApiHub-Signature: sha256= a za tím HMAC-SHA256 z „<X-ApiHub-Timestamp>.<tělo požadavku>“ vytvořený tímto tajemstvím. Zobrazuje se jen jednou.",
+          "body": "Každý požadavek nese X-ApiVerCon-Signature: sha256= a za tím HMAC-SHA256 z „<X-ApiVerCon-Timestamp>.<tělo požadavku>“ vytvořený tímto tajemstvím. Zobrazuje se jen jednou.",
           "dismiss": "Mám uloženo"
         }
       },

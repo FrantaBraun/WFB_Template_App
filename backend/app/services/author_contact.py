@@ -131,7 +131,7 @@ async def _email_author(
         base_url = settings.frontend_url.rstrip("/")
         target_path = "api-docs" if kind == "document" else "collections"
         lines = [
-            f'{sender_name} wrote to you as the author of "{target_title}" in API Hub:',
+            f'{sender_name} wrote to you as the author of "{target_title}" in ApiVerCon:',
             "",
             body,
             "",
