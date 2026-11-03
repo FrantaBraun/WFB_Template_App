@@ -20,9 +20,11 @@ from app.api.api_docs.schemas import (
     ApiDocumentUpdate,
     ApiDocumentVersionOut,
     ChangeSummaryOut,
+    EndpointOut,
     IntegrationRefOut,
     SpecChangeOut,
     VersionChangesOut,
+    VersionOutlineOut,
     VersionRefOut,
 )
 from app.api.author_messages.contact import build_author_out, contact_author
@@ -38,6 +40,7 @@ from app.services.api_document_versions import fetch_and_process, get_current_ve
 from app.services.integration_usage import integrations_using_documents
 from app.services.openapi_spec import SpecValidationError, parse_spec
 from app.services.spec_compare import diff_parsed
+from app.services.spec_outline import extract_endpoints
 from app.services.spec_storage import delete_document_files, read_spec_file
 from app.services.text_search import matches_all_terms
 
@@ -521,6 +524,65 @@ async def get_document_version_spec(
     content = read_spec_file(settings.uploads_dir, version.storage_path)
     media_type = {"json": "application/json", "graphql": "application/graphql"}.get(version.format, "application/yaml")
     return Response(content=content, media_type=media_type)
+
+
+def _outline_of(raw: bytes):
+    """Parse a stored spec file and list its endpoints - CPU work, so the
+    caller runs it off the event loop."""
+    parsed = parse_spec(raw)
+    return parsed, extract_endpoints(parsed)
+
+
+@router.get("/{document_id}/versions/{version_id}/outline")
+async def get_document_version_outline(
+    document_id: uuid.UUID,
+    version_id: uuid.UUID,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> VersionOutlineOut:
+    """The endpoints of a stored version (app/services/spec_outline.py), for
+    reading a document of a kind that has no rendered documentation here
+    (AsyncAPI, Postman, GraphQL). Same visibility as the version list; 404
+    for a version that is not this document's or whose file is gone, 422
+    when the stored file no longer parses."""
+    doc, _ = await _require_visible_document(db, document_id, current_user)
+
+    result = await db.execute(
+        select(ApiDocumentVersion).where(
+            ApiDocumentVersion.id == version_id,
+            ApiDocumentVersion.documentation_id == doc.id,
+        )
+    )
+    version = result.scalar_one_or_none()
+    if version is None:
+        raise HTTPException(status_code=404, detail="Version not found")
+    try:
+        raw = read_spec_file(settings.uploads_dir, version.storage_path)
+    except OSError as exc:
+        raise HTTPException(status_code=404, detail="The specification file of this version is no longer available") from exc
+    try:
+        parsed, endpoints = await asyncio.to_thread(_outline_of, raw)
+    except SpecValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return VersionOutlineOut(
+        spec_type=version.spec_type,
+        title=parsed.title,
+        version=version.version,
+        endpoints=[
+            EndpointOut(
+                method=e.method,
+                path=e.path,
+                name=e.name,
+                description=e.description,
+                tags=list(e.tags),
+                deprecated=e.deprecated,
+                operation_id=e.operation_id,
+            )
+            for e in endpoints
+        ],
+    )
 
 
 def _diff_files(old_raw: bytes, new_raw: bytes):

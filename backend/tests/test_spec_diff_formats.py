@@ -20,24 +20,10 @@ from graphql import build_schema, introspection_from_schema
 import app.security.jwt as jwt_module
 from app.services.openapi_spec import parse_spec
 from app.services.spec_compare import diff_parsed
+from tests.format_support import BASE_SDL, pm, pm_request
 from tests.version_support import docs_settings, make_team, make_user, pets_spec, request, token_for
 
 # --- GraphQL ------------------------------------------------------------------------
-
-BASE_SDL = """
-directive @cache(ttl: Int) on FIELD_DEFINITION
-interface Node { id: ID! }
-enum Role { ADMIN USER }
-input UserFilter { role: Role  name: String }
-type Error { message: String! }
-type User implements Node { id: ID!  name: String  role: Role }
-union Result = User | Error
-type Query {
-  users(limit: Int, filter: UserFilter): [User!]!
-  user(id: ID!): User
-}
-"""
-
 
 def gql(text: str):
     return parse_spec(text.encode())
@@ -190,18 +176,6 @@ def test_graphql_changes_are_most_severe_first_and_grouped_by_type():
 
 
 # --- Postman ------------------------------------------------------------------------
-
-SCHEMA = "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-
-
-def pm_request(name, method, path, query=(), headers=(), host="{{baseUrl}}"):
-    url = {"raw": f"{host}/{'/'.join(path)}", "host": [host], "path": list(path), "query": [{"key": k, **({"disabled": True} if k.startswith("~") else {})} for k in query]}
-    return {"name": name, "request": {"method": method, "url": url, "header": [{"key": h} for h in headers]}}
-
-
-def pm(*items, **info):
-    return parse_spec(json.dumps({"info": {"name": "Pets", "schema": SCHEMA, **info}, "item": list(items)}).encode())
-
 
 LIST = pm_request("List", "GET", ["pets"], query=["limit"])
 GET = pm_request("Get", "GET", ["pets", ":id"])

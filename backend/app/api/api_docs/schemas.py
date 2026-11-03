@@ -214,3 +214,30 @@ class VersionChangesOut(BaseModel):
     summary: ChangeSummaryOut
     changes: list[SpecChangeOut]
     truncated: bool
+
+
+class EndpointOut(BaseModel):
+    """One endpoint of a document (app/services/spec_outline.py): `method`
+    and `path` are the HTTP method and path of an OpenAPI operation or a
+    Postman request, the direction and channel of an AsyncAPI operation, or
+    QUERY / MUTATION / SUBSCRIPTION and the field name of a GraphQL root
+    field."""
+
+    method: str
+    path: str
+    name: str | None
+    description: str | None
+    tags: list[str]
+    deprecated: bool
+    operation_id: str | None
+
+
+class VersionOutlineOut(BaseModel):
+    """GET /api/api-docs/{id}/versions/{version_id}/outline: what a stored
+    version contains, as a flat list of endpoints - the readable form of the
+    kinds that have no rendered documentation here."""
+
+    spec_type: str
+    title: str | None
+    version: str
+    endpoints: list[EndpointOut]
