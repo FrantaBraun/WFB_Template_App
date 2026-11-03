@@ -8,6 +8,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import ChangeSummaryBadges, { type ChangeSummaryData } from '../components/ChangeSummaryBadges'
 import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
 
@@ -47,8 +48,18 @@ interface IntegrationDocumentSourceData {
   collection_name: string | null
 }
 
+/** What a document's current version changed over the one it replaced (backend LatestChangeOut). */
+interface LatestChangeData {
+  version_id: string
+  version: string
+  fetched_at: string
+  content_changed: boolean
+  summary: ChangeSummaryData
+}
+
 interface IntegrationDocumentOutData extends ApiDocumentSummaryData {
   sources: IntegrationDocumentSourceData[]
+  latest_change: LatestChangeData | null
 }
 
 interface IntegrationKBCollectionGroupData {
@@ -383,6 +394,9 @@ export default function IntegrationDetail() {
 
   const directDocuments = (effectiveDocuments ?? []).filter((d) => d.sources.some((s) => s.type === 'direct'))
   const directDocumentIds = new Set(directDocuments.map((d) => d.id))
+  const documentsWithBreakingChanges = (effectiveDocuments ?? []).filter(
+    (d) => (d.latest_change?.summary.breaking ?? 0) > 0,
+  ).length
   const addableDocuments = (availableDocuments ?? []).filter((d) => !directDocumentIds.has(d.id))
 
   const kbPageTotal = kb ? kb.own_pages.length + kb.collection_pages.reduce((sum, group) => sum + group.pages.length, 0) : null
@@ -591,6 +605,11 @@ export default function IntegrationDetail() {
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {t('integrations.detail.effectiveDocumentsCard.description')}
         </p>
+        {documentsWithBreakingChanges > 0 && (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+            {t('integrations.detail.effectiveDocumentsCard.breakingNotice', { count: documentsWithBreakingChanges })}
+          </p>
+        )}
         {documentsError && <p className="text-sm text-red-600 dark:text-red-400">{documentsError}</p>}
         {effectiveDocuments && effectiveDocuments.length === 0 && (
           <p className="text-sm text-slate-600 dark:text-slate-400">{t('integrations.detail.effectiveDocumentsCard.empty')}</p>
@@ -605,7 +624,19 @@ export default function IntegrationDetail() {
                     {doc.current_version ? t('apiDocs.list.version', { version: doc.current_version }) : t('apiDocs.list.noVersion')}
                   </p>
                 </Link>
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  {doc.latest_change && (
+                    <>
+                      <ChangeSummaryBadges summary={doc.latest_change.summary} />
+                      <Link
+                        to={`/api-docs/${doc.id}/versions/${doc.latest_change.version_id}/changes`}
+                        title={t('integrations.detail.effectiveDocumentsCard.changesTitle')}
+                        className="text-xs text-slate-700 underline dark:text-slate-300"
+                      >
+                        {t('integrations.detail.effectiveDocumentsCard.changes')}
+                      </Link>
+                    </>
+                  )}
                   {doc.sources.map((source, index) =>
                     source.type === 'direct' ? (
                       <span

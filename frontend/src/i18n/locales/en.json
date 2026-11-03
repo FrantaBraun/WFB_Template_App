@@ -370,6 +370,10 @@
       "recheckPeriodLabel": "Recheck period",
       "lastCheckedAtLabel": "Last checked",
       "lastCheckErrorLabel": "Last check error",
+      "integrationsCard": {
+        "title": "Used in your integrations",
+        "description": "A new version of this documentation affects these integrations of your teams."
+      },
       "currentVersionCard": {
         "title": "Current version",
         "version": "Version",
@@ -556,6 +560,7 @@
       "empty": "No notifications yet.",
       "itemText": "New version {{version}}",
       "contentChangedText": "Changed, still version {{version}}",
+      "affects": "Affects: {{names}}",
       "messageText": "Message from {{sender}} about {{title}}",
       "allMessages": "All messages"
     },
@@ -708,7 +713,11 @@
         "description": "Every document reachable from this integration, directly or through a linked collection.",
         "empty": "No documents reachable yet.",
         "sourceDirect": "Direct",
-        "sourceCollection": "via {{collectionName}}"
+        "sourceCollection": "via {{collectionName}}",
+        "changes": "What changed",
+        "changesTitle": "What the current version of this document changed compared with the one before it",
+        "breakingNotice_one": "{{count}} of these documents changed in a breaking way in its latest version.",
+        "breakingNotice_other": "{{count}} of these documents changed in a breaking way in their latest version."
       }
     }
   },

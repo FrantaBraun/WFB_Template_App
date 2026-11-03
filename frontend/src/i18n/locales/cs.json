@@ -370,6 +370,10 @@
       "recheckPeriodLabel": "Interval kontroly",
       "lastCheckedAtLabel": "Naposledy zkontrolováno",
       "lastCheckErrorLabel": "Chyba poslední kontroly",
+      "integrationsCard": {
+        "title": "Používá se ve vašich integracích",
+        "description": "Nová verze této dokumentace se dotkne těchto integrací vašich týmů."
+      },
       "currentVersionCard": {
         "title": "Aktuální verze",
         "version": "Verze",
@@ -564,6 +568,7 @@
       "empty": "Zatím žádná oznámení.",
       "itemText": "Nová verze {{version}}",
       "contentChangedText": "Změna obsahu, verze stále {{version}}",
+      "affects": "Týká se: {{names}}",
       "messageText": "Zpráva od {{sender}} k „{{title}}“",
       "allMessages": "Všechny zprávy"
     },
@@ -718,7 +723,13 @@
         "description": "Všechny dokumenty dostupné z této integrace, ať už přímo nebo přes propojenou kolekci.",
         "empty": "Zatím nejsou dostupné žádné dokumenty.",
         "sourceDirect": "Přímo",
-        "sourceCollection": "přes {{collectionName}}"
+        "sourceCollection": "přes {{collectionName}}",
+        "changes": "Co se změnilo",
+        "changesTitle": "Co aktuální verze této dokumentace změnila oproti té předchozí",
+        "breakingNotice_one": "{{count}} z těchto dokumentací se v poslední verzi nekompatibilně změnila.",
+        "breakingNotice_few": "{{count}} z těchto dokumentací se v poslední verzi nekompatibilně změnily.",
+        "breakingNotice_many": "{{count}} z těchto dokumentací se v poslední verzi nekompatibilně změnilo.",
+        "breakingNotice_other": "{{count}} z těchto dokumentací se v poslední verzi nekompatibilně změnilo."
       }
     }
   },

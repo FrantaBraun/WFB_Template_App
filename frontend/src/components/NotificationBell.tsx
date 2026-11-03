@@ -28,6 +28,7 @@ interface NotificationItemData {
   version: string | null
   content_changed: boolean
   breaking_changes: number
+  integrations: { id: string; name: string }[]
   message: NotificationMessageData | null
   is_read: boolean
   created_at: string
@@ -192,6 +193,11 @@ export default function NotificationBell() {
                       {item.breaking_changes > 0 && (
                         <p className="text-xs font-medium text-red-700 dark:text-red-300">
                           {t('changes.summary.breaking', { count: item.breaking_changes })}
+                        </p>
+                      )}
+                      {item.integrations.length > 0 && (
+                        <p className="text-xs text-slate-600 dark:text-slate-300">
+                          {t('notifications.bell.affects', { names: item.integrations.map((integration) => integration.name).join(', ') })}
                         </p>
                       )}
                       <p className="text-xs text-slate-500 dark:text-slate-400">

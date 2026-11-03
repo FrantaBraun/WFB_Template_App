@@ -44,6 +44,7 @@ interface ApiDocumentDetailData {
   can_edit: boolean
   is_subscribed: boolean | null
   author: AuthorData
+  integrations: { id: string; name: string }[]
 }
 
 /** What POST .../recheck and .../upload-version answer: the document plus what the check found. */
@@ -563,6 +564,27 @@ export default function ApiDocDetail() {
           </p>
         )}
       </div>
+
+      {doc.integrations.length > 0 && (
+        <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+            {t('apiDocs.detail.integrationsCard.title')}
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('apiDocs.detail.integrationsCard.description')}</p>
+          <ul className="flex flex-wrap gap-2">
+            {doc.integrations.map((integration) => (
+              <li key={integration.id}>
+                <Link
+                  to={`/integrations/${integration.id}`}
+                  className="inline-block rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 hover:underline dark:bg-slate-800 dark:text-slate-200"
+                >
+                  {integration.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <AuthorCard author={doc.author} contactPath={`/api/api-docs/${doc.id}/contact-author`} kind="document" />
 
