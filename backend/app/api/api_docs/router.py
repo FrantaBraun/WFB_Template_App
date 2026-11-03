@@ -118,6 +118,7 @@ async def _build_detail(
             format=current.format,
             fetched_at=current.fetched_at,
             source=current.source,
+            spec_type=current.spec_type,
             content_changed=current.content_changed,
             change_summary=ChangeSummaryOut.from_stored(current.change_summary),
         )
@@ -489,6 +490,7 @@ async def list_document_versions(
             fetched_at=v.fetched_at,
             archived_at=v.archived_at,
             source=v.source,
+            spec_type=v.spec_type,
             content_changed=v.content_changed,
             change_summary=ChangeSummaryOut.from_stored(v.change_summary),
         )
@@ -517,7 +519,7 @@ async def get_document_version_spec(
         raise HTTPException(status_code=404, detail="Version not found")
 
     content = read_spec_file(settings.uploads_dir, version.storage_path)
-    media_type = "application/json" if version.format == "json" else "application/yaml"
+    media_type = {"json": "application/json", "graphql": "application/graphql"}.get(version.format, "application/yaml")
     return Response(content=content, media_type=media_type)
 
 

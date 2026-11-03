@@ -70,6 +70,8 @@ def _summarise_changes(current: ApiDocumentVersion, parsed: ParsedSpec, uploads_
     page says it cannot compare."""
     try:
         previous = parse_spec(read_spec_file(uploads_dir, current.storage_path))
+        if previous.kind != "openapi" or parsed.kind != "openapi":
+            return None  # only OpenAPI / Swagger documents can be compared so far
         return diff_specs(previous.document, parsed.document).summary()
     except Exception:
         logger.exception("Cannot compare version %s (document %s) with the new spec", current.id, current.documentation_id)
@@ -154,6 +156,7 @@ async def process_new_spec(
             version=parsed.version,
             spec_title=parsed.title,
             format=parsed.format,
+            spec_type=parsed.kind,
             storage_path=storage_path,
             checksum=checksum,
             source=source,

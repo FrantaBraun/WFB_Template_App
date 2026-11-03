@@ -85,6 +85,13 @@ class ApiDocumentVersion(Base):
     version: Mapped[str] = mapped_column(String(100), nullable=False)
     spec_title: Mapped[str | None] = mapped_column(String(255), nullable=True)
     format: Mapped[str] = mapped_column(String(10), nullable=False)
+    # What sort of document this is: "openapi" (OpenAPI, Swagger, anything else
+    # with info.version), "asyncapi", "postman" or "graphql" - see
+    # app/services/openapi_spec.py's ParsedSpec. format is how it is written
+    # (json, yaml, or graphql for SDL text), this is what it says.
+    spec_type: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="openapi", server_default="openapi"
+    )
     storage_path: Mapped[str] = mapped_column(String(500), nullable=False)
     checksum: Mapped[str] = mapped_column(String(64), nullable=False)
     source: Mapped[str] = mapped_column(String(20), nullable=False)

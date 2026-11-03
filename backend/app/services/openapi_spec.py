@@ -9,28 +9,44 @@ from dataclasses import dataclass, field
 import httpx
 import yaml
 
+from app.services import graphql_spec, postman_spec
 from app.services.safe_http import UnsafeUrlError, safe_get
+
+
+KIND_OPENAPI = "openapi"  # OpenAPI 3.x, Swagger 2.0 - and any other document with info.version
+KIND_ASYNCAPI = "asyncapi"
+KIND_POSTMAN = "postman"
+KIND_GRAPHQL = "graphql"
 
 
 class SpecValidationError(Exception):
     """Raised when raw spec bytes can't be turned into a usable ParsedSpec -
-    neither JSON nor YAML, not an object at the top level, or missing a
-    usable info.version."""
+    not JSON, YAML or a GraphQL schema, not an object at the top level, or
+    missing a usable info.version."""
 
 
 @dataclass
 class ParsedSpec:
-    """content_hash is a fingerprint of what the spec says, not of its bytes
-    (see _content_hash); document is the parsed spec itself, for the
-    structural diff (app/services/spec_diff.py). Both are left out of == (and
-    document out of repr), so they never matter to a caller that only
-    compares version / title / format."""
+    """What a stored document is. kind says which sort it is - "openapi" (also
+    Swagger, and any other JSON/YAML with info.version), "asyncapi", "postman"
+    (a Postman collection) or "graphql" (SDL, or an introspection result) -
+    and format how it is written: "json", "yaml" or "graphql" (SDL text).
+
+    content_hash is a fingerprint of what the document says, not of its bytes
+    (see _content_hash); document is the parsed JSON/YAML (for a GraphQL
+    schema given as SDL it is empty) and schema the GraphQL schema object
+    (None for the others), both for the structural comparison
+    (app/services/spec_compare.py). These are left out of == (and out of
+    repr), so they never matter to a caller that only compares version /
+    title / format / kind."""
 
     version: str
     title: str | None
     format: str
+    kind: str = KIND_OPENAPI
     content_hash: str = field(default="", compare=False)
     document: dict = field(default_factory=dict, compare=False, repr=False)
+    schema: object | None = field(default=None, compare=False, repr=False)
 
 
 def _canonical(value: object) -> object:
@@ -58,30 +74,39 @@ def _content_hash(parsed: object) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def parse_spec(raw: bytes) -> ParsedSpec:
-    """Parse raw OpenAPI/Swagger spec bytes: try JSON first, fall back to
-    YAML (a JSON document is also valid YAML, but not vice versa, so JSON is
-    tried first rather than relying on YAML alone). Extracts info.version /
-    info.title. Raises SpecValidationError - with a message describing which
-    check failed - if neither format parses, the parsed content isn't an
-    object at the top level, "info" is missing/not an object, or
-    info.version is missing or not a non-empty string.
-    """
-    try:
-        parsed = json.loads(raw)
-        format = "json"
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        try:
-            parsed = yaml.safe_load(raw)
-            format = "yaml"
-        except yaml.YAMLError as exc:
-            raise SpecValidationError(
-                "Spec content could not be parsed as either JSON or YAML."
-            ) from exc
+def _parse_graphql(schema: object, format: str, document: dict) -> ParsedSpec:
+    return ParsedSpec(
+        version=graphql_spec.revision_label(graphql_spec.structure_signature(schema)),
+        title=None,
+        format=format,
+        kind=KIND_GRAPHQL,
+        content_hash=graphql_spec.content_hash(schema),
+        document=document,
+        schema=schema,
+    )
 
-    if not isinstance(parsed, dict):
-        raise SpecValidationError(
-            "Parsed spec content must be a JSON/YAML object at the top level."
+
+def _parse_document(parsed: dict, format: str) -> ParsedSpec:
+    """A JSON/YAML object, recognised by what it is: a GraphQL introspection
+    result, a Postman collection, an AsyncAPI document - or, failing those,
+    anything with info.version, which is what an OpenAPI / Swagger document is
+    (and what this application accepted before it knew other kinds)."""
+    introspection = graphql_spec.introspection_data(parsed)
+    if introspection is not None:
+        try:
+            schema = graphql_spec.schema_from_introspection(introspection)
+        except ValueError as exc:
+            raise SpecValidationError(str(exc)) from exc
+        return _parse_graphql(schema, format, parsed)
+
+    if "asyncapi" not in parsed and postman_spec.is_postman(parsed):
+        return ParsedSpec(
+            version=postman_spec.version_of(parsed),
+            title=postman_spec.title(parsed),
+            format=format,
+            kind=KIND_POSTMAN,
+            content_hash=_content_hash(parsed),
+            document=parsed,
         )
 
     info = parsed.get("info")
@@ -97,8 +122,66 @@ def parse_spec(raw: bytes) -> ParsedSpec:
         title = None
 
     return ParsedSpec(
-        version=version, title=title, format=format, content_hash=_content_hash(parsed), document=parsed
+        version=version,
+        title=title,
+        format=format,
+        kind=KIND_ASYNCAPI if "asyncapi" in parsed else KIND_OPENAPI,
+        content_hash=_content_hash(parsed),
+        document=parsed,
     )
+
+
+def _text_of(raw: bytes) -> str | None:
+    try:
+        return raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return None
+
+
+def parse_spec(raw: bytes) -> ParsedSpec:
+    """Parse the raw bytes of a stored document. JSON is tried first, then YAML
+    (a JSON document is also valid YAML, but not vice versa, so JSON is tried
+    first rather than relying on YAML alone); what parses to an object is
+    recognised by what it is (_parse_document). What does not parse to an
+    object - GraphQL SDL, which YAML takes for a plain string - is tried as a
+    GraphQL schema last.
+
+    Raises SpecValidationError - with a message describing which check failed
+    - if nothing parses, the parsed content isn't an object at the top level,
+    "info" is missing/not an object, or info.version is missing or not a
+    non-empty string (the last two for documents that are not a GraphQL
+    schema or a Postman collection).
+    """
+    parsed: object = None
+    yaml_failed = False
+    try:
+        parsed = json.loads(raw)
+        format = "json"
+        is_json = True
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        is_json = False
+        format = "yaml"
+        try:
+            parsed = yaml.safe_load(raw)
+        except yaml.YAMLError:
+            yaml_failed = True
+
+    if isinstance(parsed, dict):
+        return _parse_document(parsed, format)
+
+    if not is_json:
+        text = _text_of(raw)
+        if text is not None and text.strip():
+            try:
+                schema = graphql_spec.schema_from_sdl(text)
+            except ValueError:
+                pass
+            else:
+                return _parse_graphql(schema, "graphql", {})
+        if yaml_failed or not isinstance(parsed, (list, dict)):
+            raise SpecValidationError("Spec content could not be parsed as either JSON or YAML, or as a GraphQL schema.")
+
+    raise SpecValidationError("Parsed spec content must be a JSON/YAML object at the top level.")
 
 
 async def fetch_spec_from_url(url: str, timeout: float, *, max_bytes: int, allow_private: bool = False) -> bytes:

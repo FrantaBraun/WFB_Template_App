@@ -107,6 +107,7 @@ class ApiDocumentCurrentVersion(BaseModel):
     format: str
     fetched_at: datetime
     source: str
+    spec_type: str
     content_changed: bool
     change_summary: ChangeSummaryOut | None
 
@@ -169,6 +170,7 @@ class ApiDocumentVersionOut(BaseModel):
     fetched_at: datetime
     archived_at: datetime | None
     source: str
+    spec_type: str
     content_changed: bool
     change_summary: ChangeSummaryOut | None
 
