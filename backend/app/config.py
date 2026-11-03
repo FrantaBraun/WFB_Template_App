@@ -42,6 +42,15 @@ class Settings(BaseSettings):
     # limiting of its own). 0 turns the limit off.
     author_message_max_per_hour: int = 5
 
+    # Team webhooks (app/services/webhooks.py) - how long one call to a team's
+    # Slack / webhook URL may take before it counts as failed (the calls of one
+    # new version run side by side, so this is also the most a check waits for
+    # them). The URL is typed in by a user, so a call to a private or loopback
+    # address is refused (app/services/safe_http.py); only a development
+    # deployment that wants a receiver on localhost turns that off.
+    webhook_timeout_seconds: float = 5.0
+    webhook_allow_private_addresses: bool = False
+
     # Feature modules (see app/modules/) are deliberately NOT configured
     # here: which ones are mounted is set in the git-tracked
     # backend/modules.json, so it follows the branch rather than .env.

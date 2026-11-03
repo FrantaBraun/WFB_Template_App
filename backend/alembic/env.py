@@ -26,6 +26,7 @@ from app.models.integration import (  # noqa: F401
 from app.models.knowledge_base import KnowledgeBasePage  # noqa: F401
 from app.models.notification import Notification, Subscription  # noqa: F401
 from app.models.author_message import AuthorMessage  # noqa: F401
+from app.models.webhook import TeamWebhook  # noqa: F401
 from app.modules.registry import import_all_module_models
 
 import_all_module_models()  # registers every discovered module's tables on Base.metadata too

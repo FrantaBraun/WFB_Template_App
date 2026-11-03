@@ -16,6 +16,7 @@ from app.api.public import collections as public_collections
 from app.api.public import release_news as public_release_news
 from app.api.public import version as public_version
 from app.api.teams import router as teams_router
+from app.api.teams import webhooks as team_webhooks_router
 from app.modules.registry import check_module_dependencies, get_enabled_modules, load_enabled_module_keys
 
 api_router = APIRouter(prefix="/api")
@@ -26,6 +27,7 @@ api_router.include_router(public_collections.router, prefix="/public", tags=["pu
 api_router.include_router(auth_router.router, prefix="/auth", tags=["auth"])
 api_router.include_router(account_router.router, prefix="/account", tags=["account"])
 api_router.include_router(teams_router.router, prefix="/teams", tags=["teams"])
+api_router.include_router(team_webhooks_router.router, prefix="/teams/{team_id}/webhooks", tags=["team-webhooks"])
 api_router.include_router(api_docs_router.router, prefix="/api-docs", tags=["api-docs"])
 api_router.include_router(notifications_router.router, prefix="/notifications", tags=["notifications"])
 api_router.include_router(author_messages_router.router, prefix="/author-messages", tags=["author-messages"])

@@ -16,28 +16,34 @@ from app.models.team import TeamMembership
 from app.models.user import User
 from app.services.email import send_email
 from app.services.integration_usage import integrations_using_documents
+from app.services.webhooks import deliver_version_event
 
 logger = logging.getLogger(__name__)
 
 
-async def _integration_names_by_user(db: AsyncSession, doc: ApiDocument) -> dict[UUID, set[str]]:
-    """The members of teams whose integrations use this document, each with the
-    names of THEIR OWN teams' integrations that do - an integration built on a
-    document is affected by every change to it, so the people who own that
-    integration are told even when they never subscribed.
+async def _eligible_integration_names_by_team(db: AsyncSession, doc: ApiDocument) -> dict[UUID, list[str]]:
+    """The teams whose integrations use this document, each with the names of
+    ITS OWN integrations that do. An integration built on a document is
+    affected by every change to it, so those teams are told even when nobody
+    subscribed.
 
-    Only when they are allowed to see the document: it is public, or the
-    integration belongs to the document's own team (whose members are
-    recipients anyway). An integration may still reference a document that
-    was made private after it was added, and its team must not learn of that
-    document's versions."""
+    Only teams that may know about the document: it is public, or the
+    integration belongs to the document's own team. An integration may still
+    reference a document that was made private after it was added, and its
+    team must not learn of that document's versions."""
     refs = (await integrations_using_documents(db, [doc.id])).get(doc.id, [])
-    refs = [ref for ref in refs if doc.is_public or ref.team_id == doc.team_id]
-    if not refs:
-        return {}
     names_by_team: dict[UUID, list[str]] = {}
     for ref in refs:
-        names_by_team.setdefault(ref.team_id, []).append(ref.name)
+        if doc.is_public or ref.team_id == doc.team_id:
+            names_by_team.setdefault(ref.team_id, []).append(ref.name)
+    return names_by_team
+
+
+async def _integration_names_by_user(db: AsyncSession, names_by_team: dict[UUID, list[str]]) -> dict[UUID, set[str]]:
+    """The members of those teams, each with the names of THEIR OWN teams'
+    integrations - never another team's, integrations are team-private."""
+    if not names_by_team:
+        return {}
     memberships = (
         await db.execute(
             select(TeamMembership.user_id, TeamMembership.team_id).where(TeamMembership.team_id.in_(names_by_team))
@@ -110,6 +116,11 @@ async def notify_new_version(
     those integrations, so people with the same set of integrations share a
     mail and one team's integration names never reach another team.
 
+    After the people, the teams' own channels are told as well: the owning
+    team and every team found above with an integration on the document get
+    their enabled webhooks called (app/services/webhooks.py), each with the
+    names of its own integrations only - whatever happened to the e-mails.
+
     Never raises: called from process_new_spec
     (app/services/api_document_versions.py) right after a version is
     committed, and a notification failure - DB or email, anything - must
@@ -144,10 +155,9 @@ async def notify_new_version(
                 )
             )
         ).scalars().all()
-        integration_names = await _integration_names_by_user(db, doc)
+        names_by_team = await _eligible_integration_names_by_team(db, doc)
+        integration_names = await _integration_names_by_user(db, names_by_team)
         recipient_ids = set(member_ids) | set(subscriber_ids) | set(collection_subscriber_ids) | set(integration_names)
-        if not recipient_ids:
-            return
 
         for user_id in recipient_ids:
             db.add(Notification(user_id=user_id, documentation_id=doc.id, version_id=version.id))
@@ -156,9 +166,6 @@ async def notify_new_version(
         recipients = (
             await db.execute(select(User.id, User.email).where(User.id.in_(recipient_ids), User.email.isnot(None)))
         ).all()
-        if not recipients:
-            return
-
         groups: dict[tuple[str, ...], list[str]] = {}
         for user_id, email in recipients:
             groups.setdefault(tuple(sorted(integration_names.get(user_id, ()))), []).append(email)
@@ -170,7 +177,29 @@ async def notify_new_version(
                 await send_email(subject=subject, recipients=emails, body=body, settings=resolved_settings)
             except Exception:
                 logger.exception("Failed to e-mail %d recipients of new version %s for document %s", len(emails), version.id, doc.id)
+
+        # The teams' own channels (Slack, webhooks) hear about it too - after the
+        # people, and whatever happened above (nobody with an address, a mail
+        # that failed). The owning team always, the others as found above, each
+        # with the names of its own integrations.
+        await _deliver_webhooks(db, doc, version, {doc.team_id: [], **names_by_team}, resolved_settings)
     except Exception:
         logger.exception(
             "Failed to notify recipients of new version %s for document %s", version.id, doc.id
         )
+
+
+async def _deliver_webhooks(
+    db: AsyncSession,
+    doc: ApiDocument,
+    version: ApiDocumentVersion,
+    names_by_team: dict[UUID, list[str]],
+    settings: Settings,
+) -> None:
+    """Separate from the people above so that a failure in one never
+    prevents the other: deliver_version_event does not raise for a receiver
+    that fails, and anything else it hits is logged here."""
+    try:
+        await deliver_version_event(db, doc, version, names_by_team, settings)
+    except Exception:
+        logger.exception("Failed to deliver webhooks for new version %s of document %s", version.id, doc.id)
