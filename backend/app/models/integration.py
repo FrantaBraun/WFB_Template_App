@@ -112,3 +112,56 @@ class IntegrationDocument(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class IntegrationDocumentPin(Base):
+    """The version of a document an integration was built against - "we
+    integrated with 1.2.0". Pinned per (integration, document) whichever way
+    the document reaches the integration (directly or through a collection),
+    so there is at most one. It never changes by itself: the integration page
+    compares the pinned version with the document's current one, which is the
+    answer to "what changed since we built this", and that stays true when
+    several versions have gone by - unlike the change summary of the newest
+    version, which only says what it brought over the one before it.
+
+    A pin whose document is no longer part of the integration is simply not
+    shown (and comes back with the document); the document, the version and
+    the integration all cascade it away when they are deleted."""
+
+    __tablename__ = "integration_document_pins"
+    __table_args__ = (
+        UniqueConstraint(
+            "integration_id", "documentation_id", name="uq_integration_document_pins_integration_id_documentation_id"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    integration_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("integrations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    documentation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("api_documents.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("api_document_versions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    pinned_by_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

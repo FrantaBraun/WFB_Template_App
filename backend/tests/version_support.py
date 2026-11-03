@@ -15,6 +15,8 @@ import httpx
 
 from app.config import Settings, get_settings
 from app.models.api_document import ApiDocument, ApiDocumentVersion
+from app.models.collection import Collection, CollectionDocument
+from app.models.integration import Integration, IntegrationCollection, IntegrationDocument
 from app.models.team import Team, TeamMembership
 from app.models.user import User
 from app.services.api_document_versions import process_new_spec
@@ -121,3 +123,36 @@ async def request(db_session, method: str, path: str, *, token: str | None = Non
         fastapi_app.dependency_overrides.pop(get_db, None)
         if settings is not None:
             fastapi_app.dependency_overrides.pop(get_settings, None)
+
+
+async def make_team(db_session, name: str, members=()) -> Team:
+    """A team with the given members (no document attached - see make_document)."""
+    team = Team(name=name)
+    db_session.add(team)
+    await db_session.flush()
+    for member in members:
+        db_session.add(TeamMembership(team_id=team.id, user_id=member.id, role="member"))
+    await db_session.flush()
+    return team
+
+
+async def make_integration(db_session, team: Team, creator, name: str, *, documents=(), collections=()) -> Integration:
+    integration = Integration(team_id=team.id, name=name, created_by_user_id=creator.id)
+    db_session.add(integration)
+    await db_session.flush()
+    for doc in documents:
+        db_session.add(IntegrationDocument(integration_id=integration.id, documentation_id=doc.id, added_by_user_id=creator.id))
+    for collection in collections:
+        db_session.add(IntegrationCollection(integration_id=integration.id, collection_id=collection.id, added_by_user_id=creator.id))
+    await db_session.flush()
+    return integration
+
+
+async def make_collection(db_session, team: Team, creator, *, documents=()) -> Collection:
+    collection = Collection(team_id=team.id, name="Some collection", created_by_user_id=creator.id)
+    db_session.add(collection)
+    await db_session.flush()
+    for doc in documents:
+        db_session.add(CollectionDocument(collection_id=collection.id, documentation_id=doc.id, added_by_user_id=creator.id))
+    await db_session.flush()
+    return collection

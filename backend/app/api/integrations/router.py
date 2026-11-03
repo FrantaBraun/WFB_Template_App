@@ -2,6 +2,7 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
+import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -24,17 +25,21 @@ from app.api.integrations.schemas import (
     IntegrationDocumentSource,
     IntegrationKBCollectionGroup,
     IntegrationKBOut,
+    IntegrationPinOut,
+    IntegrationPinSet,
     IntegrationSummary,
     IntegrationUpdate,
 )
+from app.config import Settings, get_settings
 from app.database import get_db
 from app.models.api_document import ApiDocument, ApiDocumentVersion
 from app.models.collection import Collection, CollectionDocument
-from app.models.integration import Integration, IntegrationCollection, IntegrationDocument
+from app.models.integration import Integration, IntegrationCollection, IntegrationDocument, IntegrationDocumentPin
 from app.models.knowledge_base import KnowledgeBasePage
 from app.models.team import TeamMembership
 from app.models.user import User
 from app.services.text_search import matches_all_terms
+from app.services.version_comparison import compare_versions
 
 router = APIRouter()
 
@@ -348,6 +353,7 @@ async def list_integration_documents(
     integration_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
 ) -> list[IntegrationDocumentOut]:
     """The merged, de-duplicated, source-tagged effective document list:
     direct IntegrationDocument members plus every document belonging to a
@@ -401,6 +407,8 @@ async def list_integration_documents(
             summary=summary,
         )
 
+    pins = await _pin_summaries(db, settings, integration.id, {row[0].id: (row[1], row[2]) for row in rows})
+
     return [
         IntegrationDocumentOut(
             id=doc.id,
@@ -413,6 +421,8 @@ async def list_integration_documents(
             current_version=version,
             sources=sources_by_document[doc.id],
             latest_change=latest_change(version_id, version, fetched_at, content_changed, change_summary),
+            current_version_id=version_id,
+            pin=pins.get(doc.id),
         )
         for doc, version_id, version, fetched_at, content_changed, change_summary in rows
     ]
@@ -471,6 +481,141 @@ async def remove_document_from_integration(
     link = result.scalar_one_or_none()
     if link is not None:
         await db.delete(link)
+        await db.commit()
+
+
+async def _pin_summaries(
+    db: AsyncSession,
+    settings: Settings,
+    integration_id: uuid.UUID,
+    current: dict[uuid.UUID, tuple[uuid.UUID | None, str | None]],
+) -> dict[uuid.UUID, IntegrationPinOut]:
+    """The pin of each of the integration's documents that has one, with how
+    far the document has moved since: `current` maps a document id to its
+    current version's (id, version string). Pins of documents not in it (no
+    longer part of the integration) are left out. The comparison of the
+    pinned version with the current one is the costly part, so it is cached
+    per pair of versions (app/services/version_comparison.py) and the
+    uncached ones run side by side."""
+    rows = (
+        await db.execute(
+            select(IntegrationDocumentPin, ApiDocumentVersion)
+            .join(ApiDocumentVersion, ApiDocumentVersion.id == IntegrationDocumentPin.version_id)
+            .where(
+                IntegrationDocumentPin.integration_id == integration_id,
+                IntegrationDocumentPin.documentation_id.in_(current.keys()),
+            )
+        )
+    ).all()
+    if not rows:
+        return {}
+
+    pinned_document_ids = [pin.documentation_id for pin, _ in rows]
+    fetched = (
+        await db.execute(
+            select(ApiDocumentVersion.documentation_id, ApiDocumentVersion.fetched_at).where(
+                ApiDocumentVersion.documentation_id.in_(pinned_document_ids)
+            )
+        )
+    ).all()
+    current_ids = [current[pin.documentation_id][0] for pin, _ in rows if current[pin.documentation_id][0]]
+    current_versions = {
+        v.id: v
+        for v in (await db.execute(select(ApiDocumentVersion).where(ApiDocumentVersion.id.in_(current_ids)))).scalars()
+    }
+
+    to_compare = [
+        (pin.documentation_id, pinned, current_versions[current[pin.documentation_id][0]])
+        for pin, pinned in rows
+        if current[pin.documentation_id][0] in current_versions and pinned.id != current[pin.documentation_id][0]
+    ]
+    summaries = dict(
+        zip(
+            [document_id for document_id, _, _ in to_compare],
+            await asyncio.gather(*(compare_versions(settings.uploads_dir, base, target) for _, base, target in to_compare)),
+        )
+    )
+
+    result: dict[uuid.UUID, IntegrationPinOut] = {}
+    for pin, pinned in rows:
+        current_id = current[pin.documentation_id][0]
+        result[pin.documentation_id] = IntegrationPinOut(
+            version_id=pinned.id,
+            version=pinned.version,
+            fetched_at=pinned.fetched_at,
+            is_current=pinned.id == current_id,
+            versions_behind=sum(1 for doc_id, at in fetched if doc_id == pin.documentation_id and at > pinned.fetched_at),
+            summary=ChangeSummaryOut.from_stored(summaries.get(pin.documentation_id)),
+        )
+    return result
+
+
+@router.put("/{integration_id}/documents/{documentation_id}/pin", status_code=204)
+async def pin_document_version(
+    integration_id: uuid.UUID,
+    documentation_id: uuid.UUID,
+    body: IntegrationPinSet,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Records that this integration was built against this version of the
+    document (replacing an earlier pin). Team members only. 404 for a document
+    that is not part of the integration, one the caller may not see (neither
+    public nor their team's - an integration can still reference a document
+    made private since), and a version that is not that document's.
+    Idempotent: ON CONFLICT against the (integration, document) unique
+    constraint, for the same near-simultaneous-request reason as the
+    subscribe endpoints."""
+    integration = await _require_member_integration(db, integration_id, current_user)
+    if documentation_id not in await _compute_document_sources(db, integration.id):
+        raise HTTPException(status_code=404, detail="Document is not part of this integration")
+    doc = await db.get(ApiDocument, documentation_id)
+    if doc is None or not (doc.is_public or await is_team_member(db, doc.team_id, current_user.id)):
+        raise HTTPException(status_code=404, detail="Document not found")
+    version = (
+        await db.execute(
+            select(ApiDocumentVersion.id).where(
+                ApiDocumentVersion.id == body.version_id, ApiDocumentVersion.documentation_id == documentation_id
+            )
+        )
+    ).scalar_one_or_none()
+    if version is None:
+        raise HTTPException(status_code=404, detail="Version not found")
+
+    statement = pg_insert(IntegrationDocumentPin).values(
+        integration_id=integration.id,
+        documentation_id=documentation_id,
+        version_id=version,
+        pinned_by_user_id=current_user.id,
+    )
+    await db.execute(
+        statement.on_conflict_do_update(
+            index_elements=[IntegrationDocumentPin.integration_id, IntegrationDocumentPin.documentation_id],
+            set_={"version_id": version, "pinned_by_user_id": current_user.id, "updated_at": func.now()},
+        )
+    )
+    await db.commit()
+
+
+@router.delete("/{integration_id}/documents/{documentation_id}/pin", status_code=204)
+async def unpin_document_version(
+    integration_id: uuid.UUID,
+    documentation_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Removes the pin. Team members only; idempotent - no pin is a success."""
+    integration = await _require_member_integration(db, integration_id, current_user)
+    pin = (
+        await db.execute(
+            select(IntegrationDocumentPin).where(
+                IntegrationDocumentPin.integration_id == integration.id,
+                IntegrationDocumentPin.documentation_id == documentation_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if pin is not None:
+        await db.delete(pin)
         await db.commit()
 
 

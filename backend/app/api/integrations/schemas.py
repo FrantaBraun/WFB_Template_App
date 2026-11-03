@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.api.api_docs.schemas import ApiDocumentSummary, LatestChangeOut
+from app.api.api_docs.schemas import ApiDocumentSummary, ChangeSummaryOut, LatestChangeOut
 from app.api.collections.schemas import KnowledgeBasePageOut
 
 
@@ -74,6 +74,28 @@ class IntegrationDocumentSource(BaseModel):
     collection_name: str | None = None
 
 
+class IntegrationPinOut(BaseModel):
+    """The version of a document an integration is pinned to (what it was
+    built against) and how far the document has moved since. is_current says
+    the pin is the document's current version; versions_behind how many newer
+    versions there are; summary what changed from the pinned version to the
+    current one, counted by severity - null when they are the same, or when
+    the comparison could not be made."""
+
+    version_id: uuid.UUID
+    version: str
+    fetched_at: datetime
+    is_current: bool
+    versions_behind: int
+    summary: ChangeSummaryOut | None
+
+
+class IntegrationPinSet(BaseModel):
+    """PUT .../documents/{id}/pin body: the version to pin."""
+
+    version_id: uuid.UUID
+
+
 class IntegrationDocumentOut(ApiDocumentSummary):
     """GET /{id}/documents list item: the same summary fields as
     ApiDocumentSummary, plus the merged, de-duplicated sources list above -
@@ -81,10 +103,14 @@ class IntegrationDocumentOut(ApiDocumentSummary):
     ways. latest_change is what the document's current version changed over
     the one it replaced (null for a first version or when it could not be
     worked out) - what makes an integration's page show at a glance which of
-    the documents it depends on just broke something."""
+    the documents it depends on just broke something. pin is the version the
+    integration was built against, if one was pinned (see IntegrationPinOut);
+    current_version_id is what a "pin the current version" sends."""
 
     sources: list[IntegrationDocumentSource]
     latest_change: LatestChangeOut | None
+    current_version_id: uuid.UUID | None
+    pin: IntegrationPinOut | None
 
 
 class IntegrationKBCollectionGroup(BaseModel):
