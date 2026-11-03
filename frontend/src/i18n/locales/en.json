@@ -708,6 +708,24 @@
         "addError": "Failed to add this document.",
         "loadError": "Failed to load available documents."
       },
+      "pin": {
+        "builtAgainst": "Built against",
+        "notPinned": "No version pinned - pin the one this integration was built against to see what changed since.",
+        "pinCurrent": "Pin the current version",
+        "choose": "Choose a version",
+        "chooseLabel": "Version this integration was built against",
+        "currentSuffix": "current",
+        "unpin": "Unpin",
+        "upToDate": "up to date",
+        "behind_one": "{{count}} version behind",
+        "behind_other": "{{count}} versions behind",
+        "changesSince": "What changed since",
+        "changesSinceTitle": "What changed from the pinned version to the current one",
+        "saveError": "Failed to change the pinned version.",
+        "loadVersionsError": "Failed to load the versions of this document.",
+        "breakingSincePin_one": "{{count}} of these documents has changed in a breaking way since the version this integration was built against.",
+        "breakingSincePin_other": "{{count}} of these documents have changed in a breaking way since the version this integration was built against."
+      },
       "effectiveDocumentsCard": {
         "title": "Effective documents",
         "description": "Every document reachable from this integration, directly or through a linked collection.",

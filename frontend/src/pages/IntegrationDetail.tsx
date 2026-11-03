@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import ChangeSummaryBadges, { type ChangeSummaryData } from '../components/ChangeSummaryBadges'
+import IntegrationPin, { type PinData } from '../components/IntegrationPin'
 import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
 
@@ -60,6 +61,8 @@ interface LatestChangeData {
 interface IntegrationDocumentOutData extends ApiDocumentSummaryData {
   sources: IntegrationDocumentSourceData[]
   latest_change: LatestChangeData | null
+  current_version_id: string | null
+  pin: PinData | null
 }
 
 interface IntegrationKBCollectionGroupData {
@@ -394,8 +397,10 @@ export default function IntegrationDetail() {
 
   const directDocuments = (effectiveDocuments ?? []).filter((d) => d.sources.some((s) => s.type === 'direct'))
   const directDocumentIds = new Set(directDocuments.map((d) => d.id))
+  // A pinned document is judged by what changed since its pinned version, an unpinned one by its latest version.
+  const documentsBrokenSincePin = (effectiveDocuments ?? []).filter((d) => (d.pin?.summary?.breaking ?? 0) > 0).length
   const documentsWithBreakingChanges = (effectiveDocuments ?? []).filter(
-    (d) => (d.latest_change?.summary.breaking ?? 0) > 0,
+    (d) => !d.pin && (d.latest_change?.summary.breaking ?? 0) > 0,
   ).length
   const addableDocuments = (availableDocuments ?? []).filter((d) => !directDocumentIds.has(d.id))
 
@@ -605,6 +610,11 @@ export default function IntegrationDetail() {
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {t('integrations.detail.effectiveDocumentsCard.description')}
         </p>
+        {documentsBrokenSincePin > 0 && (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+            {t('integrations.detail.pin.breakingSincePin', { count: documentsBrokenSincePin })}
+          </p>
+        )}
         {documentsWithBreakingChanges > 0 && (
           <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
             {t('integrations.detail.effectiveDocumentsCard.breakingNotice', { count: documentsWithBreakingChanges })}
@@ -657,6 +667,15 @@ export default function IntegrationDetail() {
                     ),
                   )}
                 </div>
+                {id && (
+                  <IntegrationPin
+                    integrationId={id}
+                    documentId={doc.id}
+                    currentVersionId={doc.current_version_id}
+                    pin={doc.pin}
+                    onChanged={reloadEffectiveDocuments}
+                  />
+                )}
               </li>
             ))}
           </ul>

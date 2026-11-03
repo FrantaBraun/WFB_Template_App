@@ -718,6 +718,28 @@
         "addError": "Přidání dokumentu se nezdařilo.",
         "loadError": "Nepodařilo se načíst dostupné dokumenty."
       },
+      "pin": {
+        "builtAgainst": "Postaveno na verzi",
+        "notPinned": "Žádná verze není připnutá – připněte tu, na které je tato integrace postavená, a uvidíte, co se od té doby změnilo.",
+        "pinCurrent": "Připnout aktuální verzi",
+        "choose": "Vybrat verzi",
+        "chooseLabel": "Verze, na které je tato integrace postavená",
+        "currentSuffix": "aktuální",
+        "unpin": "Odepnout",
+        "upToDate": "aktuální",
+        "behind_one": "o {{count}} verzi pozadu",
+        "behind_few": "o {{count}} verze pozadu",
+        "behind_many": "o {{count}} verze pozadu",
+        "behind_other": "o {{count}} verzí pozadu",
+        "changesSince": "Co se od té doby změnilo",
+        "changesSinceTitle": "Co se změnilo od připnuté verze k aktuální",
+        "saveError": "Připnutou verzi se nepodařilo změnit.",
+        "loadVersionsError": "Verze této dokumentace se nepodařilo načíst.",
+        "breakingSincePin_one": "{{count}} z těchto dokumentací se od verze, na které je integrace postavená, nekompatibilně změnila.",
+        "breakingSincePin_few": "{{count}} z těchto dokumentací se od verze, na které je integrace postavená, nekompatibilně změnily.",
+        "breakingSincePin_many": "{{count}} z těchto dokumentací se od verze, na které je integrace postavená, nekompatibilně změnilo.",
+        "breakingSincePin_other": "{{count}} z těchto dokumentací se od verze, na které je integrace postavená, nekompatibilně změnilo."
+      },
       "effectiveDocumentsCard": {
         "title": "Efektivní dokumenty",
         "description": "Všechny dokumenty dostupné z této integrace, ať už přímo nebo přes propojenou kolekci.",
