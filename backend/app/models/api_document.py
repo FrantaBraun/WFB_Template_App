@@ -5,7 +5,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, func, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -107,6 +107,12 @@ class ApiDocumentVersion(Base):
     # when the comparison itself failed; the changes themselves are computed
     # on demand from the two stored files (GET .../versions/{id}/changes).
     change_summary: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # How many endpoints of this version are in the search index
+    # (ApiDocumentEndpoint below), NULL while it has not been indexed. Only the
+    # current version is ever indexed, so an archived row keeps whatever it had.
+    # NULL on a current version is what app/services/endpoint_index.py's
+    # backfill looks for.
+    endpoint_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -116,3 +122,41 @@ class ApiDocumentVersion(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class ApiDocumentEndpoint(Base):
+    """One endpoint of a document's CURRENT version, kept so that endpoints can
+    be searched across every document without parsing a spec per request - see
+    app/services/endpoint_index.py (what is stored and when it is rebuilt) and
+    app/services/spec_outline.py (what an endpoint is for each kind of
+    document). Rows are replaced as a whole whenever a document gets a new
+    current version; `search_text` is the folded text (lower case, no
+    diacritics) the search looks in. Team and visibility are deliberately not
+    copied here: they are read from the document at search time, so changing
+    is_public takes effect at once."""
+
+    __tablename__ = "api_document_endpoints"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    documentation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("api_documents.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("api_document_versions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    method: Mapped[str] = mapped_column(String(20), nullable=False)
+    path: Mapped[str] = mapped_column(Text, nullable=False)
+    name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tags: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb"))
+    deprecated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    operation_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    search_text: Mapped[str] = mapped_column(Text, nullable=False)

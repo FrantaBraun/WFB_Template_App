@@ -2,6 +2,8 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
+import asyncio
+import contextlib
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -15,6 +17,7 @@ from app.database import engine
 from app.logging_config import configure_logging
 from app.modules.registry import load_enabled_module_keys, start_background_tasks, stop_background_tasks
 from app.services.auth_client import auth_client
+from app.services.endpoint_index import run_backfill
 from app.services.scheduler import shutdown_scheduler, start_scheduler
 
 settings = get_settings()
@@ -27,18 +30,26 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """FastAPI startup/shutdown hook: starts/stops the automatic recheck
     scheduler (guarded by settings.scheduler_enabled, so tests can disable
-    it) and the background tasks of every enabled module, and closes the
-    shared AuthClient's HTTP connection and disposes the DB engine's
-    connection pool on shutdown. The scheduler and the module tasks are
-    stopped before either of those, since their jobs use the DB engine - they
-    must not still be running once that engine is disposed."""
+    it), the one-off indexing of the endpoints of documents that are not in
+    the search index yet (same guard - see app/services/endpoint_index.py) and
+    the background tasks of every enabled module, and closes the shared
+    AuthClient's HTTP connection and disposes the DB engine's connection pool
+    on shutdown. The scheduler, the indexing and the module tasks are stopped
+    before either of those, since their jobs use the DB engine - they must not
+    still be running once that engine is disposed."""
     logger.info("Application startup")
+    indexing_task = None
     if settings.scheduler_enabled:
         start_scheduler()
+        indexing_task = asyncio.create_task(run_backfill(settings.uploads_dir))
     background_tasks = start_background_tasks(load_enabled_module_keys())
     yield
     logger.info("Application shutdown")
     await stop_background_tasks(background_tasks)
+    if indexing_task is not None:
+        indexing_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await indexing_task
     if settings.scheduler_enabled:
         shutdown_scheduler()
     await auth_client.aclose()

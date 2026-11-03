@@ -9,6 +9,7 @@ from app.api.api_docs import router as api_docs_router
 from app.api.auth import router as auth_router
 from app.api.author_messages import router as author_messages_router
 from app.api.collections import router as collections_router
+from app.api.endpoint_search import router as endpoint_search_router
 from app.api.integrations import router as integrations_router
 from app.api.notifications import router as notifications_router
 from app.api.public import api_docs as public_api_docs
@@ -32,6 +33,7 @@ api_router.include_router(api_docs_router.router, prefix="/api-docs", tags=["api
 api_router.include_router(notifications_router.router, prefix="/notifications", tags=["notifications"])
 api_router.include_router(author_messages_router.router, prefix="/author-messages", tags=["author-messages"])
 api_router.include_router(collections_router.router, prefix="/collections", tags=["collections"])
+api_router.include_router(endpoint_search_router.router, prefix="/endpoint-search", tags=["endpoint-search"])
 api_router.include_router(integrations_router.router, prefix="/integrations", tags=["integrations"])
 
 # Feature modules (see app/modules/) mount themselves here, gated by

@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
 from app.models.api_document import ApiDocument, ApiDocumentVersion
+from app.services.endpoint_index import index_version
 from app.services.notifications import notify_new_version
 from app.services.openapi_spec import ParsedSpec, SpecValidationError, fetch_spec_from_url, parse_spec
 from app.services.spec_compare import diff_parsed
@@ -102,7 +103,9 @@ async def process_new_spec(
     re-upload and (a later phase's) scheduled recheck - source is the only
     thing that varies between callers.
 
-    On an actual new/changed version, notify_new_version
+    On an actual new/changed version the endpoint search index is rebuilt for
+    the document (app/services/endpoint_index.py - never raises, a failed
+    index is retried by the start-up backfill) and notify_new_version
     (app/services/notifications.py) is called before returning - never on
     the no-op path above, and never on a failure path below, since those
     don't reach this point. notify_new_version never raises, so it can't
@@ -167,6 +170,7 @@ async def process_new_spec(
         doc.last_check_error = None
         await db.commit()
         await db.refresh(new_version)
+        await index_version(db, new_version, parsed)
         await notify_new_version(doc, new_version, db)
         return new_version
     except Exception as exc:
