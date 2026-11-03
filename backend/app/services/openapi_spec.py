@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 import httpx
 import yaml
 
+from app.services.safe_http import UnsafeUrlError, safe_get
+
 
 class SpecValidationError(Exception):
     """Raised when raw spec bytes can't be turned into a usable ParsedSpec -
@@ -99,12 +101,31 @@ def parse_spec(raw: bytes) -> ParsedSpec:
     )
 
 
-async def fetch_spec_from_url(url: str, timeout: float) -> bytes:
-    """Fetch raw spec bytes from a documentation's source_url. Raises via
-    response.raise_for_status() on a non-2xx response; a connection error
-    (DNS failure, timeout, refused connection, ...) propagates as httpx's
-    own exception - never swallowed here, callers decide how to react."""
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        response = await client.get(url)
-        response.raise_for_status()
-        return response.content
+async def fetch_spec_from_url(url: str, timeout: float, *, max_bytes: int, allow_private: bool = False) -> bytes:
+    """Fetch raw spec bytes from a documentation's source_url - an address a
+    user typed in, called from this server, so it goes through
+    app/services/safe_http.py: unless `allow_private` (the deployment's
+    Settings.outbound_allow_private_addresses) it must resolve only to public
+    addresses, and redirects are not followed. The body is read only up to
+    `max_bytes`; a longer one is a SpecValidationError, not something held
+    in memory first and measured afterwards.
+
+    Raises SpecValidationError for an address that may not be called or a body
+    that is too large, httpx.HTTPStatusError (as raise_for_status does) for a
+    non-2xx answer, a redirect included, and a connection error (DNS failure,
+    timeout, refused connection, ...) propagates as httpx's own exception -
+    never swallowed here, callers decide how to react."""
+    try:
+        response = await safe_get(url, {}, timeout=timeout, max_bytes=max_bytes, allow_private=allow_private)
+    except UnsafeUrlError as exc:
+        raise SpecValidationError(str(exc)) from exc
+    if not 200 <= response.status_code < 300:
+        request = httpx.Request("GET", url)
+        raise httpx.HTTPStatusError(
+            f"The server answered {response.status_code}",
+            request=request,
+            response=httpx.Response(response.status_code, request=request),
+        )
+    if response.truncated:
+        raise SpecValidationError(f"Spec content is larger than the {max_bytes} byte limit.")
+    return response.body

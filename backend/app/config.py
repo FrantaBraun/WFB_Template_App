@@ -45,11 +45,16 @@ class Settings(BaseSettings):
     # Team webhooks (app/services/webhooks.py) - how long one call to a team's
     # Slack / webhook URL may take before it counts as failed (the calls of one
     # new version run side by side, so this is also the most a check waits for
-    # them). The URL is typed in by a user, so a call to a private or loopback
-    # address is refused (app/services/safe_http.py); only a development
-    # deployment that wants a receiver on localhost turns that off.
+    # them).
     webhook_timeout_seconds: float = 5.0
-    webhook_allow_private_addresses: bool = False
+
+    # Every address a user types in that this server then calls - a team's
+    # webhook, the source_url of a documentation - is refused when it is a
+    # private, loopback or link-local one (or resolves to one), so the server
+    # cannot be aimed at its own network (app/services/safe_http.py). A
+    # deployment that registers documentation served inside its own network,
+    # or a development one with a receiver on localhost, turns that off.
+    outbound_allow_private_addresses: bool = False
 
     # Feature modules (see app/modules/) are deliberately NOT configured
     # here: which ones are mounted is set in the git-tracked

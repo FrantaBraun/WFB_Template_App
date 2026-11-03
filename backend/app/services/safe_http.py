@@ -2,16 +2,19 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
-"""Posting to an address a USER typed in, without letting them aim the
-server at its own network (SSRF).
+"""Calling an address a USER typed in, without letting them aim the server at
+its own network (SSRF).
 
-A webhook URL is chosen by whoever configures it, and this server then calls
-it from inside its own network - so `http://169.254.169.254/...` (cloud
-metadata), `http://localhost:5432` or `http://10.0.0.5/admin` must never be
-reachable that way. Three things keep it so:
+Two things in this application call such addresses: a team's webhooks
+(app/services/webhooks.py, POST) and the documentation a user registers by
+URL (app/services/openapi_spec.py's fetch_spec_from_url, GET). The server
+makes those calls from inside its own network - so
+`http://169.254.169.254/...` (cloud metadata), `http://localhost:5432` or
+`http://10.0.0.5/admin` must never be reachable that way. Three things keep
+it so:
 
-- only https, no credentials in the URL (http only when the deployment
-  explicitly allows private addresses, see Settings.webhook_allow_private_addresses);
+- only https (and http where the caller says it is fine, as for fetching a
+  public specification), no credentials in the URL;
 - the host is resolved HERE and every address it resolves to has to be a
   public one - one private address among several rejects the lot;
 - the connection goes to the address that was checked, not to the host name
@@ -20,8 +23,13 @@ reachable that way. Three things keep it so:
   rebinding - cannot swap in a private one. Redirects are never followed,
   since the target of a redirect was never checked.
 
-The response is read only as far as MAX_RESPONSE_BYTES: the answer of a
-chat tool is a word, and a hostile one must not be able to fill the memory."""
+A deployment that really does need to call private addresses (documentation
+served inside the company network, a webhook receiver on localhost while
+developing) sets Settings.outbound_allow_private_addresses, which turns the
+address check off and uses the URL as written.
+
+The response is read only as far as the caller allows: the answer of a chat
+tool is a word, and a hostile server must not be able to fill the memory."""
 
 import asyncio
 import functools
@@ -57,9 +65,14 @@ class UnsafeUrlError(ValueError):
 
 
 @dataclass(frozen=True)
-class PostResult:
+class SafeResponse:
+    """What came back: the status, the body up to the caller's limit, and
+    whether there was more than that (truncated) - in which case body is
+    only the part that was read."""
+
     status_code: int
     body: bytes
+    truncated: bool = False
 
 
 def is_public_address(address: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
@@ -86,10 +99,11 @@ def is_public_address(address: ipaddress.IPv4Address | ipaddress.IPv6Address) ->
     return address.is_global
 
 
-def split_url(url: str, *, allow_private: bool = False) -> tuple[str, str, int, str]:
+def split_url(url: str, *, allow_private: bool = False, allow_http: bool = False) -> tuple[str, str, int, str]:
     """(scheme, host, port, path with query) of a URL that may be called, else
     UnsafeUrlError. Looks only at the URL - whether the host is safe is for
-    `resolve_public`."""
+    `resolve_public`. Plain http is accepted when the caller allows it, and
+    wherever private addresses are allowed (development)."""
     if len(url) > MAX_URL_LENGTH:
         raise UnsafeUrlError("The URL is too long")
     try:
@@ -97,9 +111,9 @@ def split_url(url: str, *, allow_private: bool = False) -> tuple[str, str, int, 
         port = parts.port
     except ValueError as exc:
         raise UnsafeUrlError("The URL is not valid") from exc
-    allowed = ("https", "http") if allow_private else ("https",)
-    if parts.scheme not in allowed:
-        raise UnsafeUrlError("The URL must start with https://" if not allow_private else "The URL must be http or https")
+    plain_http_ok = allow_http or allow_private
+    if parts.scheme not in (("https", "http") if plain_http_ok else ("https",)):
+        raise UnsafeUrlError("The URL must be http or https" if plain_http_ok else "The URL must start with https://")
     if not parts.hostname:
         raise UnsafeUrlError("The URL has no host")
     if parts.username is not None or parts.password is not None:
@@ -143,10 +157,10 @@ async def resolve_public(host: str, port: int) -> list[str]:
     return list(dict.fromkeys(str(address) for address in parsed))
 
 
-async def check_url(url: str, *, allow_private: bool = False) -> None:
+async def check_url(url: str, *, allow_private: bool = False, allow_http: bool = False) -> None:
     """Raise UnsafeUrlError unless `url` may be called (what a webhook is
     asked to satisfy when it is saved - and again every time it is called)."""
-    _, host, port, _ = split_url(url, allow_private=allow_private)
+    _, host, port, _ = split_url(url, allow_private=allow_private, allow_http=allow_http)
     if not allow_private:
         await resolve_public(host, port)
 
@@ -158,15 +172,51 @@ async def safe_post(
     *,
     timeout: float,
     allow_private: bool = False,
-) -> PostResult:
-    """POST `body` to `url` as described in the module docstring. Raises
-    UnsafeUrlError for an address that must not be called and httpx.HTTPError
-    for a connection that fails; an answer of any status is a result, the
-    caller decides what a 404 means."""
-    scheme, host, port, path = split_url(url, allow_private=allow_private)
+) -> SafeResponse:
+    """POST `body` to `url` as described in the module docstring (https only,
+    answer read up to MAX_RESPONSE_BYTES). Raises UnsafeUrlError for an
+    address that must not be called and httpx.HTTPError for a connection that
+    fails; an answer of any status is a result, the caller decides what a 404
+    means."""
+    return await _send(
+        "POST", url, body, headers, timeout=timeout, allow_private=allow_private, allow_http=False, max_bytes=MAX_RESPONSE_BYTES
+    )
+
+
+async def safe_get(
+    url: str,
+    headers: dict[str, str],
+    *,
+    timeout: float,
+    max_bytes: int,
+    allow_private: bool = False,
+    allow_http: bool = True,
+) -> SafeResponse:
+    """GET `url` as described in the module docstring. The body is read only up
+    to `max_bytes`; a longer one comes back with `truncated` set and the rest
+    unread. http is allowed by default - a public specification served over
+    plain http is an ordinary thing, and what makes the call safe is the
+    address, not the scheme. Raises like safe_post."""
+    return await _send(
+        "GET", url, None, headers, timeout=timeout, allow_private=allow_private, allow_http=allow_http, max_bytes=max_bytes
+    )
+
+
+async def _send(
+    method: str,
+    url: str,
+    body: bytes | None,
+    headers: dict[str, str],
+    *,
+    timeout: float,
+    allow_private: bool,
+    allow_http: bool,
+    max_bytes: int,
+) -> SafeResponse:
+    scheme, host, port, path = split_url(url, allow_private=allow_private, allow_http=allow_http)
     if allow_private:
-        # A development deployment (a webhook receiver on localhost): the URL is used as written.
-        return await _post(url, body, headers, timeout=timeout, extensions={})
+        # A deployment that allows private addresses: the URL is used as written.
+        return await _request(method, url, body, headers, timeout=timeout, extensions={}, max_bytes=max_bytes)
 
     addresses = await resolve_public(host, port)
     default_port = 443 if scheme == "https" else 80
@@ -176,12 +226,14 @@ async def safe_post(
     for address in addresses[:_MAX_ADDRESSES_TRIED]:
         literal = f"[{address}]" if ":" in address else address
         try:
-            return await _post(
+            return await _request(
+                method,
                 f"{scheme}://{literal}:{port}{path}",
                 body,
                 {**headers, "Host": host_header},
                 timeout=timeout,
                 extensions=extensions,
+                max_bytes=max_bytes,
             )
         except (httpx.ConnectError, httpx.ConnectTimeout) as exc:  # try the next address; anything else is final
             last_error = exc
@@ -189,14 +241,25 @@ async def safe_post(
     raise last_error
 
 
-async def _post(url: str, body: bytes, headers: dict[str, str], *, timeout: float, extensions: dict) -> PostResult:
+async def _request(
+    method: str,
+    url: str,
+    body: bytes | None,
+    headers: dict[str, str],
+    *,
+    timeout: float,
+    extensions: dict,
+    max_bytes: int,
+) -> SafeResponse:
     async with httpx.AsyncClient(
         timeout=timeout, follow_redirects=False, trust_env=False, verify=_ssl_context()
     ) as client:
-        async with client.stream("POST", url, content=body, headers=headers, extensions=extensions) as response:
+        async with client.stream(method, url, content=body, headers=headers, extensions=extensions) as response:
             received = b""
+            truncated = False
             async for chunk in response.aiter_bytes():
                 received += chunk
-                if len(received) >= MAX_RESPONSE_BYTES:
+                if len(received) > max_bytes:
+                    truncated = True
                     break
-            return PostResult(status_code=response.status_code, body=received[:MAX_RESPONSE_BYTES])
+            return SafeResponse(status_code=response.status_code, body=received[:max_bytes], truncated=truncated)

@@ -163,7 +163,7 @@ async def send(webhook: TeamWebhook, event: dict, settings: Settings) -> Deliver
             body,
             headers,
             timeout=settings.webhook_timeout_seconds,
-            allow_private=settings.webhook_allow_private_addresses,
+            allow_private=settings.outbound_allow_private_addresses,
         )
     except UnsafeUrlError:
         return DeliveryResult(ok=False, error="The address is not allowed")

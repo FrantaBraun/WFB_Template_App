@@ -62,6 +62,9 @@ def _network(monkeypatch):
 
     monkeypatch.setattr(safe_http, "_getaddrinfo", resolve)
     monkeypatch.setattr(socket, "getfqdn", lambda *args, **kwargs: "localhost")
+    # A new version's webhooks are delivered with the application's own settings
+    # (notify_new_version is not handed any): make those the strict ones.
+    monkeypatch.setattr(notifications_module, "get_settings", _settings)
 
 
 # --- URL masking --------------------------------------------------------------------
@@ -176,7 +179,15 @@ def _webhook(kind: str = "generic", url: str = "https://hooks.example.com/ingest
 
 
 def _settings(**overrides) -> Settings:
-    return Settings(webhook_timeout_seconds=2.0, frontend_url="https://app.example.com", **overrides)
+    """The address check is ON here whatever the test environment says (conftest
+    switches it off for everything else), since this is what is under test."""
+    values = {
+        "webhook_timeout_seconds": 2.0,
+        "frontend_url": "https://app.example.com",
+        "outbound_allow_private_addresses": False,
+    }
+    values.update(overrides)
+    return Settings(**values)
 
 
 @respx.mock

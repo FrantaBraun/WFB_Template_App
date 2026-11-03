@@ -194,9 +194,16 @@ async def fetch_and_process(
     instead).
     """
     try:
-        raw = await fetch_spec_from_url(doc.source_url, settings.spec_fetch_timeout_seconds)
-    except httpx.HTTPError as exc:
+        raw = await fetch_spec_from_url(
+            doc.source_url,
+            settings.spec_fetch_timeout_seconds,
+            max_bytes=settings.max_spec_file_size_bytes,
+            allow_private=settings.outbound_allow_private_addresses,
+        )
+    except (httpx.HTTPError, SpecValidationError) as exc:
         # httpx timeouts stringify to "" - the type name is better than nothing.
+        # A SpecValidationError here is the fetch refusing (an address that may
+        # not be called, a body over the limit) - recorded like any failed check.
         doc.last_check_error = str(exc) or type(exc).__name__
         await db.commit()
         raise

@@ -40,7 +40,14 @@ def _environment(rsa_keypair, monkeypatch):
 
 
 def _settings(**overrides) -> Settings:
-    return Settings(webhook_timeout_seconds=2.0, frontend_url="https://app.example.com", **overrides)
+    """The address check is ON here whatever the test environment says."""
+    values = {
+        "webhook_timeout_seconds": 2.0,
+        "frontend_url": "https://app.example.com",
+        "outbound_allow_private_addresses": False,
+    }
+    values.update(overrides)
+    return Settings(**values)
 
 
 async def _team(db_session, make_access_token):
@@ -147,7 +154,7 @@ async def test_private_addresses_are_accepted_only_where_the_deployment_allows_t
 
     refused = await request(db_session, "POST", _path(team), token=tokens["owner"], settings=_settings(), json=body)
     allowed = await request(
-        db_session, "POST", _path(team), token=tokens["owner"], settings=_settings(webhook_allow_private_addresses=True), json=body
+        db_session, "POST", _path(team), token=tokens["owner"], settings=_settings(outbound_allow_private_addresses=True), json=body
     )
 
     assert (refused.status_code, allowed.status_code) == (422, 201)

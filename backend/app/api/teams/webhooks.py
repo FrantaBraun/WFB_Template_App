@@ -154,7 +154,7 @@ async def create_webhook(
     host that does not resolve or resolves to a non-public address) or, for
     Slack, one not on hooks.slack.com; 409 past MAX_WEBHOOKS_PER_TEAM."""
     await _require_owner(db, team_id, current_user)
-    allow_private = settings.webhook_allow_private_addresses
+    allow_private = settings.outbound_allow_private_addresses
     try:
         _, host, _, _ = split_url(body.url, allow_private=allow_private)
         if body.kind == "slack" and host != SLACK_HOST and not allow_private:

@@ -26,6 +26,13 @@ import uuid
 # overridden.
 os.environ.setdefault("MAIL_SUPPRESS_SEND", "true")
 
+# The same reasoning for fetching a documentation's source_url and calling a
+# webhook: with the address check on, the host of every mocked URL would first
+# be looked up in real DNS (app/services/safe_http.py). The tests of that check
+# (test_safe_http.py, test_spec_fetch_guard.py, the webhook tests) switch it on
+# explicitly with their own Settings.
+os.environ.setdefault("OUTBOUND_ALLOW_PRIVATE_ADDRESSES", "true")
+
 import jwt as pyjwt
 import pytest
 from cryptography.hazmat.primitives import serialization
