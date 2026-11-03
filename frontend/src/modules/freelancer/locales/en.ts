@@ -89,7 +89,7 @@ export const en: typeof cs = {
     },
     portfolio: {
       title: 'My projects',
-      intro: 'A few applications from the WithFBraun ecosystem, which I build on my own.',
+      intro: 'A few applications, which I am building...',
       all: 'Full portfolio',
     },
     cta: {

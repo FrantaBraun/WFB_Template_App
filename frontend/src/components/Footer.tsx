@@ -31,14 +31,6 @@ export default function Footer() {
         </nav>
       )}
       <p>
-        <a
-          href="https://withfbraun.com"
-          target="_blank"
-          rel="noreferrer"
-          className="font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
-        >
-          {t('footer.ecosystem')}
-        </a>
         <span className="mx-2">·</span>
         {t('footer.copyright', { year: new Date().getFullYear() })}
       </p>

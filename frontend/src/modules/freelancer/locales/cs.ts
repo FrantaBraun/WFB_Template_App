@@ -88,7 +88,7 @@ export const cs = {
     },
     portfolio: {
       title: 'Moje projekty',
-      intro: 'Několik aplikací z ekosystému WithFBraun, který vlastními silami vytvářím.',
+      intro: 'Několik aplikací, které vyvíjím...',
       all: 'Celé portfolio',
     },
     cta: {

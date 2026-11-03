@@ -119,7 +119,7 @@ export default function HomePage() {
         {projects && projects.length > 0 && (
           <section>
             <h2 className="text-2xl font-semibold tracking-tight">{t('home.portfolio.title')}</h2>
-            <p className={`${card} mt-4 max-w-2xl py-4 ${mutedText}`}>{t('home.portfolio.intro')}</p>
+            <p className={`max-w-2xl py-4 ${mutedText}`}>{t('home.portfolio.intro')}</p>
             <ul className="mt-6 grid gap-4 sm:grid-cols-3">
               {projects.map((project) => (
                 <li key={project.slug}>
