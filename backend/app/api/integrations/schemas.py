@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.api.api_docs.schemas import ApiDocumentSummary
+from app.api.api_docs.schemas import ApiDocumentSummary, LatestChangeOut
 from app.api.collections.schemas import KnowledgeBasePageOut
 
 
@@ -78,9 +78,13 @@ class IntegrationDocumentOut(ApiDocumentSummary):
     """GET /{id}/documents list item: the same summary fields as
     ApiDocumentSummary, plus the merged, de-duplicated sources list above -
     one entry per document, never repeated even when reachable multiple
-    ways."""
+    ways. latest_change is what the document's current version changed over
+    the one it replaced (null for a first version or when it could not be
+    worked out) - what makes an integration's page show at a glance which of
+    the documents it depends on just broke something."""
 
     sources: list[IntegrationDocumentSource]
+    latest_change: LatestChangeOut | None
 
 
 class IntegrationKBCollectionGroup(BaseModel):

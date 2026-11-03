@@ -20,6 +20,7 @@ from app.api.api_docs.schemas import (
     ApiDocumentUpdate,
     ApiDocumentVersionOut,
     ChangeSummaryOut,
+    IntegrationRefOut,
     SpecChangeOut,
     VersionChangesOut,
     VersionRefOut,
@@ -34,6 +35,7 @@ from app.models.notification import Subscription
 from app.models.team import TeamMembership
 from app.models.user import User
 from app.services.api_document_versions import fetch_and_process, get_current_version, process_new_spec
+from app.services.integration_usage import integrations_using_documents
 from app.services.openapi_spec import SpecValidationError, parse_spec
 from app.services.spec_diff import diff_specs
 from app.services.spec_storage import delete_document_files, read_spec_file
@@ -68,14 +70,6 @@ async def _require_member_document(db: AsyncSession, document_id: uuid.UUID, use
     if not await is_team_member(db, doc.team_id, user.id):
         raise HTTPException(status_code=404, detail="Document not found")
     return doc
-
-
-def _summary_out(summary: dict | None) -> ChangeSummaryOut | None:
-    if not summary:
-        return None
-    return ChangeSummaryOut(
-        breaking=summary.get("breaking", 0), warning=summary.get("warning", 0), info=summary.get("info", 0)
-    )
 
 
 def _validate_recheck_period(recheck_period: str, source_url: str | None) -> None:
@@ -125,7 +119,7 @@ async def _build_detail(
             fetched_at=current.fetched_at,
             source=current.source,
             content_changed=current.content_changed,
-            change_summary=_summary_out(current.change_summary),
+            change_summary=ChangeSummaryOut.from_stored(current.change_summary),
         )
         if current is not None
         else None
@@ -134,6 +128,10 @@ async def _build_detail(
     author = await build_author_out(
         db, created_by_user_id=doc.created_by_user_id, team_id=doc.team_id, viewer=current_user
     )
+    # Integrations are team-private: only the viewer's own teams' are named.
+    used_by = (
+        await integrations_using_documents(db, [doc.id], user_id=current_user.id) if current_user is not None else {}
+    ).get(doc.id, [])
     return ApiDocumentDetail(
         id=doc.id,
         team_id=doc.team_id,
@@ -151,6 +149,7 @@ async def _build_detail(
         can_edit=can_edit,
         is_subscribed=is_subscribed,
         author=author,
+        integrations=[IntegrationRefOut(id=ref.id, name=ref.name) for ref in used_by],
     )
 
 
@@ -491,7 +490,7 @@ async def list_document_versions(
             archived_at=v.archived_at,
             source=v.source,
             content_changed=v.content_changed,
-            change_summary=_summary_out(v.change_summary),
+            change_summary=ChangeSummaryOut.from_stored(v.change_summary),
         )
         for v in result.scalars().all()
     ]

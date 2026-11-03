@@ -8,6 +8,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from app.api.api_docs.schemas import IntegrationRefOut
+
 
 class NotificationMessageOut(BaseModel):
     """What a bell entry of kind "author_message" shows: who wrote, about
@@ -35,7 +37,8 @@ class NotificationOut(BaseModel):
     ApiDocumentVersion.content_changed); the UI words those differently.
     breaking_changes is how many breaking changes that version brought over
     the one it replaced (ApiDocumentVersion.change_summary), 0 when none or
-    unknown."""
+    unknown. integrations are the viewer's own teams' integrations that use
+    the document (the new version affects them) - empty for message entries."""
 
     id: uuid.UUID
     kind: Literal["new_version", "author_message"]
@@ -44,6 +47,7 @@ class NotificationOut(BaseModel):
     version: str | None
     content_changed: bool
     breaking_changes: int
+    integrations: list[IntegrationRefOut]
     message: NotificationMessageOut | None
     is_read: bool
     created_at: datetime

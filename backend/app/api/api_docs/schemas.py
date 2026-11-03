@@ -64,6 +64,36 @@ class ChangeSummaryOut(BaseModel):
     warning: int
     info: int
 
+    @classmethod
+    def from_stored(cls, summary: dict | None) -> "ChangeSummaryOut | None":
+        """From ApiDocumentVersion.change_summary (null or {"breaking": n, ...})."""
+        if not summary:
+            return None
+        return cls(
+            breaking=summary.get("breaking", 0), warning=summary.get("warning", 0), info=summary.get("info", 0)
+        )
+
+
+class IntegrationRefOut(BaseModel):
+    """An integration, as another page names it: just enough to show and link
+    it. Only ever integrations of teams the caller belongs to - integrations
+    are team-private, so their names must not reach anyone else."""
+
+    id: uuid.UUID
+    name: str
+
+
+class LatestChangeOut(BaseModel):
+    """What a document's current version changed over the one it replaced -
+    present only when it replaced one (and the comparison could be made).
+    version_id is the current version's id, which the Changes page takes."""
+
+    version_id: uuid.UUID
+    version: str
+    fetched_at: datetime
+    content_changed: bool
+    summary: ChangeSummaryOut
+
 
 class ApiDocumentCurrentVersion(BaseModel):
     """The current-version object nested in ApiDocumentDetail. Distinct from
@@ -87,7 +117,9 @@ class ApiDocumentDetail(BaseModel):
     api_docs/router.py's _build_detail, which computes it from the same
     current_user already used for can_edit. author is who created the
     document and the team that owns it (see AuthorOut) - what the "contact
-    the author" card shows."""
+    the author" card shows. integrations are the caller's own teams'
+    integrations that use this document (directly or through a collection) -
+    empty for an anonymous caller and for anyone whose teams use it nowhere."""
 
     id: uuid.UUID
     team_id: uuid.UUID
@@ -105,6 +137,7 @@ class ApiDocumentDetail(BaseModel):
     can_edit: bool
     is_subscribed: bool | None
     author: AuthorOut
+    integrations: list[IntegrationRefOut]
 
 
 class ApiDocumentCheckResult(ApiDocumentDetail):

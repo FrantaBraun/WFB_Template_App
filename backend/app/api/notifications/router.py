@@ -9,6 +9,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
+from app.api.api_docs.schemas import IntegrationRefOut
 from app.api.notifications.schemas import NotificationListOut, NotificationMessageOut, NotificationOut
 from app.database import get_db
 from app.models.api_document import ApiDocument, ApiDocumentVersion
@@ -17,6 +18,7 @@ from app.models.collection import Collection
 from app.models.notification import Notification
 from app.models.user import User
 from app.services.author_contact import display_name, preview
+from app.services.integration_usage import integrations_using_documents
 
 router = APIRouter()
 
@@ -97,6 +99,10 @@ async def list_notifications(
 
     rows = (await db.execute(items_stmt)).all()
     messages = await _load_messages(db, [row[0].message_id for row in rows if row[0].message_id is not None])
+    # Which of the viewer's own teams' integrations each document's news affects.
+    affected = await integrations_using_documents(
+        db, {row[0].documentation_id for row in rows if row[0].documentation_id is not None}, user_id=current_user.id
+    )
     items = [
         NotificationOut(
             id=notification.id,
@@ -106,6 +112,9 @@ async def list_notifications(
             version=version,
             content_changed=bool(content_changed),
             breaking_changes=(change_summary or {}).get("breaking", 0),
+            integrations=[
+                IntegrationRefOut(id=ref.id, name=ref.name) for ref in affected.get(notification.documentation_id, [])
+            ],
             message=messages.get(notification.message_id),
             is_read=notification.is_read,
             created_at=notification.created_at,

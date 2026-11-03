@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.api_docs.schemas import ChangeSummaryOut, LatestChangeOut
 from app.api.collections.schemas import (
     CollectionSummary,
     KnowledgeBasePageCreate,
@@ -362,17 +363,44 @@ async def list_integration_documents(
         return []
 
     current_version_subq = (
-        select(ApiDocumentVersion.documentation_id, ApiDocumentVersion.version)
+        select(
+            ApiDocumentVersion.documentation_id,
+            ApiDocumentVersion.id.label("version_id"),
+            ApiDocumentVersion.version,
+            ApiDocumentVersion.fetched_at,
+            ApiDocumentVersion.content_changed,
+            ApiDocumentVersion.change_summary,
+        )
         .where(ApiDocumentVersion.archived_at.is_(None))
         .subquery()
     )
     stmt = (
-        select(ApiDocument, current_version_subq.c.version)
+        select(
+            ApiDocument,
+            current_version_subq.c.version_id,
+            current_version_subq.c.version,
+            current_version_subq.c.fetched_at,
+            current_version_subq.c.content_changed,
+            current_version_subq.c.change_summary,
+        )
         .outerjoin(current_version_subq, current_version_subq.c.documentation_id == ApiDocument.id)
         .where(ApiDocument.id.in_(sources_by_document.keys()))
         .order_by(ApiDocument.title.asc())
     )
     rows = (await db.execute(stmt)).all()
+
+    def latest_change(version_id, version, fetched_at, content_changed, change_summary) -> LatestChangeOut | None:
+        summary = ChangeSummaryOut.from_stored(change_summary)
+        if summary is None:
+            return None
+        return LatestChangeOut(
+            version_id=version_id,
+            version=version,
+            fetched_at=fetched_at,
+            content_changed=content_changed,
+            summary=summary,
+        )
+
     return [
         IntegrationDocumentOut(
             id=doc.id,
@@ -384,8 +412,9 @@ async def list_integration_documents(
             last_check_error=doc.last_check_error,
             current_version=version,
             sources=sources_by_document[doc.id],
+            latest_change=latest_change(version_id, version, fetched_at, content_changed, change_summary),
         )
-        for doc, version in rows
+        for doc, version_id, version, fetched_at, content_changed, change_summary in rows
     ]
 
 
