@@ -871,6 +871,7 @@
       "collectionsLoadError": "Failed to load this integration's collections.",
       "documentsLoadError": "Failed to load this integration's effective documents.",
       "kbLoadError": "Failed to load this integration's knowledge base.",
+      "someIncompatibilities" : "One or more documents used in the integration have been updated with incompatible changes.",
       "editCard": {
         "title": "Edit",
         "nameLabel": "Name",

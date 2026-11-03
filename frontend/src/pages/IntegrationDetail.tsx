@@ -414,7 +414,11 @@ export default function IntegrationDetail() {
           {t('integrations.detail.backToList')}
         </Link>
       </div>
-
+      {(documentsBrokenSincePin > 0 || documentsWithBreakingChanges > 0) &&
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+            {t('integrations.detail.someIncompatibilities')}
+          </p>
+          }
       {integration.description && <p className="text-slate-700 dark:text-slate-300">{integration.description}</p>}
 
       <form
@@ -635,18 +639,7 @@ export default function IntegrationDetail() {
                   </p>
                 </Link>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  {doc.latest_change && (
-                    <>
-                      <ChangeSummaryBadges summary={doc.latest_change.summary} />
-                      <Link
-                        to={`/api-docs/${doc.id}/versions/${doc.latest_change.version_id}/changes`}
-                        title={t('integrations.detail.effectiveDocumentsCard.changesTitle')}
-                        className="text-xs text-slate-700 underline dark:text-slate-300"
-                      >
-                        {t('integrations.detail.effectiveDocumentsCard.changes')}
-                      </Link>
-                    </>
-                  )}
+
                   {doc.sources.map((source, index) =>
                     source.type === 'direct' ? (
                       <span

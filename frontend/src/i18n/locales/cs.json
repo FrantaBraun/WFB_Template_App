@@ -887,6 +887,7 @@
       "collectionsLoadError": "Nepodařilo se načíst kolekce této integrace.",
       "documentsLoadError": "Nepodařilo se načíst efektivní dokumenty této integrace.",
       "kbLoadError": "Nepodařilo se načíst znalostní bázi této integrace.",
+      "someIncompatibilities" : "Jedna nebo více dokumentací použitých v integraci byly aktualizovány s nekompatibilními úpravami.",
       "editCard": {
         "title": "Úprava",
         "nameLabel": "Název",
