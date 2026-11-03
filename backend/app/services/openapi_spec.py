@@ -19,13 +19,16 @@ class SpecValidationError(Exception):
 @dataclass
 class ParsedSpec:
     """content_hash is a fingerprint of what the spec says, not of its bytes
-    (see _content_hash) - it is left out of ==, so it never matters to a
-    caller that only compares version / title / format."""
+    (see _content_hash); document is the parsed spec itself, for the
+    structural diff (app/services/spec_diff.py). Both are left out of == (and
+    document out of repr), so they never matter to a caller that only
+    compares version / title / format."""
 
     version: str
     title: str | None
     format: str
     content_hash: str = field(default="", compare=False)
+    document: dict = field(default_factory=dict, compare=False, repr=False)
 
 
 def _canonical(value: object) -> object:
@@ -91,7 +94,9 @@ def parse_spec(raw: bytes) -> ParsedSpec:
     if not isinstance(title, str):
         title = None
 
-    return ParsedSpec(version=version, title=title, format=format, content_hash=_content_hash(parsed))
+    return ParsedSpec(
+        version=version, title=title, format=format, content_hash=_content_hash(parsed), document=parsed
+    )
 
 
 async def fetch_spec_from_url(url: str, timeout: float) -> bytes:
