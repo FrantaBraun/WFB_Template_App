@@ -387,14 +387,18 @@ const boardsModule: ModuleDefinition = {
             title: 'Registrace k DPH v Česku',
             payer: 'Poskytovatel je v nastavení (invoicing.provider.vat_payer) označen jako plátce DPH, limit pro registraci se proto nesleduje.',
             explain:
-              'Obrat za 12 kalendářních měsíců, {{from}} až {{to}}. Po překročení {{limit}} je třeba se zpravidla do 15 dnů po konci měsíce přihlásit k registraci a vystavovat daňové doklady, což tato aplikace neumí. Ověřte s účetní.',
+              'Od roku 2025 se obrat počítá za kalendářní rok. Nad {{limit}} se stanete plátcem od 1. ledna dalšího roku, nad {{immediate}} už od následujícího dne. Přihlášku je třeba podat do 10 pracovních dnů od překročení. Tato aplikace daňové doklady plátce neumí vystavit. Ověřte s účetní.',
+            year: 'Rok {{year}}',
+            first: 'Limit {{limit}}: plátcem od 1. ledna {{next}}',
+            second: 'Limit {{limit}}: plátcem od následujícího dne',
             paid: 'Zaplaceno {{amount}} (plateb: {{count}}).',
-            note: 'Počítají se všechny platby ze všech zemí. Limit se ale vztahuje na celý obrat osoby včetně jiných činností, které tady nevidíte.',
+            overdue: 'Obrat za rok {{year}} přesáhl první limit, takže jste se měl stát plátcem od 1. ledna {{next}}. Ověřte u účetní, že je přihláška podaná.',
+            note: 'Počítají se všechny platby ze všech zemí. Do obratu v tuzemsku ale patří jen plnění s místem plnění v Česku (prodej spotřebiteli mimo EU třeba ne) a limit se vztahuje na celý obrat osoby včetně jiných činností, které tady nevidíte.',
           },
           oss: {
             title: 'Prodej spotřebitelům v jiných státech EU',
             explain:
-              'Elektronické služby spotřebitelům v jiných členských státech EU se do {{limit}} za rok zdaňují jako doma. Limit nesmí být překročen v letošním ani loňském roce; nad ním se platí DPH státu zákazníka a je třeba registrace do OSS. Zemi zákazníka bere aplikace z fakturační adresy zadané při platbě.',
+              'Elektronické služby spotřebitelům v jiných členských státech EU se do {{limit}} za rok zdaňují jako doma. Limit nesmí být překročen v letošním ani loňském roce; nad ním se platí DPH státu zákazníka, a to přes OSS, nebo registrací v každém státě zvlášť. Zemi zákazníka bere aplikace z fakturační adresy zadané při platbě.',
             year: 'Rok {{year}}',
             sold: 'Do jiných států EU: {{amount}} (plateb: {{count}}, přepočteno na {{estimate}}).',
             unknown: 'Plateb bez zjištěné země: {{count}} (jsou z doby před jejím ukládáním), do součtu za EU se proto nepočítají.',
@@ -745,14 +749,18 @@ const boardsModule: ModuleDefinition = {
             title: 'VAT registration in the Czech Republic',
             payer: 'The provider is marked as a VAT payer in the settings (invoicing.provider.vat_payer), so the registration limit is not watched.',
             explain:
-              'Turnover over 12 calendar months, {{from}} to {{to}}. Once it passes {{limit}}, you normally have to apply for VAT registration within 15 days of the end of the month and issue tax documents, which this application cannot do. Check with your accountant.',
+              'Since 2025 turnover is counted per calendar year. Above {{limit}} you become a VAT payer from 1 January of the next year, above {{immediate}} from the next day. The registration application is due within 10 working days of passing a limit. This application cannot issue a VAT payer’s tax documents. Check with your accountant.',
+            year: 'Year {{year}}',
+            first: 'Limit {{limit}}: payer from 1 January {{next}}',
+            second: 'Limit {{limit}}: payer from the next day',
             paid: '{{amount}} paid (payments: {{count}}).',
-            note: 'Every payment from every country is counted. The limit, though, applies to the whole turnover of the person, including other activities you cannot see here.',
+            overdue: 'Turnover in {{year}} passed the first limit, so you should have become a VAT payer on 1 January {{next}}. Check with your accountant that the application has been filed.',
+            note: 'Every payment from every country is counted. Only supplies with their place of supply in the Czech Republic belong in the turnover (a sale to a consumer outside the EU, say, does not), and the limit applies to the whole turnover of the person, including other activities you cannot see here.',
           },
           oss: {
             title: 'Sales to consumers in other EU countries',
             explain:
-              'Electronic services sold to consumers in other EU member states are taxed as at home up to {{limit}} a year. The limit must not be passed in this year or the last; above it the VAT of the customer’s country applies and registration in OSS is needed. The customer’s country is taken from the billing address entered when paying.',
+              'Electronic services sold to consumers in other EU member states are taxed as at home up to {{limit}} a year. The limit must not be passed in this year or the last; above it the VAT of the customer’s country applies, through OSS or by registering in each country. The customer’s country is taken from the billing address entered when paying.',
             year: 'Year {{year}}',
             sold: 'To other EU countries: {{amount}} (payments: {{count}}, converted to {{estimate}}).',
             unknown: 'Payments with no country recorded: {{count}} (they date from before it was kept), so they are not in the EU total.',

@@ -147,16 +147,26 @@ export interface CountryTotal {
   paid_usd_cents: number
 }
 
-/** The turnover of the last twelve calendar months against the limit for registering as a VAT payer. */
-export interface VatRegistration {
-  window_from: string
-  window_to: string
+/** One calendar year's turnover against the two limits for becoming a VAT payer: `level` for the first, `immediate_level` for the second. */
+export interface VatYear {
+  year: number
   payments: number
   paid_usd_cents: number
   estimated_czk: number
-  limit_czk: number
+  /** Share of the first limit (payer from 1 January of the next year). */
   percent: number
   level: LimitLevel
+  /** Share of the second limit (payer from the next day). */
+  immediate_percent: number
+  immediate_level: LimitLevel
+}
+
+/** The turnover per calendar year (counted so since 2025) against the limits for registering as a VAT payer. */
+export interface VatRegistration {
+  limit_czk: number
+  immediate_limit_czk: number
+  /** The previous calendar year first, then the current one. */
+  years: VatYear[]
 }
 
 /** One calendar year's sales to the other EU member states against the 10 000 EUR limit. */

@@ -4,7 +4,7 @@
 
 import unicodedata
 import uuid
-from datetime import date, datetime
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -223,18 +223,28 @@ class CountryTotalOut(BaseModel):
     paid_usd_cents: int
 
 
-class VatRegistrationOut(BaseModel):
-    """The turnover over the last twelve calendar months (this one included)
-    against the limit for registering as a VAT payer."""
+class VatYearOut(BaseModel):
+    """One calendar year's turnover against the two limits for becoming a VAT
+    payer: `percent` / `level` for the first (payer from 1 January of the next
+    year), `immediate_*` for the second (payer from the next day)."""
 
-    window_from: date
-    window_to: date
+    year: int
     payments: int
     paid_usd_cents: int
     estimated_czk: int
-    limit_czk: int
     percent: float
     level: LimitLevel
+    immediate_percent: float
+    immediate_level: LimitLevel
+
+
+class VatRegistrationOut(BaseModel):
+    """The turnover per calendar year against the limits for registering as a
+    VAT payer (counted per calendar year since 2025)."""
+
+    limit_czk: int
+    immediate_limit_czk: int
+    years: list[VatYearOut]  # the previous calendar year first, then the current one
 
 
 class OssYearOut(BaseModel):

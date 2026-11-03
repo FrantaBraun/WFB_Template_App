@@ -14,6 +14,7 @@ import {
   type LimitLevel,
   type OssYear,
   type PaymentsOverview,
+  type VatYear,
 } from './api'
 import { card } from './styles'
 
@@ -35,12 +36,6 @@ function regionName(code: string, language: string): string {
   } catch {
     return code
   }
-}
-
-/** "2030-04-01" as a local date - `new Date(iso)` would read it as UTC midnight and may show the day before. */
-function formatDay(iso: string, language: string): string {
-  const [year, month, day] = iso.split('-').map(Number)
-  return new Date(year, month - 1, day).toLocaleDateString(language)
 }
 
 function LimitBar({ percent, level, label }: { percent: number; level: LimitLevel; label: string }) {
@@ -116,6 +111,54 @@ function Countries({ countries, language }: { countries: CountryTotal[]; languag
         ))}
       </tbody>
     </table>
+  )
+}
+
+function VatYearCard({
+  year,
+  limit,
+  immediateLimit,
+  overdue,
+  language,
+}: {
+  year: VatYear
+  limit: number
+  immediateLimit: number
+  overdue: boolean
+  language: string
+}) {
+  const { t } = useTranslation('boards')
+  const czk = new Intl.NumberFormat(language, { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 })
+  const title = t('admin.limits.vat.year', { year: year.year })
+  const next = year.year + 1
+  return (
+    <section aria-label={title} className={`${card} p-5`}>
+      <h4 className="mb-3 font-semibold">{title}</h4>
+      <p className="mb-2 text-slate-600 dark:text-slate-400">{t('admin.limits.vat.first', { limit: czk.format(limit), next })}</p>
+      <Figure
+        title={`${title}, ${czk.format(limit)}`}
+        value={czk.format(year.estimated_czk)}
+        limit={czk.format(limit)}
+        percent={year.percent}
+        level={year.level}
+      />
+      <p className="mb-2 mt-4 text-slate-600 dark:text-slate-400">{t('admin.limits.vat.second', { limit: czk.format(immediateLimit) })}</p>
+      <Figure
+        title={`${title}, ${czk.format(immediateLimit)}`}
+        value={czk.format(year.estimated_czk)}
+        limit={czk.format(immediateLimit)}
+        percent={year.immediate_percent}
+        level={year.immediate_level}
+      />
+      <p className="mt-3 text-slate-600 dark:text-slate-400">
+        {t('admin.limits.vat.paid', { amount: formatMoney(year.paid_usd_cents, 'usd', language), count: year.payments })}
+      </p>
+      {overdue && (
+        <p className="mt-2 rounded-lg bg-rose-50 p-2 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100">
+          {t('admin.limits.vat.overdue', { year: year.year, next })}
+        </p>
+      )}
+    </section>
   )
 }
 
@@ -197,29 +240,24 @@ export default function ModerationLimits() {
         {overview.vat_payer ? (
           <p className={`${card} p-5`}>{t('admin.limits.vat.payer')}</p>
         ) : (
-          <div className={`${card} p-5`}>
+          <>
             <p className="mb-3 text-slate-600 dark:text-slate-400">
-              {t('admin.limits.vat.explain', {
-                from: formatDay(vat.window_from, language),
-                to: formatDay(vat.window_to, language),
-                limit: czk.format(vat.limit_czk),
-              })}
+              {t('admin.limits.vat.explain', { limit: czk.format(vat.limit_czk), immediate: czk.format(vat.immediate_limit_czk) })}
             </p>
-            <Figure
-              title={vatTitle}
-              value={czk.format(vat.estimated_czk)}
-              limit={czk.format(vat.limit_czk)}
-              percent={vat.percent}
-              level={vat.level}
-            />
-            <p className="mt-3 text-slate-600 dark:text-slate-400">
-              {t('admin.limits.vat.paid', {
-                amount: formatMoney(vat.paid_usd_cents, 'usd', language),
-                count: vat.payments,
-              })}
-            </p>
-            <p className="mt-2 text-slate-500 dark:text-slate-400">{t('admin.limits.vat.note')}</p>
-          </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {[...vat.years].reverse().map((year, index) => (
+                <VatYearCard
+                  key={year.year}
+                  year={year}
+                  limit={vat.limit_czk}
+                  immediateLimit={vat.immediate_limit_czk}
+                  overdue={index === 1 && year.level === 'exceeded'}
+                  language={language}
+                />
+              ))}
+            </div>
+            <p className="mt-3 text-slate-500 dark:text-slate-400">{t('admin.limits.vat.note')}</p>
+          </>
         )}
       </section>
 

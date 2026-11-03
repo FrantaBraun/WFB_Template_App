@@ -154,8 +154,11 @@ class TaxLimitsConfig(BaseModel):
     """The figures limits.py measures the payments against - an early warning,
     not bookkeeping.
 
-    - vat_registration_czk: the Czech turnover above which a provider has to
-      register for VAT (2 000 000 CZK over twelve calendar months since 2025).
+    - vat_registration_czk: the Czech turnover in a calendar year above which a
+      provider becomes a VAT payer from 1 January of the next year (2 000 000
+      CZK since 2025).
+    - vat_immediate_czk: the higher limit (2 536 500 CZK, 100 000 EUR) above
+      which the provider is a payer from the next day. Must be above the first.
     - oss_threshold_eur: the EU-wide yearly total of sales of electronic
       services to consumers in other member states above which the VAT of the
       customer's country applies (10 000 EUR, this and the previous year).
@@ -169,10 +172,17 @@ class TaxLimitsConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     vat_registration_czk: int = Field(default=2_000_000, ge=1)
+    vat_immediate_czk: int = Field(default=2_536_500, ge=1)
     oss_threshold_eur: int = Field(default=10_000, ge=1)
     czk_per_usd: float = Field(default=24.0, gt=0)
     eur_per_usd: float = Field(default=0.95, gt=0)
     warn_percent: int = Field(default=80, ge=1, le=100)
+
+    @model_validator(mode="after")
+    def _immediate_limit_is_the_higher_one(self) -> "TaxLimitsConfig":
+        if self.vat_immediate_czk <= self.vat_registration_czk:
+            raise ValueError("vat_immediate_czk must be above vat_registration_czk")
+        return self
 
 
 class BoardsConfig(BaseModel):
