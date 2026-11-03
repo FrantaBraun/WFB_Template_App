@@ -401,6 +401,8 @@
         "empty": "No versions yet.",
         "current": "current",
         "contentChanged": "content changed",
+        "changes": "Changes",
+        "changesTitle": "What this version changed compared with the one before it",
         "contentChangedTitle": "The specification changed without a new version number; the previous content is the entry below",
         "viewDocs": "Docs",
         "viewDocsTitle": "View the specification as Docs (Swagger UI)",
@@ -482,6 +484,72 @@
       "reply": "Reply by e-mail"
     }
   },
+  "changes": {
+    "pageTitle": "Changes between versions",
+    "back": "Back to the documentation",
+    "compared": "Compared with {{base}} ({{baseDate}}), the version {{target}} ({{targetDate}}) differs as follows.",
+    "onlyWhatMatters": "Only what matters (hide harmless changes)",
+    "none": "No structural changes were found. Descriptions, examples or other documentation text may still differ.",
+    "allHidden_one": "{{count}} harmless change is hidden.",
+    "allHidden_other": "{{count}} harmless changes are hidden.",
+    "general": "General",
+    "truncated": "Only the first {{count}} changes are shown - the comparison stops there.",
+    "notFound": "There is nothing to compare this version with.",
+    "loadError": "Failed to load the changes.",
+    "summary": {
+      "breaking_one": "{{count}} breaking change",
+      "breaking_other": "{{count}} breaking changes",
+      "warning_one": "{{count}} warning",
+      "warning_other": "{{count}} warnings",
+      "info_one": "{{count}} harmless change",
+      "info_other": "{{count}} harmless changes"
+    },
+    "severity": {
+      "breaking": "Breaking",
+      "warning": "Warning",
+      "info": "Harmless"
+    },
+    "scope": {
+      "parameter": "Parameter",
+      "request": "Request",
+      "response": "Response {{status}}"
+    },
+    "kinds": {
+      "operation_removed": "Operation removed",
+      "operation_added": "Operation added",
+      "operation_deprecated": "Operation marked as deprecated",
+      "operation_undeprecated": "Operation is no longer deprecated",
+      "security_added": "Authentication is now required ({{schemes}})",
+      "security_relaxed": "Authentication is no longer required",
+      "security_changed": "Authentication changed (added: {{added}}; removed: {{removed}})",
+      "parameter_removed": "Parameter removed",
+      "parameter_added_required": "Required parameter added",
+      "parameter_added_optional": "Optional parameter added",
+      "parameter_became_required": "Parameter became required",
+      "parameter_became_optional": "Parameter became optional",
+      "request_body_added_required": "Required request body added",
+      "request_body_added_optional": "Optional request body added",
+      "request_body_removed": "Request body removed",
+      "request_body_became_required": "Request body became required",
+      "request_body_became_optional": "Request body became optional",
+      "response_removed": "Response removed",
+      "response_added": "Response added",
+      "media_type_removed": "Media type removed",
+      "media_type_added": "Media type added",
+      "type_changed": "Type changed from {{from}} to {{to}}",
+      "format_changed": "Format changed from {{from}} to {{to}}",
+      "nullable_changed_true": "May now be null",
+      "nullable_changed_false": "May no longer be null",
+      "enum_value_removed": "Allowed values removed: {{values}}",
+      "enum_value_added": "Allowed values added: {{values}}",
+      "composition_changed": "The oneOf / anyOf alternatives changed",
+      "property_removed": "Property removed",
+      "property_added_required": "Required property added",
+      "property_added_optional": "Optional property added",
+      "property_became_required": "Property became required",
+      "property_became_optional": "Property became optional"
+    }
+  },
   "notifications": {
     "bell": {
       "title": "Notifications",
@@ -494,6 +562,8 @@
     "banner": {
       "text": "New version available: {{versions}}",
       "contentChanged": "The specification changed without a new version number: {{versions}}",
+      "breaking_one": "It includes {{count}} breaking change - see the version history.",
+      "breaking_other": "It includes {{count}} breaking changes - see the version history.",
       "dismiss": "Dismiss"
     },
     "subscribe": {

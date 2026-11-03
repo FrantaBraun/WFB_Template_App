@@ -16,6 +16,7 @@ interface NotificationItemData {
   document_title: string
   version: string
   content_changed: boolean
+  breaking_changes: number
   is_read: boolean
   created_at: string
 }
@@ -72,12 +73,16 @@ export default function VersionBanner({ documentationId }: { documentationId: st
   // Two kinds of news: a new version number, and the same number with different content.
   const newVersions = items.filter((item) => !item.content_changed).map((item) => item.version).join(', ')
   const changedVersions = items.filter((item) => item.content_changed).map((item) => item.version).join(', ')
+  const breaking = items.reduce((sum, item) => sum + item.breaking_changes, 0)
 
   return (
     <div className="flex items-center justify-between gap-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
       <div className="space-y-1">
         {newVersions && <p>{t('notifications.banner.text', { versions: newVersions })}</p>}
         {changedVersions && <p>{t('notifications.banner.contentChanged', { versions: changedVersions })}</p>}
+        {breaking > 0 && (
+          <p className="font-medium text-red-700 dark:text-red-300">{t('notifications.banner.breaking', { count: breaking })}</p>
+        )}
       </div>
       <button
         type="button"

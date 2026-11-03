@@ -28,6 +28,7 @@ import AcceptInvitation from "./pages/AcceptInvitation"
 import ApiDocs from "./pages/ApiDocs"
 import NewApiDoc from "./pages/NewApiDoc"
 import ApiDocDetail from "./pages/ApiDocDetail"
+import VersionChanges from "./pages/VersionChanges"
 import Collections from "./pages/Collections"
 import CollectionDetail from "./pages/CollectionDetail"
 import CollectionKnowledgeBase from "./pages/CollectionKnowledgeBase"
@@ -66,6 +67,7 @@ function App() {
       <Route path="/api-docs" element={<ApiDocs />} />
       <Route path="/api-docs/new" element={<NewApiDoc />} />
       <Route path="/api-docs/:id" element={<ApiDocDetail />} />
+      <Route path="/api-docs/:id/versions/:versionId/changes" element={<VersionChanges />} />
       <Route
         path="/api-docs/:id/versions/:versionId/view"
         element={

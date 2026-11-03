@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch, apiUpload } from '../api/client'
 import AuthorCard, { type AuthorData } from '../components/AuthorCard'
+import ChangeSummaryBadges, { type ChangeSummaryData } from '../components/ChangeSummaryBadges'
 import ResultDialog from '../components/ResultDialog'
 import VersionBanner from '../components/VersionBanner'
 import usePageMeta from '../hooks/usePageMeta'
@@ -23,6 +24,7 @@ interface ApiDocumentCurrentVersionData {
   fetched_at: string
   source: string
   content_changed: boolean
+  change_summary: ChangeSummaryData | null
 }
 
 interface ApiDocumentDetailData {
@@ -59,6 +61,7 @@ interface ApiDocumentVersionOutData {
   archived_at: string | null
   source: string
   content_changed: boolean
+  change_summary: ChangeSummaryData | null
 }
 
 type RecheckPeriod = 'manual' | 'daily' | 'weekly' | 'monthly'
@@ -74,6 +77,7 @@ type CheckDialogState =
       kind: 'success'
       newVersionFound: boolean
       contentChanged: boolean
+      breaking: number
       version: string | null
       previousVersion: string | null
     }
@@ -126,6 +130,9 @@ function CheckResultBody({ result }: { result: CheckDialogState }) {
         <p className={emphasis}>{t('apiDocs.checkDialog.contentChanged')}</p>
         {result.version && <p>{t('apiDocs.checkDialog.currentVersionUnchanged', { version: result.version })}</p>}
         <p>{t('apiDocs.checkDialog.contentChangedHint')}</p>
+        {result.breaking > 0 && (
+          <p className="font-medium text-red-700 dark:text-red-300">{t('changes.summary.breaking', { count: result.breaking })}</p>
+        )}
       </>
     )
   }
@@ -152,6 +159,9 @@ function CheckResultBody({ result }: { result: CheckDialogState }) {
           </>
         )}
       </dl>
+      {result.breaking > 0 && (
+        <p className="font-medium text-red-700 dark:text-red-300">{t('changes.summary.breaking', { count: result.breaking })}</p>
+      )}
     </>
   )
 }
@@ -322,6 +332,7 @@ export default function ApiDocDetail() {
         kind: 'success',
         newVersionFound,
         contentChanged,
+        breaking: detail.current_version?.change_summary?.breaking ?? 0,
         version: detail.current_version?.version ?? null,
         previousVersion,
       })
@@ -751,7 +762,7 @@ export default function ApiDocDetail() {
         )}
         {versions && versions.length > 0 && (
           <ul className="divide-y divide-slate-200 dark:divide-slate-800">
-            {versions.map((version) => (
+            {versions.map((version, index) => (
               <li key={version.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
                 <div>
                   <p className="font-medium text-slate-900 dark:text-slate-100">
@@ -769,6 +780,9 @@ export default function ApiDocDetail() {
                         {t('apiDocs.detail.versionsCard.contentChanged')}
                       </span>
                     )}
+                    <span className="ml-2 inline-flex flex-wrap gap-1 align-middle">
+                      <ChangeSummaryBadges summary={version.change_summary} />
+                    </span>
                   </p>
                   <p className="text-slate-500 dark:text-slate-400">
                     {formatDateTime(version.fetched_at, i18n.language)}
@@ -777,6 +791,15 @@ export default function ApiDocDetail() {
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  {versions[index + 1] && (
+                    <Link
+                      to={`/api-docs/${doc.id}/versions/${version.id}/changes?against=${versions[index + 1].id}`}
+                      title={t('apiDocs.detail.versionsCard.changesTitle')}
+                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                    >
+                      {t('apiDocs.detail.versionsCard.changes')}
+                    </Link>
+                  )}
                   <Link
                     to={`/api-docs/${doc.id}/versions/${version.id}/view?viewer=docs`}
                     title={t('apiDocs.detail.versionsCard.viewDocsTitle')}

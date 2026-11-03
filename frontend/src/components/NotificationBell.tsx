@@ -27,6 +27,7 @@ interface NotificationItemData {
   document_title: string | null
   version: string | null
   content_changed: boolean
+  breaking_changes: number
   message: NotificationMessageData | null
   is_read: boolean
   created_at: string
@@ -188,6 +189,11 @@ export default function NotificationBell() {
                       className="block rounded-lg px-2 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                     >
                       <p className="font-medium text-slate-900 dark:text-slate-100">{item.document_title}</p>
+                      {item.breaking_changes > 0 && (
+                        <p className="text-xs font-medium text-red-700 dark:text-red-300">
+                          {t('changes.summary.breaking', { count: item.breaking_changes })}
+                        </p>
+                      )}
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         {t(item.content_changed ? 'notifications.bell.contentChangedText' : 'notifications.bell.itemText', {
                           version: item.version,

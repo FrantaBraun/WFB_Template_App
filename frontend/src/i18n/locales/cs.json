@@ -401,6 +401,8 @@
         "empty": "Zatím žádné verze.",
         "current": "aktuální",
         "contentChanged": "změněný obsah",
+        "changes": "Změny",
+        "changesTitle": "Co tato verze změnila oproti té předchozí",
         "contentChangedTitle": "Specifikace se změnila bez nového čísla verze; původní obsah je položka níže",
         "viewDocs": "Docs",
         "viewDocsTitle": "Zobrazit specifikaci v přehledu Docs (Swagger UI)",
@@ -482,6 +484,80 @@
       "reply": "Odpovědět e-mailem"
     }
   },
+  "changes": {
+    "pageTitle": "Změny mezi verzemi",
+    "back": "Zpět na dokumentaci",
+    "compared": "Oproti verzi {{base}} ({{baseDate}}) se verze {{target}} ({{targetDate}}) liší takto.",
+    "onlyWhatMatters": "Jen to podstatné (skrýt neškodné změny)",
+    "none": "Nebyly nalezeny žádné strukturální změny. Popisy, příklady či jiný dokumentační text se přesto mohly lišit.",
+    "allHidden_one": "{{count}} neškodná změna je skryta.",
+    "allHidden_few": "{{count}} neškodné změny jsou skryty.",
+    "allHidden_many": "{{count}} neškodných změn je skryto.",
+    "allHidden_other": "{{count}} neškodných změn je skryto.",
+    "general": "Obecné",
+    "truncated": "Zobrazeno je jen prvních {{count}} změn – porovnání se tam zastavilo.",
+    "notFound": "Není s čím tuto verzi porovnat.",
+    "loadError": "Změny se nepodařilo načíst.",
+    "summary": {
+      "breaking_one": "{{count}} nekompatibilní změna",
+      "breaking_few": "{{count}} nekompatibilní změny",
+      "breaking_many": "{{count}} nekompatibilní změny",
+      "breaking_other": "{{count}} nekompatibilních změn",
+      "warning_one": "{{count}} varování",
+      "warning_few": "{{count}} varování",
+      "warning_many": "{{count}} varování",
+      "warning_other": "{{count}} varování",
+      "info_one": "{{count}} neškodná změna",
+      "info_few": "{{count}} neškodné změny",
+      "info_many": "{{count}} neškodné změny",
+      "info_other": "{{count}} neškodných změn"
+    },
+    "severity": {
+      "breaking": "Nekompatibilní",
+      "warning": "Varování",
+      "info": "Neškodné"
+    },
+    "scope": {
+      "parameter": "Parametr",
+      "request": "Požadavek",
+      "response": "Odpověď {{status}}"
+    },
+    "kinds": {
+      "operation_removed": "Operace odstraněna",
+      "operation_added": "Operace přidána",
+      "operation_deprecated": "Operace označena jako zastaralá",
+      "operation_undeprecated": "Operace už není zastaralá",
+      "security_added": "Nově je vyžadováno ověření ({{schemes}})",
+      "security_relaxed": "Ověření už není vyžadováno",
+      "security_changed": "Změnilo se ověření (přidáno: {{added}}; odebráno: {{removed}})",
+      "parameter_removed": "Parametr odstraněn",
+      "parameter_added_required": "Přidán povinný parametr",
+      "parameter_added_optional": "Přidán nepovinný parametr",
+      "parameter_became_required": "Parametr se stal povinným",
+      "parameter_became_optional": "Parametr se stal nepovinným",
+      "request_body_added_required": "Přidáno povinné tělo požadavku",
+      "request_body_added_optional": "Přidáno nepovinné tělo požadavku",
+      "request_body_removed": "Tělo požadavku odstraněno",
+      "request_body_became_required": "Tělo požadavku se stalo povinným",
+      "request_body_became_optional": "Tělo požadavku se stalo nepovinným",
+      "response_removed": "Odpověď odstraněna",
+      "response_added": "Odpověď přidána",
+      "media_type_removed": "Typ obsahu odstraněn",
+      "media_type_added": "Typ obsahu přidán",
+      "type_changed": "Typ se změnil z {{from}} na {{to}}",
+      "format_changed": "Formát se změnil z {{from}} na {{to}}",
+      "nullable_changed_true": "Nově může být null",
+      "nullable_changed_false": "Už nesmí být null",
+      "enum_value_removed": "Odebrány povolené hodnoty: {{values}}",
+      "enum_value_added": "Přidány povolené hodnoty: {{values}}",
+      "composition_changed": "Změnily se varianty oneOf / anyOf",
+      "property_removed": "Vlastnost odstraněna",
+      "property_added_required": "Přidána povinná vlastnost",
+      "property_added_optional": "Přidána nepovinná vlastnost",
+      "property_became_required": "Vlastnost se stala povinnou",
+      "property_became_optional": "Vlastnost se stala nepovinnou"
+    }
+  },
   "notifications": {
     "bell": {
       "title": "Oznámení",
@@ -494,6 +570,10 @@
     "banner": {
       "text": "Nová verze k dispozici: {{versions}}",
       "contentChanged": "Specifikace se změnila bez nového čísla verze: {{versions}}",
+      "breaking_one": "Obsahuje {{count}} nekompatibilní změnu – viz historie verzí.",
+      "breaking_few": "Obsahuje {{count}} nekompatibilní změny – viz historie verzí.",
+      "breaking_many": "Obsahuje {{count}} nekompatibilní změny – viz historie verzí.",
+      "breaking_other": "Obsahuje {{count}} nekompatibilních změn – viz historie verzí.",
       "dismiss": "Skrýt"
     },
     "subscribe": {
