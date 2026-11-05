@@ -197,7 +197,7 @@ export default function Layout({ children, modules = [] }: { children: React.Rea
     <div className="flex min-h-screen flex-col">
       <Nav modules={modules} />
       <main className="page flex-1">{children}</main>
-      <Footer modules={modules} />
+      <Footer />
     </div>
   )
 }

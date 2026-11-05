@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { LEGAL_PATHS } from './LegalShell'
 import { useEnabledModules } from '../modules/registry'
-import { ModuleDefinition } from '../modules/types'
 
 /**
  * Sitewide footer, styled after the one on withfbraun.com - a border-topped,
@@ -17,7 +16,7 @@ import { ModuleDefinition } from '../modules/types'
  * enabled modules' footerLinks, as one link row above the credit line; the footer resolves enabled modules itself (the hook is
  * cached) so Layout doesn't have to thread them through.
  */
-export default function Footer({ modules }: { modules: ModuleDefinition[] }) {
+export default function Footer() {
   const { t } = useTranslation()
   const footerLinks = [
     ...(Object.keys(LEGAL_PATHS) as (keyof typeof LEGAL_PATHS)[]).map((key) => ({ to: LEGAL_PATHS[key], labelKey: `legal:nav.${key}` })),

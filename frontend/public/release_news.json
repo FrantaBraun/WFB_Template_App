@@ -1,5 +1,6 @@
 {
   "unreleased": [
+    "Fixed the production build, which stopped at two leftovers (an unused footer parameter and an unused import) and so could not be packaged; nothing changes on screen",
     "Two-step sign-in: a user with an authenticator app is asked for the code - or a backup code - after the password, and after Google sign-in too, on a new step of the sign-in page; a wrong or expired code, too many attempts and a stronger sign-in demanded by the application are explained in Czech and English",
     "Google sign-in works with the auth service's new one-time code: the callback page removes it from the address bar at once and trades it for tokens through the backend; a failed attempt returns to the sign-in page with a message",
     "The Account page no longer offers a password change to an account that signs in only with Google - it says there is no password to change",
