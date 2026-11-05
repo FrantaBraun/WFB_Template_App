@@ -7,6 +7,7 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { apiFetch } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 const inputClass =
   'w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100'
@@ -15,10 +16,14 @@ const inputClass =
  * Change-password card on the Account page. The backend forwards the
  * current and new password to the auth service, which checks the current
  * one. It keeps its own form state, so a failure here never touches the
- * profile card.
+ * profile card. An account that only ever signed in with Google has no
+ * password (`has_password: false` on the auth service's user), so there is
+ * nothing to change and the card says so instead of offering a form that can
+ * only fail.
  */
 export default function ChangePasswordCard() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -48,6 +53,17 @@ export default function ChangePasswordCard() {
     } finally {
       setSaving(false)
     }
+  }
+
+  if (user?.has_password === false) {
+    return (
+      <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+          {t('account.passwordCard.title')}
+        </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400">{t('account.passwordCard.noPassword')}</p>
+      </div>
+    )
   }
 
   return (
