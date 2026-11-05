@@ -1,5 +1,8 @@
 {
     "unreleased": [
+        "Two-step sign-in: a user with an authenticator app is asked for the code - or a backup code - after the password, and after Google sign-in too, on a new step of the sign-in page; a wrong or expired code, too many attempts and a stronger sign-in demanded by the application are explained in Czech and English",
+        "Google sign-in works with the auth service's new one-time code: the callback page removes it from the address bar at once and trades it for tokens through the backend; a failed attempt returns to the sign-in page with a message",
+        "The Account page no longer offers a password change to an account that signs in only with Google - it says there is no password to change",
         "Forgotten password: the sign-in page links to a form that e-mails a reset link, and the link opens a page where a new password is set (with a confirmation field; the link works once and expires)",
         "The Account page has a Change password card: current password, new password and its confirmation, saved on its own without touching the profile",
         "Let an application ship its own share image: the page-meta hook now keeps the og:image and twitter:card that index.html carries on every page (and sets twitter:image to match) instead of always writing the logo as a small card; without them in index.html nothing changes",

@@ -10,6 +10,8 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from app.api.auth.schemas import (
     ChangePasswordBody,
+    GoogleExchangeRequest,
+    LoginMfaRequest,
     LoginRequest,
     LogoutRequest,
     PasswordResetConfirmBody,
@@ -39,10 +41,22 @@ def _raise_for_response(response: httpx.Response) -> NoReturn:
         detail = response.json().get("detail", response.text)
     except ValueError:
         detail = response.text
-    raise HTTPException(status_code=response.status_code, detail=detail)
+    # A 429 (too many wrong passwords / second-factor codes) says how long to
+    # wait in Retry-After; pass it on rather than swallowing it.
+    retry_after = response.headers.get("Retry-After")
+    raise HTTPException(
+        status_code=response.status_code,
+        detail=detail,
+        headers={"Retry-After": retry_after} if retry_after else None,
+    )
 
 async def _check_admin(credentials: HTTPAuthorizationCredentials, current_user: User, application_group_id: str, db: AsyncSession) -> User:
     """Checks the upstream role for the current user and updates the local user row's is_admin flag if it differs from the upstream role. This ensures that the local user row's is_admin flag is always in sync with the upstream role, which is important for access control in the application. The function returns the updated current_user object."""
+
+    if not application_group_id:
+        # The role lives in the group attributes; without a group id there is
+        # nothing to read (and nothing to sync), so the stored flag stands.
+        return current_user
 
     try:
         group_attributes = await auth_client.get_group_attributes(
@@ -72,12 +86,45 @@ async def register(body: RegisterRequest) -> dict:
 
 @router.post("/login")
 async def login(body: LoginRequest) -> dict:
-    """Proxies the upstream response as-is - including a 403 consent_required,
-    so the frontend can redirect to our own /consent page."""
+    """Proxies the upstream response as-is, so the frontend sees every outcome
+    of the first sign-in step: tokens (200), a 403 `mfa_required` (the user has
+    a second factor - `detail` carries the `mfa_token` and the `methods`; the
+    frontend asks for a code and calls /login/mfa), a 403
+    `auth_level_insufficient` (the application group demands a stronger
+    sign-in), or a 403 consent_required, so it can redirect to our own
+    /consent page."""
     response = await auth_client.login(identifier=body.identifier, password=body.password)
     if response.status_code == 200:
         return response.json()
     _raise_for_response(response)
+
+
+@router.post("/login/mfa")
+async def login_mfa(body: LoginMfaRequest) -> dict:
+    """Second step of a sign-in that answered 403 `mfa_required` - from /login
+    or from /google/exchange. Proxied as-is: tokens (200), 401 for a wrong code
+    or an expired `mfa_token`, 403 `auth_level_insufficient`, 429 while locked."""
+    try:
+        return await auth_client.login_mfa(
+            mfa_token=body.mfa_token, method=body.method, code=body.code
+        )
+    except httpx.HTTPStatusError as exc:
+        _raise_for_response(exc.response)
+
+
+@router.post("/google/exchange")
+async def google_exchange(body: GoogleExchangeRequest) -> dict:
+    """Trades the single-use code of the Google redirect for tokens. The
+    browser is sent to the auth service for the Google part (it needs no API
+    key), but the auth service no longer puts tokens in the redirect URL - only
+    a short-lived `code` - and the exchange goes through this backend so it
+    carries our X-Api-Key (which makes the service apply the group's minimum
+    sign-in level). Proxied as-is, including a 403 `mfa_required`: a user with
+    a second factor finishes with /login/mfa, the Google code being spent."""
+    try:
+        return await auth_client.google_exchange(code=body.code)
+    except httpx.HTTPStatusError as exc:
+        _raise_for_response(exc.response)
 
 
 @router.post("/refresh")

@@ -7,15 +7,18 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
+import { signInErrorMessage, type MfaChallenge } from '../api/authFlow'
 import { getAuthUrl } from '../api/client'
+import MfaForm from '../components/MfaForm'
 import { useAuth } from '../context/AuthContext'
 import usePageMeta from '../hooks/usePageMeta'
 
 const isRegistrationAllowed = (import.meta.env.VITE_REGISTRATION_ALLOWED || 'true') === 'true';
 const isGoogleSignInAllowed = (import.meta.env.VITE_GOOGLE_SIGN_ALLOWED || 'true') === 'true';
 
-// Redirects straight to the auth service - it owns the entire Google exchange
-// and redirects back to /oauth/callback with tokens, no backend involvement.
+// Sends the browser to the auth service, which runs the Google part and
+// redirects back to /oauth/callback with a single-use `code` (never tokens).
+// OAuthCallback trades that code for tokens through our own backend.
 function buildGoogleLoginUrl() {
   const redirectUri = `${window.location.origin}/oauth/callback`
   return `${getAuthUrl()}/auth/google?redirect_uri=${encodeURIComponent(redirectUri)}`
@@ -24,7 +27,9 @@ function buildGoogleLoginUrl() {
 /**
  * Email/password + Google OAuth entry point. On consent_required, login()
  * (in AuthContext) redirects to /consent internally and returns normally
- * rather than throwing, so the catch block below never sees that case.
+ * rather than throwing, so the catch block below never sees that case. For a
+ * user with two-factor authentication login() returns an MfaChallenge instead:
+ * the page then swaps the form for the code step (MfaForm).
  */
 export default function Login() {
   const { t } = useTranslation()
@@ -37,19 +42,40 @@ export default function Login() {
     (location.state as { flash?: string } | null)?.flash ?? null,
   )
   const [loading, setLoading] = useState(false)
+  // Set after a correct password when a second factor is still needed. Kept in
+  // component state only - the mfa_token is a credential for 5 minutes.
+  const [challenge, setChallenge] = useState<MfaChallenge | null>(null)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
     setLoading(true)
     try {
-      await login(identifier, password)
+      const next = await login(identifier, password)
       // On consent_required, login() already redirected to /consent - it
       // returns normally rather than throwing, so nothing more to do here.
+      if (next) {
+        setChallenge(next)
+        setLoading(false)
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('login.failed'))
+      setError(signInErrorMessage(err, t, t('login.failed')))
       setLoading(false)
     }
+  }
+
+  if (challenge) {
+    return (
+      <MfaForm
+        challenge={challenge}
+        onCancel={(message) => {
+          // Back to the password step, which has to be done again.
+          setChallenge(null)
+          setPassword('')
+          setError(message ?? null)
+        }}
+      />
+    )
   }
 
   return (

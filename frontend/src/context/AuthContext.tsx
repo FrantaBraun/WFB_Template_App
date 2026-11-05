@@ -7,7 +7,13 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { clearTokens, getRefreshToken, setTokens } from '../api/client'
-import { apiFetch } from '../api/client'
+import { apiFetch, publicFetch } from '../api/client'
+import {
+  buildSignInError,
+  extractMfaChallenge,
+  type MfaChallenge,
+  type MfaMethod,
+} from '../api/authFlow'
 import { applyUserLanguage } from '../i18n'
 import { consumeReturnPath } from '../utils/returnPath'
 import { useTheme } from './ThemeContext'
@@ -15,7 +21,17 @@ import { useTheme } from './ThemeContext'
 interface AuthContextType {
   user: any | null
   loading: boolean
-  login: (identifier: string, password: string) => Promise<void>
+  /**
+   * First sign-in step. Resolves to null when the sign-in is over (signed in,
+   * or sent on to /consent) and to an MfaChallenge when the user has a second
+   * factor: show the code form and call completeMfa(). Throws a SignInError
+   * for anything else.
+   */
+  login: (identifier: string, password: string) => Promise<MfaChallenge | null>
+  /** Second sign-in step: the code (authenticator app or backup code) for a challenge from login() or signInWithGoogleCode(). Throws a SignInError. */
+  completeMfa: (challenge: MfaChallenge, code: string, method: MfaMethod) => Promise<void>
+  /** Trades the `code` Google's redirect to /oauth/callback carried for tokens; resolves like login(). */
+  signInWithGoogleCode: (code: string) => Promise<MfaChallenge | null>
   logout: () => Promise<void>
   setUser: (user: any) => void
   loadUser: () => Promise<boolean>
@@ -24,7 +40,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  login: async () => {},
+  login: async () => null,
+  completeMfa: async () => {},
+  signInWithGoogleCode: async () => null,
   logout: async () => {},
   setUser: () => {},
   loadUser: async () => false,
@@ -128,26 +146,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function login(identifier: string, password: string) {
-    const resp = await apiFetch('/api/auth/login', {
+  /**
+   * Common end of every way to sign in (password, second step, Google): reads
+   * the response of the auth service, as proxied by our backend.
+   *  - 200: stores the tokens and loads the user (see loadUser/consent notes).
+   *  - 403 mfa_required: returns the challenge - the caller shows the code form.
+   *  - 403 consent_required: redirects to /consent and returns null.
+   *  - anything else throws a SignInError.
+   * These calls go through publicFetch, not apiFetch: a 401 here is a wrong
+   * password or code, which must not be retried behind a token refresh.
+   */
+  async function handleSignInResponse(resp: Response, secondStep = false): Promise<MfaChallenge | null> {
+    if (resp.ok) {
+      const data = await resp.json()
+      setTokens(data.access_token, data.refresh_token)
+      const loaded = await loadUser()
+      // If consent was required, loadUser() already redirected to /consent -
+      // navigating to '/' here too would cancel that.
+      if (loaded) {
+        navigate(consumeReturnPath() ?? '/', { replace: true })
+      }
+      return null
+    }
+    const body = await resp.json().catch(() => ({}))
+    const groupId = extractConsentGroupId(body)
+    if (groupId) {
+      redirectToConsent(groupId)
+      return null
+    }
+    const challenge = extractMfaChallenge(body)
+    if (challenge) return challenge
+    throw buildSignInError(resp.status, body, secondStep)
+  }
+
+  async function login(identifier: string, password: string): Promise<MfaChallenge | null> {
+    const resp = await publicFetch('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ identifier, password }),
     })
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}))
-      const groupId = extractConsentGroupId(err)
-      if (groupId) {
-        redirectToConsent(groupId)
-        return
-      }
-      throw new Error(typeof err.detail === 'string' ? err.detail : 'Login failed')
-    }
-    const data = await resp.json()
-    setTokens(data.access_token, data.refresh_token)
-    const loaded = await loadUser()
-    if (loaded) {
-      navigate(consumeReturnPath() ?? '/', { replace: true })
-    }
+    return handleSignInResponse(resp)
+  }
+
+  async function completeMfa(challenge: MfaChallenge, code: string, method: MfaMethod): Promise<void> {
+    const resp = await publicFetch('/api/auth/login/mfa', {
+      method: 'POST',
+      body: JSON.stringify({ mfa_token: challenge.mfaToken, method, code }),
+    })
+    // The second step never asks for another one; a challenge in the answer
+    // would be unexpected, so it is not followed.
+    await handleSignInResponse(resp, true)
+  }
+
+  async function signInWithGoogleCode(code: string): Promise<MfaChallenge | null> {
+    const resp = await publicFetch('/api/auth/google/exchange', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    })
+    return handleSignInResponse(resp)
   }
 
   async function logout() {
@@ -163,7 +218,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, setUser, loadUser }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, completeMfa, signInWithGoogleCode, logout, setUser, loadUser }}
+    >
       {children}
     </AuthContext.Provider>
   )
