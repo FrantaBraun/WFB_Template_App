@@ -77,6 +77,32 @@ class AuthClient:
             "/api/auth/login", json={"identifier": identifier, "password": password}
         )
 
+    async def login_mfa(self, *, mfa_token: str, code: str, method: str = "totp") -> dict:
+        """POST /api/auth/login/mfa - the second step of a login that answered
+        403 `mfa_required` (from `login` or from `google_exchange`). `method` is
+        "totp" or "backup_code". Raises on non-2xx: 401 = wrong code or an
+        expired `mfa_token`, 403 = `auth_level_insufficient`, 429 = locked."""
+        self._require_api_key()
+        r = await self._http.post(
+            "/api/auth/login/mfa",
+            json={"mfa_token": mfa_token, "method": method, "code": code},
+        )
+        r.raise_for_status()
+        return r.json()
+
+    async def google_exchange(self, *, code: str) -> dict:
+        """POST /api/auth/google/exchange - trades the single-use `code` the
+        auth service appended to our /oauth/callback redirect for tokens.
+        The X-Api-Key is optional upstream, but sending it (as every call here
+        does) makes the service apply the group's minimum sign-in level.
+        Raises on non-2xx: 401 = code unknown/expired/used, 403 = a second
+        factor is needed (`mfa_required`, finish with `login_mfa`) or
+        `auth_level_insufficient`."""
+        self._require_api_key()
+        r = await self._http.post("/api/auth/google/exchange", json={"code": code})
+        r.raise_for_status()
+        return r.json()
+
     async def refresh(self, *, refresh_token: str) -> dict:
         self._require_api_key()
         r = await self._http.post("/api/auth/refresh", json={"refresh_token": refresh_token})
