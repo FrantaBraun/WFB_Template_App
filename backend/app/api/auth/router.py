@@ -24,6 +24,8 @@ from app.config import get_settings
 from app.models.user import User
 from app.security.jwt import bearer_scheme
 from app.services.auth_client import auth_client
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import get_db
 
 router = APIRouter()
 
@@ -38,6 +40,23 @@ def _raise_for_response(response: httpx.Response) -> NoReturn:
     except ValueError:
         detail = response.text
     raise HTTPException(status_code=response.status_code, detail=detail)
+
+async def _check_admin(credentials: HTTPAuthorizationCredentials, current_user: User, application_group_id: str, db: AsyncSession) -> User:
+    """Checks the upstream role for the current user and updates the local user row's is_admin flag if it differs from the upstream role. This ensures that the local user row's is_admin flag is always in sync with the upstream role, which is important for access control in the application. The function returns the updated current_user object."""
+
+    try:
+        group_attributes = await auth_client.get_group_attributes(
+                access_token=credentials.credentials, group_id=application_group_id
+            )
+    except httpx.HTTPStatusError as exc:
+        _raise_for_response(exc.response)
+
+    # Update the local user row's is_admin flag if it differs from the upstream role.
+    if current_user.is_admin != group_attributes.get("role", 'USER') == 'ADMIN':
+        current_user.is_admin = group_attributes.get("role", 'USER') == 'ADMIN'
+        await db.commit()
+        await db.refresh(current_user)
+    return current_user
 
 
 @router.post("/register", status_code=201)
@@ -129,6 +148,7 @@ async def change_password(
 async def me(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Ensures a local user row exists (via get_current_user) and returns the
     live profile from the auth service - not cached locally, so it's always
@@ -160,6 +180,9 @@ async def me(
             },
         )
     user = result.get("user") or result
+
+    current_user = await _check_admin(credentials, current_user, result.get("application_group_id"), db)
+
     return {
         **user,
         "application_group_id": result.get("application_group_id"),
