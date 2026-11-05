@@ -168,6 +168,9 @@ async def test_me_creates_local_user_and_returns_upstream_profile(
     assert resp.status_code == 200
     assert resp.json()["login"] == "alogin"
     assert resp.json()["application_group_id"] is None
+    # Without a group id there is no role to sync: no group-attributes request
+    # is made (respx would fail the test on an unmocked one) and the flag stays.
+    assert resp.json()["is_admin"] is False
 
 
 @respx.mock
@@ -190,6 +193,11 @@ async def test_me_wrapper_shape_with_user_populated_also_handled(
                 "user": {"id": sub, "login": "alogin", "email": "a@example.com"},
             },
         )
+    )
+    # /me also reads the group attributes to keep the local is_admin flag in
+    # step with the user's role in the group.
+    respx.get(f"{AUTH_URL}/api/auth/me/group-attributes/g1").mock(
+        return_value=Response(200, json={"application_group_id": "g1", "user_data": {}, "role": "USER"})
     )
 
     resp = await _me_request(db_session, make_access_token, sub=sub)
@@ -435,3 +443,206 @@ def test_change_password_requires_bearer(client):
         json={"current_password": "oldpassword", "new_password": "newpassword1"},
     )
     assert resp.status_code in (401, 403)
+
+
+@respx.mock
+def test_login_mfa_required_passthrough(client):
+    """The first sign-in step answers 403 mfa_required for a user with a second
+    factor; the frontend needs the mfa_token and the methods untouched."""
+    respx.post(f"{AUTH_URL}/api/auth/login").mock(
+        return_value=Response(
+            403,
+            json={"detail": {"mfa_required": True, "mfa_token": "mt", "methods": ["totp", "backup_code"]}},
+        )
+    )
+
+    resp = client.post("/api/auth/login", json={"identifier": "user", "password": "pw"})
+
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == {
+        "mfa_required": True,
+        "mfa_token": "mt",
+        "methods": ["totp", "backup_code"],
+    }
+
+
+@respx.mock
+def test_login_auth_level_insufficient_passthrough(client):
+    detail = {"auth_level_insufficient": True, "required_level": 2, "current_level": 1, "hint": "enroll_mfa"}
+    respx.post(f"{AUTH_URL}/api/auth/login").mock(return_value=Response(403, json={"detail": detail}))
+
+    resp = client.post("/api/auth/login", json={"identifier": "user", "password": "pw"})
+
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == detail
+
+
+@respx.mock
+def test_login_rate_limited_forwards_retry_after(client):
+    respx.post(f"{AUTH_URL}/api/auth/login").mock(
+        return_value=Response(
+            429,
+            json={"detail": "Too many attempts. Try again in 60 seconds."},
+            headers={"Retry-After": "60"},
+        )
+    )
+
+    resp = client.post("/api/auth/login", json={"identifier": "user", "password": "pw"})
+
+    assert resp.status_code == 429
+    assert resp.headers["Retry-After"] == "60"
+    assert "Too many attempts" in resp.json()["detail"]
+
+
+@respx.mock
+def test_login_mfa_success(client):
+    route = respx.post(f"{AUTH_URL}/api/auth/login/mfa").mock(
+        return_value=Response(
+            200,
+            json={"access_token": "a", "refresh_token": "r", "token_type": "bearer", "expires_in": 900},
+        )
+    )
+
+    resp = client.post("/api/auth/login/mfa", json={"mfa_token": "mt", "code": "123456"})
+
+    assert resp.status_code == 200
+    assert resp.json()["access_token"] == "a"
+    # The method defaults to the authenticator app, as upstream does.
+    assert json.loads(route.calls.last.request.content) == {
+        "mfa_token": "mt",
+        "method": "totp",
+        "code": "123456",
+    }
+
+
+@respx.mock
+def test_login_mfa_backup_code(client):
+    route = respx.post(f"{AUTH_URL}/api/auth/login/mfa").mock(
+        return_value=Response(200, json={"access_token": "a", "refresh_token": "r", "expires_in": 900})
+    )
+
+    resp = client.post(
+        "/api/auth/login/mfa",
+        json={"mfa_token": "mt", "method": "backup_code", "code": "K7QF2-M9XPA"},
+    )
+
+    assert resp.status_code == 200
+    assert json.loads(route.calls.last.request.content)["method"] == "backup_code"
+
+
+@respx.mock
+def test_login_mfa_wrong_code_propagates_401(client):
+    respx.post(f"{AUTH_URL}/api/auth/login/mfa").mock(
+        return_value=Response(401, json={"detail": "Invalid verification code"})
+    )
+
+    resp = client.post("/api/auth/login/mfa", json={"mfa_token": "mt", "code": "000000"})
+
+    assert resp.status_code == 401
+    assert resp.json()["detail"] == "Invalid verification code"
+
+
+@respx.mock
+def test_login_mfa_expired_challenge_propagates_401(client):
+    respx.post(f"{AUTH_URL}/api/auth/login/mfa").mock(
+        return_value=Response(401, json={"detail": "MFA challenge is invalid or has expired"})
+    )
+
+    resp = client.post("/api/auth/login/mfa", json={"mfa_token": "old", "code": "123456"})
+
+    assert resp.status_code == 401
+    assert "expired" in resp.json()["detail"]
+
+
+@respx.mock
+def test_login_mfa_locked_forwards_retry_after(client):
+    respx.post(f"{AUTH_URL}/api/auth/login/mfa").mock(
+        return_value=Response(429, json={"detail": "Too many attempts."}, headers={"Retry-After": "120"})
+    )
+
+    resp = client.post("/api/auth/login/mfa", json={"mfa_token": "mt", "code": "000000"})
+
+    assert resp.status_code == 429
+    assert resp.headers["Retry-After"] == "120"
+
+
+@respx.mock
+def test_login_mfa_auth_level_insufficient_passthrough(client):
+    detail = {"auth_level_insufficient": True, "required_level": 3, "current_level": 2, "hint": "use_passkey"}
+    respx.post(f"{AUTH_URL}/api/auth/login/mfa").mock(return_value=Response(403, json={"detail": detail}))
+
+    resp = client.post("/api/auth/login/mfa", json={"mfa_token": "mt", "code": "123456"})
+
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == detail
+
+
+def test_login_mfa_rejects_unknown_method_and_blank_code(client):
+    # None of these reach the auth service (no respx mock is active: a call would fail).
+    bad_method = client.post("/api/auth/login/mfa", json={"mfa_token": "mt", "method": "sms", "code": "123456"})
+    blank_code = client.post("/api/auth/login/mfa", json={"mfa_token": "mt", "code": ""})
+    blank_token = client.post("/api/auth/login/mfa", json={"mfa_token": "", "code": "123456"})
+    assert bad_method.status_code == 422
+    assert blank_code.status_code == 422
+    assert blank_token.status_code == 422
+
+
+@respx.mock
+def test_google_exchange_success(client):
+    route = respx.post(f"{AUTH_URL}/api/auth/google/exchange").mock(
+        return_value=Response(
+            200,
+            json={"access_token": "a", "refresh_token": "r", "token_type": "bearer", "expires_in": 900},
+        )
+    )
+
+    resp = client.post("/api/auth/google/exchange", json={"code": "Qm3x"})
+
+    assert resp.status_code == 200
+    assert resp.json()["refresh_token"] == "r"
+    assert json.loads(route.calls.last.request.content) == {"code": "Qm3x"}
+    # The BFF's own key goes along, so the group's minimum sign-in level applies.
+    assert route.calls.last.request.headers["X-Api-Key"]
+
+
+@respx.mock
+def test_google_exchange_mfa_required_passthrough(client):
+    respx.post(f"{AUTH_URL}/api/auth/google/exchange").mock(
+        return_value=Response(
+            403,
+            json={"detail": {"mfa_required": True, "mfa_token": "mt", "methods": ["totp", "backup_code"]}},
+        )
+    )
+
+    resp = client.post("/api/auth/google/exchange", json={"code": "Qm3x"})
+
+    assert resp.status_code == 403
+    assert resp.json()["detail"]["mfa_required"] is True
+    assert resp.json()["detail"]["mfa_token"] == "mt"
+
+
+@respx.mock
+def test_google_exchange_auth_level_insufficient_passthrough(client):
+    detail = {"auth_level_insufficient": True, "required_level": 2, "current_level": 1, "hint": "enroll_mfa"}
+    respx.post(f"{AUTH_URL}/api/auth/google/exchange").mock(return_value=Response(403, json={"detail": detail}))
+
+    resp = client.post("/api/auth/google/exchange", json={"code": "Qm3x"})
+
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == detail
+
+
+@respx.mock
+def test_google_exchange_used_code_propagates_401(client):
+    respx.post(f"{AUTH_URL}/api/auth/google/exchange").mock(
+        return_value=Response(401, json={"detail": "Code is invalid, expired or already used"})
+    )
+
+    resp = client.post("/api/auth/google/exchange", json={"code": "spent"})
+
+    assert resp.status_code == 401
+
+
+def test_google_exchange_rejects_blank_code(client):
+    assert client.post("/api/auth/google/exchange", json={"code": ""}).status_code == 422
+    assert client.post("/api/auth/google/exchange", json={}).status_code == 422

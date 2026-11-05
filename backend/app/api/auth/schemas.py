@@ -2,6 +2,8 @@
 # Author: František Braun <frantisek.braun95@gmail.com>
 # Freely available as a template for building custom applications.
 
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -38,6 +40,23 @@ class LoginRequest(BaseModel):
 
     identifier: str
     password: str
+
+
+class LoginMfaRequest(BaseModel):
+    """Body for POST /api/auth/login/mfa - the `mfa_token` from the 403
+    `mfa_required` answer of /login (or /google/exchange) and a code from the
+    authenticator app or one of the user's backup codes."""
+
+    mfa_token: str = Field(min_length=1, max_length=2048)
+    method: Literal["totp", "backup_code"] = "totp"
+    code: str = Field(min_length=1, max_length=64)
+
+
+class GoogleExchangeRequest(BaseModel):
+    """Body for POST /api/auth/google/exchange - the single-use `code` the auth
+    service puts on the redirect back to /oauth/callback."""
+
+    code: str = Field(min_length=1, max_length=512)
 
 
 class RefreshRequest(BaseModel):

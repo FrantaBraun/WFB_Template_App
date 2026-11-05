@@ -191,6 +191,92 @@ async def test_update_group_attributes_sends_full_user_data(auth_test_settings):
     await client.aclose()
 
 
+@respx.mock
+async def test_login_mfa_required_does_not_raise(auth_test_settings):
+    """Password right, second factor needed: login() hands the 403 back
+    untouched so the router can forward the mfa_token and methods."""
+    respx.post("https://auth.test/api/auth/login").mock(
+        return_value=Response(
+            403,
+            json={"detail": {"mfa_required": True, "mfa_token": "mt", "methods": ["totp", "backup_code"]}},
+        )
+    )
+    client = AuthClient(auth_test_settings)
+    resp = await client.login(identifier="user", password="pw")
+    assert resp.status_code == 403
+    assert resp.json()["detail"]["mfa_token"] == "mt"
+    await client.aclose()
+
+
+@respx.mock
+async def test_login_mfa_sends_token_method_and_code(auth_test_settings):
+    route = respx.post("https://auth.test/api/auth/login/mfa").mock(
+        return_value=Response(200, json={"access_token": "a", "refresh_token": "r", "expires_in": 900})
+    )
+    client = AuthClient(auth_test_settings)
+    result = await client.login_mfa(mfa_token="mt", code="123456")
+    assert result["access_token"] == "a"
+    assert json.loads(route.calls.last.request.content) == {
+        "mfa_token": "mt",
+        "method": "totp",
+        "code": "123456",
+    }
+    assert route.calls.last.request.headers["X-Api-Key"] == "test-api-key"
+    await client.aclose()
+
+
+@respx.mock
+async def test_login_mfa_backup_code_method(auth_test_settings):
+    route = respx.post("https://auth.test/api/auth/login/mfa").mock(
+        return_value=Response(200, json={"access_token": "a", "refresh_token": "r", "expires_in": 900})
+    )
+    client = AuthClient(auth_test_settings)
+    await client.login_mfa(mfa_token="mt", code="K7QF2-M9XPA", method="backup_code")
+    assert json.loads(route.calls.last.request.content)["method"] == "backup_code"
+    await client.aclose()
+
+
+@respx.mock
+async def test_login_mfa_raises_on_wrong_code(auth_test_settings):
+    respx.post("https://auth.test/api/auth/login/mfa").mock(
+        return_value=Response(401, json={"detail": "Invalid verification code"})
+    )
+    client = AuthClient(auth_test_settings)
+    with pytest.raises(httpx.HTTPStatusError) as excinfo:
+        await client.login_mfa(mfa_token="mt", code="000000")
+    assert excinfo.value.response.status_code == 401
+    await client.aclose()
+
+
+@respx.mock
+async def test_google_exchange_sends_code_with_api_key(auth_test_settings):
+    route = respx.post("https://auth.test/api/auth/google/exchange").mock(
+        return_value=Response(200, json={"access_token": "a", "refresh_token": "r", "expires_in": 900})
+    )
+    client = AuthClient(auth_test_settings)
+    result = await client.google_exchange(code="Qm3x")
+    assert result["refresh_token"] == "r"
+    assert json.loads(route.calls.last.request.content) == {"code": "Qm3x"}
+    # Without the key the service could not apply the group's minimum sign-in level.
+    assert route.calls.last.request.headers["X-Api-Key"] == "test-api-key"
+    await client.aclose()
+
+
+@respx.mock
+async def test_google_exchange_mfa_required_raises_with_challenge(auth_test_settings):
+    respx.post("https://auth.test/api/auth/google/exchange").mock(
+        return_value=Response(
+            403,
+            json={"detail": {"mfa_required": True, "mfa_token": "mt", "methods": ["totp"]}},
+        )
+    )
+    client = AuthClient(auth_test_settings)
+    with pytest.raises(httpx.HTTPStatusError) as excinfo:
+        await client.google_exchange(code="Qm3x")
+    assert excinfo.value.response.json()["detail"]["mfa_token"] == "mt"
+    await client.aclose()
+
+
 @pytest.fixture()
 def no_key_client():
     return AuthClient(Settings(auth_url="https://auth.test", auth_api_key=""))
@@ -201,6 +287,8 @@ def no_key_client():
     [
         lambda c: c.register(email="a@example.com", login="a", password="password123", first_name="A", last_name="B"),
         lambda c: c.login(identifier="user", password="pw"),
+        lambda c: c.login_mfa(mfa_token="mt", code="123456"),
+        lambda c: c.google_exchange(code="Qm3x"),
         lambda c: c.refresh(refresh_token="rt"),
         lambda c: c.logout(access_token="a", refresh_token="r"),
         lambda c: c.get_me(access_token="a"),
