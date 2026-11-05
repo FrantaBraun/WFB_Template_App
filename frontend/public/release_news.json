@@ -1,5 +1,6 @@
 {
     "unreleased": [
+        "Opening the application without a connection no longer signs you out: when the server cannot be reached at all, the stored session is kept (it is dropped only when the server answers that it is not valid), and it is checked again as soon as the device is back online",
         "Forgotten password: the sign-in page links to a form that e-mails a reset link, and the link opens a page where a new password is set (with a confirmation field; the link works once and expires)",
         "The Account page has a Change password card: current password, new password and its confirmation, saved on its own without touching the profile",
         "The moderation page has a new \"Sales and limits\" tab (Czech and English) showing, per calendar year, how close the payments are to the two limits for becoming a VAT payer and to the EU limit for sales to consumers, with the sales broken down by the payer's country.",

@@ -6,7 +6,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { clearTokens, getRefreshToken, setTokens } from '../api/client'
+import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../api/client'
 import { apiFetch } from '../api/client'
 import { applyUserLanguage } from '../i18n'
 import { consumeReturnPath } from '../utils/returnPath'
@@ -107,6 +107,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false
       }
     }
+    if (resp === null) {
+      // The server could not be reached at all (the device is offline): nothing
+      // says the session is bad, so the tokens stay. Dropping them here signed
+      // people out every time they opened the app without a connection.
+      setUser(null)
+      return false
+    }
     clearTokens()
     setUser(null)
     return false
@@ -127,6 +134,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // redirected-to) URL as the new target.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Back online with a session that could not be checked while offline: check it now.
+  useEffect(() => {
+    const onOnline = () => {
+      if (!user && getAccessToken()) void loadUser()
+    }
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
+  }, [user, loadUser])
 
   async function login(identifier: string, password: string) {
     const resp = await apiFetch('/api/auth/login', {
