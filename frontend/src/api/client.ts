@@ -87,6 +87,20 @@ export async function apiFetch(path: string, options: { method?: string; headers
 }
 
 /**
+ * Fetch for the calls that create a session (login, its second step, the
+ * Google code exchange): no bearer token and, unlike apiFetch, no
+ * refresh-and-retry on a 401. There a 401 means "wrong password / wrong code /
+ * spent code", and retrying it would send the same wrong code twice - the auth
+ * service counts every wrong second-factor code toward a lock (5 per account).
+ */
+export function publicFetch(path: string, options: { method?: string; body?: string } = {}) {
+  return fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
+
+/**
  * Decodes a JWT's payload for client-side display purposes only (e.g.
  * reading claims to show in the UI). Does NOT verify the signature - this
  * is purely a base64url decode, so the result must never be trusted for
