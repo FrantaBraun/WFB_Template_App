@@ -21,7 +21,7 @@ Want a one-off template to clone and rename for a single, standalone app rather 
 
 ## What's included
 
-- **Backend-for-frontend authorization** — the backend proxies every auth call to a shared identity service ([auth.withfbraun.com](https://auth.withfbraun.com)); the browser never sees an API key. Email/password login, Google OAuth, and a custom in-app consent flow all work out of the box.
+- **Backend-for-frontend authorization** — the backend proxies every auth call to a shared identity service ([auth.withfbraun.com](https://auth.withfbraun.com)); the browser never sees an API key. Email/password login, Google OAuth, two-step verification (authenticator app or backup code) and a custom in-app consent flow all work out of the box.
 - **A local account model** — your own Postgres-backed `User` table, linked to (but never duplicating) the identity data the auth service owns. Extend it with whatever fields your app actually needs.
 - **A working Account page** — two independently-saved cards: one for your app's own local data, one for the shared profile (name, avatar, birth date, ...), plus a config-file-driven system for adding more profile fields without touching code.
 - **Multi-language UI** — `react-i18next` already wired up (Czech + English), including switching to a signed-in user's own language preference automatically.

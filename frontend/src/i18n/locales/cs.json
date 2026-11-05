@@ -91,7 +91,24 @@
     "google": "Pokračovat přes Google",
     "noAccount": "Nemáte účet?",
     "registerLink": "Zaregistrujte se",
-    "failed": "Přihlášení se nezdařilo"
+    "failed": "Přihlášení se nezdařilo",
+    "rateLimited": "Příliš mnoho pokusů. Počkejte prosím minutu a zkuste to znovu.",
+    "levelEnrollMfa": "Tato aplikace vyžaduje dvoufázové ověření. Zapněte si autentizační aplikaci v nastavení zabezpečení účtu na {{url}} a poté se přihlaste znovu.",
+    "levelInsufficient": "Tato aplikace vyžaduje silnější přihlášení, než jaké tato stránka nabízí (například přístupový klíč).",
+    "mfa": {
+      "title": "Dvoufázové ověření",
+      "totpHint": "Zadejte 6místný kód z autentizační aplikace.",
+      "backupHint": "Zadejte jeden ze záložních kódů. Každý záložní kód lze použít jen jednou.",
+      "totpLabel": "Ověřovací kód",
+      "backupLabel": "Záložní kód",
+      "submit": "Ověřit",
+      "submitting": "Ověřuji…",
+      "useBackup": "Použít záložní kód",
+      "useTotp": "Použít autentizační aplikaci",
+      "back": "Zpět na přihlášení",
+      "invalidCode": "Kód není platný. Zkuste to prosím znovu.",
+      "expired": "Ověření vypršelo. Přihlaste se prosím znovu."
+    }
   },
   "register": {
     "pageTitle": "Registrace",
@@ -120,7 +137,8 @@
       "submitting": "Ukládám…",
       "mismatch": "Nová hesla se neshodují.",
       "success": "Heslo bylo změněno.",
-      "error": "Heslo se nepodařilo změnit. Zkontrolujte současné heslo."
+      "error": "Heslo se nepodařilo změnit. Zkontrolujte současné heslo.",
+      "noPassword": "Tento účet se přihlašuje přes Google a nemá žádné heslo, které by šlo změnit."
     },
     "pageTitle": "Účet",
     "pageDescription": "Spravujte údaje svého účtu.",
@@ -183,7 +201,6 @@
   "oauthCallback": {
     "pageTitle": "Přihlašování…",
     "signingIn": "Přihlašování…",
-    "profileLoadError": "Přihlášení proběhlo, ale načtení profilu selhalo.",
     "googleFailed": "Přihlášení přes Google selhalo. Zkuste to prosím znovu."
   },
   "version": {

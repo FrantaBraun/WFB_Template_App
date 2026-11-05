@@ -91,7 +91,24 @@
     "google": "Continue with Google",
     "noAccount": "Don't have an account?",
     "registerLink": "Register",
-    "failed": "Login failed"
+    "failed": "Login failed",
+    "rateLimited": "Too many attempts. Please wait a minute and try again.",
+    "levelEnrollMfa": "This application requires two-step verification. Turn on an authenticator app in your account security settings at {{url}}, then sign in again.",
+    "levelInsufficient": "This application requires a stronger sign-in than this page can offer (for example a passkey).",
+    "mfa": {
+      "title": "Two-step verification",
+      "totpHint": "Enter the 6-digit code from your authenticator app.",
+      "backupHint": "Enter one of your backup codes. Each backup code works only once.",
+      "totpLabel": "Verification code",
+      "backupLabel": "Backup code",
+      "submit": "Verify",
+      "submitting": "Verifying…",
+      "useBackup": "Use a backup code instead",
+      "useTotp": "Use the authenticator app instead",
+      "back": "Back to sign in",
+      "invalidCode": "That code is not valid. Please try again.",
+      "expired": "The verification expired. Please sign in again."
+    }
   },
   "register": {
     "pageTitle": "Register",
@@ -120,7 +137,8 @@
       "submitting": "Saving…",
       "mismatch": "The new passwords do not match.",
       "success": "Password changed.",
-      "error": "The password could not be changed. Check the current password."
+      "error": "The password could not be changed. Check the current password.",
+      "noPassword": "This account signs in with Google and has no password to change."
     },
     "pageTitle": "Account",
     "pageDescription": "Manage your account details.",
@@ -183,7 +201,6 @@
   "oauthCallback": {
     "pageTitle": "Signing in…",
     "signingIn": "Signing in…",
-    "profileLoadError": "Signed in, but loading your profile failed.",
     "googleFailed": "Google sign-in failed. Please try again."
   },
   "version": {
