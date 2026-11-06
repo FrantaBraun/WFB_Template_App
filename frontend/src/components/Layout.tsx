@@ -123,7 +123,9 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
   const utilityControls = (
     <>
       {modules.filter((module) => module.headerWidget).map((module) => (
-        <span key={module.key}>{module.headerWidget}</span>
+        <span className="flex items-center" key={module.key}>
+          {module.headerWidget}
+        </span>
       ))}
       {user ? (
         <>
@@ -161,14 +163,9 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
-          {utilityControls}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((open) => !open)}
-            aria-label={t(mobileMenuOpen ? 'common.closeMenu' : 'common.openMenu')}
-            aria-expanded={mobileMenuOpen}
-            className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden"
-          >
+          <div className="hidden md:flex items-center">{utilityControls}</div>
+          <button type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={t(mobileMenuOpen ? 'common.closeMenu' : 'common.openMenu')} aria-expanded={mobileMenuOpen}
+            className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden">
             {mobileMenuOpen ? <CloseIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
           </button>
         </div>
@@ -178,6 +175,7 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
         <div ref={mobileMenuRef} className="border-t border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950 sm:px-6 md:hidden">
           <nav className="flex flex-col items-start gap-3">
             {navLinks}
+            <div className='flex items-center justify-center w-full'>{utilityControls}</div>
           </nav>
         </div>
       )}
