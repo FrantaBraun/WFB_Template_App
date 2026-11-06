@@ -49,9 +49,6 @@ export default function HomePage() {
 
       <section className="border-b border-slate-200 bg-gradient-to-b from-violet-50 to-white dark:border-slate-800 dark:from-violet-950/30 dark:to-slate-950">
         <div className={`${container} py-16 sm:py-24`}>
-          <p className="inline-block rounded-full border border-violet-200 bg-white px-3 py-1 text-sm font-medium text-violet-800 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-200">
-            {t('home.eyebrow')}
-          </p>
           <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">{t('home.title')}</h1>
           <p className={`mt-6 max-w-2xl text-lg ${mutedText}`}>{t('home.lead')}</p>
           <div className="mt-8 flex flex-wrap gap-3">

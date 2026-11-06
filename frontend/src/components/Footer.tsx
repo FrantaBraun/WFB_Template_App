@@ -20,7 +20,7 @@ export default function Footer() {
   const footerLinks = useEnabledModules().flatMap((module) => module.footerLinks ?? [])
 
   return (
-    <footer className="border-t border-slate-200 px-6 py-8 text-center text-sm text-slate-400 dark:border-slate-800 dark:text-slate-500">
+    <footer className="border-t border-slate-300 px-6 py-8 text-center text-sm text-slate-400 dark:border-slate-800 dark:text-slate-500">
       {footerLinks.length > 0 && (
         <nav className="mb-3 flex flex-wrap justify-center gap-x-4 gap-y-1">
           {footerLinks.map((item) => (
@@ -30,8 +30,9 @@ export default function Footer() {
           ))}
         </nav>
       )}
-      <p>
-        <span className="mx-2">·</span>
+      <p className="flex flex-wrap items-center justify-center gap-1">
+        <span className="font-semibold text-slate-500 dark:text-slate-400">WFB</span>
+        <span className="text-2xl mx-1">·</span>
         {t('footer.copyright', { year: new Date().getFullYear() })}
       </p>
     </footer>
