@@ -140,7 +140,9 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
   const utilityControls = (
     <>
       {modules.filter((module) => module.headerWidget).map((module) => (
-        <span key={module.key}>{module.headerWidget}</span>
+        <span className="flex items-center" key={module.key}>
+          {module.headerWidget}
+        </span>
       ))}
       {user ? (
         <>
@@ -178,7 +180,7 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
-          {utilityControls}
+          <div className="hidden md:flex items-center">{utilityControls}</div>
           <button type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={t(mobileMenuOpen ? 'common.closeMenu' : 'common.openMenu')} aria-expanded={mobileMenuOpen}
             className="inline-flex items-center justify-center rounded-lg p-2 text-ink-soft hover:bg-ink/10 dark:text-ink-soft-dark dark:hover:bg-ink-dark/15 md:hidden">
             {mobileMenuOpen ? <CloseIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
@@ -190,6 +192,7 @@ function Nav({ modules }: { modules: ModuleDefinition[] }) {
         <div ref={mobileMenuRef} className="border-t border-ink/10 px-3 py-3 dark:border-ink-dark/10 sm:px-6 md:hidden">
           <nav className="flex flex-col items-start gap-3 text-sm text-ink-soft dark:text-ink-soft-dark">
             {navLinks}
+            <div className='flex items-center justify-center w-full'>{utilityControls}</div>
           </nav>
         </div>
       )}
