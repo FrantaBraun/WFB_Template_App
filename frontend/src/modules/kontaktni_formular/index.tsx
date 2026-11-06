@@ -17,6 +17,7 @@ const contactFormModule: ModuleDefinition = {
     { path: '/kontakt', element: <Navigate to="/contact" replace /> },
   ],
   nav: [{ to: '/contact', labelKey: 'kontaktni_formular:nav.contact' }],
+  footerLinks: [{ to: '/contact', labelKey: 'kontaktni_formular:nav.contact' }],
   locales: {
     cs: {
       nav: { contact: 'Kontakt' },
